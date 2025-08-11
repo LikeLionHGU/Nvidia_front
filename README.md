@@ -5,25 +5,27 @@
 2) 브랜치 : 이름_[타입]/#번호 => eunju_feat/#112
 3) 커밋 : "타입 : 짧은설명" => "feat: 로그인"
 4) 파일구조 : 
-  /src
+``` tree
+   /src
 ├── components/          # 재사용 가능한 UI 컴포넌트
 │   ├── common/          # 전역적으로 사용하는 버튼, 인풋, 모달 등
 │   └── specific/        # 특정 페이지에서만 사용하는 컴포넌트
 ├── pages/               # 라우팅 되는 페이지 컴포넌트 (e.g., Home, About)
 │   ├── HomePage.jsx
 │   └── AboutPage.jsx
-├── api/                 # API 요청 관련 파일 (e.g., axios 인스턴스, 각 API 함수)
+├── api/             # API 요청 관련 파일 (e.g., axios 인스턴스, 각 API 함수)
 ├── assets/              # 이미지, 폰트, 아이콘 등 정적 파일
 │   ├── images/
 │   ├── fonts/
 │   └── icons/
 ├── hooks/               # 커스텀 훅 (재사용 가능한 로직)
-├── store/               # 상태 관리
+├── store/               # 상태 관리 
 ├── styles/              # 전역 스타일, 공통 스타일
 │   ├── global.css
 │   └── variables.css
-├── main.jsx
+├── main.jsx             
 └── App.jsx
+```
 
 6) 자기가 짠 코드 주석 달기 
 
