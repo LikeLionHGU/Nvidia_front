@@ -17,27 +17,27 @@ const MapComponent = ({ markers }) => {
 
   useEffect(() => {
     if (!markers || markers.length === 0) {
-      setError("No markers provided.");
+      setError("마커가 없습니다");
       setLoading(false);
       return;
     }
 
-    // Calculate map center and zoom based on markers
+    // 마커 위치에 따른 줌 계산
     if (markers.length > 0) {
       if (markers.length === 1) {
         setMapCenter(markers[0].position);
-        setMapZoom(15); // Default zoom for single marker
+        setMapZoom(15); // 마커 1개일때 줌
       } else {
         const bounds = new navermaps.LatLngBounds();
         markers.forEach((marker) => bounds.extend(marker.position));
         setMapCenter(bounds.getCenter());
-        setMapZoom(10); // A more zoomed out view for multiple markers
+        setMapZoom(10); // 마커 여러개 일때 줌
       }
     } else {
       setError("Could not find any valid markers.");
     }
     setLoading(false);
-  }, [markers, navermaps]); // Dependency on markers and navermaps
+  }, [markers, navermaps]); // 마커나 주소 정보가 바뀔때마다 실행
 
   if (loading) {
     return <div>Loading map...</div>;
