@@ -52,7 +52,7 @@ const MapComponent = ({ markers }) => {
   }
 
   return (
-    <MapDiv style={{ width: "100vw", height: "100vh" }}>
+    <MapDiv style={{ width: "100%", height: "100%" }}>
       <NaverMap
         center={mapCenter}
         zoom={mapZoom}
