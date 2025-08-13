@@ -31,7 +31,7 @@ const MapComponent = ({ markers }) => {
         const bounds = new navermaps.LatLngBounds();
         markers.forEach((marker) => bounds.extend(marker.position));
         setMapCenter(bounds.getCenter());
-        setMapZoom(10); // 마커 여러개 일때 줌
+        setMapZoom(13); // 마커 여러개 일때 줌
       }
     } else {
       setError("Could not find any valid markers.");
