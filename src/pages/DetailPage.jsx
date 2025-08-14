@@ -1,7 +1,7 @@
 import React from "react";
 import "./../styles/global.css";
 
-function DetailPlacePage({ isModal = false, onClose }) {
+function DetailPage({ isModal = false, onClose }) {
   return (
     <div>
       {!isModal && (
@@ -15,4 +15,4 @@ function DetailPlacePage({ isModal = false, onClose }) {
   );
 }
 
-export default DetailPlacePage;
+export default DetailPage;
