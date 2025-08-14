@@ -1,24 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import MapComponent from "../apis/MapComponent";
 import { NavermapsProvider } from "react-naver-maps";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import CommonModal from "../components/common/commonModal";
+import DetailPlacePage from "./DetailPage";
+import ManageMyPlacePage from "./ManageMyPlacePage";
 import "./../styles/global.css";
 
 function HomePage() {
   const navigate = useNavigate();
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
   const moveToAddPlacePage = () => {
-    navigate('/add-place');
-  }
+    navigate("/add-place");
+  };
 
   const moveToDetailPage = () => {
-    navigate('/detail-page');
-  }
+    setIsDetailModalOpen(true);
+  };
 
   const moveToManagePage = () => {
-    navigate('/manage-page');
-  }
+    setIsManageModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+  };
+
+  const closeManageModal = () => {
+    setIsManageModalOpen(false);
+  };
 
   const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
   const markers = [
@@ -30,33 +43,46 @@ function HomePage() {
   return (
     <div>
       <div>
-      <span>홈페이지 </span>
-        <span style={{cursor:"pointer"}} onClick={moveToAddPlacePage}>장소등록 </span>
-        <span style={{cursor:"pointer"}} onClick={moveToDetailPage}>장소상세 </span>
-        <span style={{cursor:"pointer"}} onClick={moveToManagePage}>장소관리</span>
+        <span>홈페이지 </span>
+        <span style={{ cursor: "pointer" }} onClick={moveToAddPlacePage}>
+          장소등록{" "}
+        </span>
+        <span style={{ cursor: "pointer" }} onClick={moveToDetailPage}>
+          장소상세{" "}
+        </span>
+        <span style={{ cursor: "pointer" }} onClick={moveToManagePage}>
+          장소관리
+        </span>
       </div>
-      <SearchBarContainer>
-        검색 바
-      </SearchBarContainer>
+
+      <SearchBarContainer>검색 바</SearchBarContainer>
+
       <ContentsContainer>
-        <AIsearchContainer>
-          AI 검색
-        </AIsearchContainer>
-        <SearchResultsContainer>
-          검색결과
-        </SearchResultsContainer>
+        <AIsearchContainer>AI 검색</AIsearchContainer>
+        <SearchResultsContainer>검색결과</SearchResultsContainer>
         <MapContainer>
-          <NavermapsProvider ncpKeyId={mapClientId}> 
-          {/* 옛날 예시코드에는 ncpClientID 였는데 ncpKeyId로 바뀜 절대 수정 금지 */}
+          <NavermapsProvider ncpKeyId={mapClientId}>
             <MapComponent markers={markers} />
           </NavermapsProvider>
         </MapContainer>
       </ContentsContainer>
+
+      {isDetailModalOpen && (
+        <CommonModal title="장소 상세 정보" onClose={closeDetailModal}>
+          <DetailPlacePage isModal={true} onClose={closeDetailModal} />
+        </CommonModal>
+      )}
+
+      {isManageModalOpen && (
+        <CommonModal title="장소 관리" onClose={closeManageModal}>
+          <ManageMyPlacePage isModal={true} onClose={closeManageModal} />
+        </CommonModal>
+      )}
     </div>
   );
 }
-export default HomePage;
 
+export default HomePage;
 
 const ContentsContainer = styled.div`
   display: flex;
@@ -87,4 +113,3 @@ const SearchBarContainer = styled.div`
   border: 1px solid black;
   margin: 10px;
 `;
-
