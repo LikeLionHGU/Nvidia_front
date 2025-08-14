@@ -3,6 +3,9 @@ import MapComponent from "../apis/MapComponent";
 import { NavermapsProvider } from "react-naver-maps";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import CommonModal from "../components/common/commonModal";
+import DetailPlacePage from "./DetailPage";
+import ManageMyPlacePage from "./ManageMyPlacePage";
 // import { getRecommendList, searchPlacesByKeyword } from "../apis/MainPageAPI";
 import "./../styles/global.css";
 import SearchResultItem, {
@@ -14,9 +17,27 @@ import SearchResultItem, {
 } from "../components/specific/SearchResultItem";
 
 function MainPage() {
-  // --- STATE --- //
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
   const [recommendList, setRecommendList] = useState([]); // 추천 장소 목록 (API 연동 전 더미 데이터)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+
+  const moveToDetailPage = () => {
+    setIsDetailModalOpen(true);
+  };
+
+  const moveToManagePage = () => {
+    setIsManageModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+  };
+
+  const closeManageModal = () => {
+    setIsManageModalOpen(false);
+  };
+  
   const navigate = useNavigate();
 
   // 1. 초기 로딩 시 추천 목록(더미 데이터) 가져오고, 마커와 주소 설정
@@ -50,8 +71,8 @@ function MainPage() {
   }, []); // 컴포넌트 마운트 시 1회만 실행
 
   const moveToAddPlacePage = () => navigate("/add-place");
-  const moveToDetailPage = (roomId) => navigate(`/detail-page/${roomId}`);
-  const moveToManagePage = () => navigate("/manage-page");
+  // const moveToDetailPage = (roomId) => navigate(`/detail-page/${roomId}`);
+  // const moveToManagePage = () => navigate("/manage-page");
 
   const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
 
@@ -73,7 +94,8 @@ function MainPage() {
           {recommendList.map((item) => (
             <SearchResultItem
               key={item.roomId}
-              onClick={() => moveToDetailPage(item.roomId)}
+              // onClick={() => moveToDetailPage(item.roomId)}
+              onClick={moveToDetailPage}
             >
               <ResultPhoto src={item.photo} alt="장소 사진" />
               <ResultInfo>
@@ -99,6 +121,18 @@ function MainPage() {
           </NavermapsProvider>
         </MapContainer>
       </ContentsContainer>
+
+      {isDetailModalOpen && (
+        <CommonModal title="장소 상세 정보" onClose={closeDetailModal}>
+          <DetailPlacePage isModal={true} onClose={closeDetailModal} />
+        </CommonModal>
+      )}
+
+      {isManageModalOpen && (
+        <CommonModal title="장소 관리" onClose={closeManageModal}>
+          <ManageMyPlacePage isModal={true} onClose={closeManageModal} />
+        </CommonModal>
+      )}
     </div>
   );
 }
