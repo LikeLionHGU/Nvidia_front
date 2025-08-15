@@ -21,9 +21,11 @@ function MainPage() {
   const [recommendList, setRecommendList] = useState([]); // 추천 장소 목록 (API 연동 전 더미 데이터)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
 
-  const moveToDetailPage = () => {
+  const moveToDetailPage = (roomId) => {
     setIsDetailModalOpen(true);
+    setSelectedRoomId(roomId);
   };
 
   const moveToManagePage = () => {
@@ -32,6 +34,7 @@ function MainPage() {
 
   const closeDetailModal = () => {
     setIsDetailModalOpen(false);
+    setSelectedRoomId(null);
   };
 
   const closeManageModal = () => {
@@ -94,8 +97,8 @@ function MainPage() {
           {recommendList.map((item) => (
             <SearchResultItem
               key={item.roomId}
-              // onClick={() => moveToDetailPage(item.roomId)}
-              onClick={moveToDetailPage}
+              onClick={() => moveToDetailPage(item.roomId)}
+              // onClick={moveToDetailPage}
             >
               <ResultPhoto src={item.photo} alt="장소 사진" />
               <ResultInfo>
@@ -120,11 +123,12 @@ function MainPage() {
             />
           </NavermapsProvider>
         </MapContainer>
+        
       </ContentsContainer>
 
       {isDetailModalOpen && (
         <CommonModal title="장소 상세 정보" onClose={closeDetailModal}>
-          <DetailPlacePage isModal={true} onClose={closeDetailModal} />
+          <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId}/>
         </CommonModal>
       )}
 
