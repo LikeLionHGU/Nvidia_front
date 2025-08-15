@@ -39,42 +39,15 @@ const MapComponent = ({ markers, center }) => {
       return;
     }
 
-    // 4) 여러 개면 → bounds로 모두 보이게 맞춘 뒤, idle에서 평균 중심으로 이동(줌 유지)
+    // 4) 여러 개면 → bounds에 맞춰 모두 보이게 하기
     const latLngs = markers.map(
       m => new navermaps.LatLng(m.position.lat, m.position.lng)
     );
 
-    // bounds 계산
     const bounds = new navermaps.LatLngBounds(latLngs[0], latLngs[0]);
     latLngs.forEach(ll => bounds.extend(ll));
 
-    // 평균 중심 계산
-    const { sumLat, sumLng } = markers.reduce(
-      (acc, m) => ({
-        sumLat: acc.sumLat + m.position.lat,
-        sumLng: acc.sumLng + m.position.lng,
-      }),
-      { sumLat: 0, sumLng: 0 }
-    );
-    const avgLat = sumLat / markers.length;
-    const avgLng = sumLng / markers.length;
-    const avgCenter = new navermaps.LatLng(avgLat, avgLng);
-
-    // a) 모두 보이도록 맞추기 (패딩 100)
     map.morph(bounds, 100);
-
-    // b) 한 번만 실행되는 idle 리스너로 평균 중심으로 이동(줌은 유지)
-    const listener = navermaps.Event.addListener(map, "idle", () => {
-      const currentZoom = map.getZoom();
-      map.setCenter(avgCenter);
-      map.setZoom(currentZoom);
-      navermaps.Event.removeListener(listener);
-    });
-
-    // 의존성 변경 시 리스너 정리
-    return () => {
-      if (listener) navermaps.Event.removeListener(listener);
-    };
   }, [markers, center, map, navermaps]);
 
   return (
