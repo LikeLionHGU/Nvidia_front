@@ -26,6 +26,8 @@ function MainPage() {
   const [showResults, setShowResults] = useState(false); // 추천 결과 표시 여부 상태
   const [addressInputs, setAddressInputs] = useState([""]); // 주소 입력창 배열
   const [budgetRange, setBudgetRange] = useState([0, 100000]);
+  const [center, setCenter] = useState({lat: 37.5665, lng: 126.978});
+  const [hoveredRoomId, setHoveredRoomId] = useState(null);
 
   const handleAddressInputChange = (index, value) => {
     const newAddressInputs = [...addressInputs];
@@ -91,7 +93,8 @@ function MainPage() {
     // 더미 데이터 기반으로 지도에 표시할 마커 생성
     const newMarkers = dummyRecommendList.map(item => ({
       position: { lat: parseFloat(item.address.latitude), lng: parseFloat(item.address.longitude) },
-      title: `장소 ${item.roomId}`
+      title: `장소 ${item.roomId}`,
+      price: item.price
     }));
     setMarkers(newMarkers);
   }, []); // 컴포넌트 마운트 시 1회만 실행
@@ -131,6 +134,9 @@ function MainPage() {
                 <SearchResultItem
                   key={item.roomId}
                   onClick={() => moveToDetailPage(item.roomId)}
+                  onMouseEnter={() => setHoveredRoomId(item.roomId)}
+                  onMouseLeave={() => setHoveredRoomId(null)}
+                  isHovered={hoveredRoomId === item.roomId}
                 >
                   <ResultPhoto src={item.photo} alt="장소 사진" />
                   <ResultInfo>
@@ -188,8 +194,11 @@ function MainPage() {
         <MapContainer>
           <NavermapsProvider ncpKeyId={mapClientId}>
             <MapComponent 
-              markers={markers}
-              center={{ lat: 37.4782, lng: 127.0282 }}
+              recommendList={recommendList}
+              onMarkerClick={moveToDetailPage}
+              onMarkerMouseEnter={setHoveredRoomId}
+              onMarkerMouseLeave={() => setHoveredRoomId(null)}
+              hoveredRoomId={hoveredRoomId}
             />
           </NavermapsProvider>
         </MapContainer>
