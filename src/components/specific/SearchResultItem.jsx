@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const SearchResultItem = ({ children, onClick }) => {
-  return <ItemContainer onClick={onClick}>{children}</ItemContainer>;
+const SearchResultItem = ({ children, onClick, onMouseEnter, onMouseLeave, isHovered }) => {
+  return <ItemContainer onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} isHovered={isHovered}>{children}</ItemContainer>;
 };
 
 export default SearchResultItem;
@@ -12,6 +12,7 @@ const ItemContainer = styled.div`
   padding: 10px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
+  background-color: ${(props) => (props.isHovered ? '#f5f5f5' : 'white')};
 
   &:hover {
     background-color: #f5f5f5;

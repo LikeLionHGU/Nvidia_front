@@ -1,0 +1,33 @@
+.custom-marker {
+  background-color: #28a745; /* Green background */
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.custom-marker::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0 10px;
+  border-style: solid;
+  border-color: #28a745 transparent transparent transparent;
+  transition: border-color 0.2s;
+}
+
+.custom-marker.hovered {
+  background-color: #007bff; /* Blue background on hover */
+  transform: scale(1.1);
+}
+
+.custom-marker.hovered::after {
+  border-color: #007bff transparent transparent transparent;
+}

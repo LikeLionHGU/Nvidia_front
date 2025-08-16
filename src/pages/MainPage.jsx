@@ -26,6 +26,27 @@ function MainPage() {
   const [showResults, setShowResults] = useState(false); // 추천 결과 표시 여부 상태
   const [addressInputs, setAddressInputs] = useState([""]); // 주소 입력창 배열
   const [budgetRange, setBudgetRange] = useState([0, 100000]);
+  const [hoveredRoomId, setHoveredRoomId] = useState(null); // New state for hovered room ID
+  const [currentLocation, setCurrentLocation] = useState(null); // { lat: ..., lng: ... }
+
+  const handleGetCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Error getting current location:", error);
+          alert("현재 위치를 가져올 수 없습니다. 위치 권한을 허용해주세요.");
+        }
+      );
+    } else {
+      alert("이 브라우저에서는 Geolocation이 지원되지 않습니다.");
+    }
+  };
 
   const handleAddressInputChange = (index, value) => {
     const newAddressInputs = [...addressInputs];
@@ -66,6 +87,11 @@ function MainPage() {
 
   const navigate = useNavigate();
 
+  // New handler for marker hover
+  const handleMarkerHover = (roomId, isHovering) => {
+    setHoveredRoomId(isHovering ? roomId : null);
+  };
+
   // 1. 초기 로딩 시 추천 목록(더미 데이터) 가져오고, 마커와 주소 설정
   useEffect(() => {
     // API 연동 전까지 사용할 더미 데이터
@@ -96,6 +122,8 @@ function MainPage() {
     const newMarkers = dummyRecommendList.map((item) => ({
       position: { lat: parseFloat(item.address.latitude), lng: parseFloat(item.address.longitude) },
       title: `장소 ${item.roomId}`,
+      id: item.roomId, // Pass roomId as id
+      price: item.price.toLocaleString(), // Pass price
     }));
     setMarkers(newMarkers);
   }, []); // 컴포넌트 마운트 시 1회만 실행
@@ -140,7 +168,11 @@ function MainPage() {
             <>
               <BackButton onClick={handleBackClick}>수정하기</BackButton>
               {recommendList.map((item) => (
-                <SearchResultItem key={item.roomId} onClick={() => moveToDetailPage(item.roomId)}>
+                <SearchResultItem
+                  key={item.roomId}
+                  onClick={() => moveToDetailPage(item.roomId)}
+                  isHovered={hoveredRoomId === item.roomId} // Pass isHovered prop
+                >
                   <ResultPhoto src={item.photo} alt="장소 사진" />
                   <ResultInfo>
                     <ResultAddress>주소: {item.roadName}</ResultAddress>
@@ -194,13 +226,21 @@ function MainPage() {
           <NavermapsProvider ncpKeyId={mapClientId}>
             {/* 마커가 준비된 후에만 지도 렌더링, center prop 제거 */}
             {markers.length > 0 ? (
-              <MapComponent markers={markers} />
+              <MapComponent
+                markers={markers}
+                onMarkerClick={moveToDetailPage} // 클릭 핸들러 전달
+                onMarkerHover={handleMarkerHover} // 호버 핸들러 전달
+                currentLocation={currentLocation} // New prop
+              />
             ) : (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                 지도 로딩 중...
               </div>
             )}
           </NavermapsProvider>
+          <CurrentLocationButton onClick={handleGetCurrentLocation}>
+            📍 현재 위치 불러오기
+          </CurrentLocationButton>
         </MapContainer>
       </ContentsContainer>
 
@@ -230,6 +270,29 @@ const ContentsContainer = styled.div`
 const MapContainer = styled.div`
   width: 60%;
   margin: 10px;
+`;
+
+const CurrentLocationButton = styled.button`
+  position: absolute;
+  top: 70px;
+  right: 20%; /* 수평 중앙 정렬 */
+  transform: translateX(-50%); /* 정확한 중앙 정렬을 위한 조정 */
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 20px; /* 둥근 모서리 (원형이 아닌) */
+  padding: 10px 15px; /* 내용에 따라 크기 조절을 위한 패딩 */
+  display: flex; /* 내용 중앙 정렬을 위해 유지 */
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  font-size: 16px; /* 패딩과 더 잘 어울리도록 폰트 크기 조정 */
+  color: #333;
+  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  &:hover {
+    background-color: #f0f0f0;
+  }
 `;
 
 const SearchResultsContainer = styled.div`
