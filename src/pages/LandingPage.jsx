@@ -1,20 +1,10 @@
-import React, { useState } from "react";
-import Header from "../components/common/Header";
+import React from "react";
 import BackgroundImg from "../assets/images/LandingBack.svg";
 import styled from "styled-components";
 
 function LandingPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const SearchEnterHandle = (e) => {
-    if (e.key === "Enter") {
-      console.log("Search triggered:", searchQuery);
-    }
-  };
-
   return (
     <div>
-      <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} SearchEnterHandle={SearchEnterHandle} />
       <BackgroundContainer bgImage={BackgroundImg} />
     </div>
   );
