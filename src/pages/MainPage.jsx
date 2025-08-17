@@ -8,6 +8,7 @@ import "./../styles/global.css";
 import MapWrapper from "../components/specific/MapWrapper";
 import FormComponent from "../components/specific/FormComponent";
 import SearchResultContainer from "../components/specific/SearchResultContainer";
+import RecommendationBox from "../components/specific/RecommendationBox";
 
 function MainPage() {
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
@@ -133,7 +134,7 @@ function MainPage() {
   const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
 
   return (
-    <div>
+    <PageContainer>
       {/* 상단 네비게이션 */}
 
       {/* 메인 컨텐츠 영역 */}
@@ -168,24 +169,33 @@ function MainPage() {
           handleMarkerHover={handleMarkerHover}
           currentLocation={currentLocation}
           handleGetCurrentLocation={handleGetCurrentLocation}
+          isDetailModalOpen={isDetailModalOpen}
         />
       </ContentsContainer>
+
+      <RecommendationBox recommendList={recommendList} isDetailModalOpen={isDetailModalOpen} onCardClick={moveToDetailPage} />
 
       {isDetailModalOpen && (
         <CommonModal title="장소 상세 정보" onClose={closeDetailModal}>
           <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
         </CommonModal>
       )}
-    </div>
+    </PageContainer>
   );
 }
 export default MainPage;
+
+const PageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+`;
 
 // 스타일 컴포넌트들은 그대로 유지
 const ContentsContainer = styled.div`
   display: flex;
   width: 100%;
-  height: 95vh;
+  height: 89vh;
 `;
 
 const SearchResultsContainer = styled.div`

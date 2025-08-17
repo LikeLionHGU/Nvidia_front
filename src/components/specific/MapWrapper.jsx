@@ -10,6 +10,7 @@ function MapWrapper({
   handleMarkerHover,
   currentLocation,
   handleGetCurrentLocation,
+  isDetailModalOpen,
 }) {
   return (
     <MapContainer>
@@ -27,7 +28,9 @@ function MapWrapper({
           </div>
         )}
       </NavermapsProvider>
-      <CurrentLocationButton onClick={handleGetCurrentLocation}>📍 현재 위치 불러오기</CurrentLocationButton>
+      <CurrentLocationButton onClick={handleGetCurrentLocation} isDetailModalOpen={isDetailModalOpen}>
+        📍 현재 위치 불러오기
+      </CurrentLocationButton>
     </MapContainer>
   );
 }
@@ -41,10 +44,10 @@ const MapContainer = styled.div`
 
 const CurrentLocationButton = styled.button`
   position: absolute;
-  top: 120px;
+  top: 50px;
   right: 20%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: ${({ isDetailModalOpen }) => (isDetailModalOpen ? 1 : 1000)};
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 20px;
