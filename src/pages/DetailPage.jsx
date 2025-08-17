@@ -25,6 +25,15 @@ function DetailPage({ isModal = false, onClose, roomId }) {
       price: 30000,
       roadName: "서울특별시 강남구 개포로 623",
     },
+    {
+      roomId: 3,
+      photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
+      address: { latitude: "37.3947611", longitude: "127.1111361" },
+      maxPeople: 10,
+      phoneNumber: "010-8765-2321",
+      price: 35000,
+      roadName: "경기도 성남시 분당구 판교역로 160 ",
+    },
   ];
 
   useEffect(() => {

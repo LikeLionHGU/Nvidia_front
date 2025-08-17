@@ -13,6 +13,8 @@ export default defineConfig({
         secure: false,
       },
     }
-  }
+  },
+  optimizeDeps: {
+    exclude: ['date-fns'],
+  },
 })
-
