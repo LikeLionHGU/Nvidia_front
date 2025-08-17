@@ -13,6 +13,9 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
   const mapRef = useRef(null);
   const [hoveredPlaceId, setHoveredPlaceId] = useState(null); // 호버된 마커를 관리하는 상태
 
+  // 카드 리스트가 가리는 높이(px). 상황에 맞게 조절(예: 220~300)
+  const BOTTOM_UI_PADDING = 80;
+
   // 지도 이동 함수
   const moveToMarkers = useCallback(
     (mapInstance) => {
@@ -28,7 +31,9 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
           const pos = markers[0].position;
           console.log("Moving to single marker:", pos);
           mapInstance.setCenter(new navermaps.LatLng(pos.lat, pos.lng));
-          mapInstance.setZoom(15);
+          mapInstance.setZoom(14);
+          // 아래 카드 영역만큼 위로 올려서(=화면을 위쪽으로 팬) 마커가 안 가리게
+          mapInstance.panBy(new navermaps.Point(0, BOTTOM_UI_PADDING));
         } else {
           console.log("Fitting bounds for multiple markers");
           const bounds = new navermaps.LatLngBounds();
@@ -36,6 +41,11 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
             bounds.extend(new navermaps.LatLng(marker.position.lat, marker.position.lng));
           });
           mapInstance.fitBounds(bounds, { padding: 50 });
+          // 범위 맞춘 뒤 추가로 위로 올리기
+          mapInstance.panBy(new navermaps.Point(0, BOTTOM_UI_PADDING));
+          // fitBounds가 너무 딱 맞으면 아래 박스에 걸릴 수 있어서 한 단계 줌 아웃
+          const currentZoom = mapInstance.getZoom();
+          mapInstance.setZoom(currentZoom - 1);
         }
         console.log("Map movement completed successfully");
       } catch (error) {
@@ -165,15 +175,18 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
 
       const currentLatLng = new navermaps.LatLng(currentLocation.lat, currentLocation.lng);
       map.setCenter(currentLatLng);
-      map.setZoom(15); // Zoom in to the current location
+      map.setZoom(14); // Zoom in to the current location
+
+      // 현재 위치도 카드에 안 가리게 위로 올리기
+      map.panBy(new navermaps.Point(0, BOTTOM_UI_PADDING));
 
       // Add a custom marker/circle for current location
       const circle = new naver.maps.Circle({
         map: map,
         center: currentLatLng,
-        radius: 100, // meters
-        fillColor: 'rgba(0, 128, 255, 0.3)',
-        strokeColor: 'rgba(0, 128, 255, 0.8)',
+        radius: 500, // meters
+        fillColor: 'rgba(47, 185, 117, 0.3)',
+        strokeColor: 'rgba(47, 185, 117, 0.8)',
         strokeWeight: 2,
       });
       currentLocationCircleRef.current = circle;
