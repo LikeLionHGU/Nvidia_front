@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from "react";
-import MapComponent from "../apis/MapComponent";
-import { NavermapsProvider } from "react-naver-maps";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import CommonModal from "../components/common/commonModal";
 import DetailPlacePage from "./DetailPage";
-import ManageMyPlacePage from "./ManageMyPlacePage";
 // import { getRecommendList, searchPlacesByKeyword } from "../apis/MainPageAPI";
 import "./../styles/global.css";
-import SearchResultItem, {
-  ResultPhoto,
-  ResultInfo,
-  ResultAddress,
-  ResultDetails,
-  ResultPrice,
-} from "../components/specific/SearchResultItem";
 import MapWrapper from "../components/specific/MapWrapper";
 import FormComponent from "../components/specific/FormComponent";
 import SearchResultContainer from "../components/specific/SearchResultContainer";
-import BudgetSlider from "../components/specific/BudgetSlider";
 
 function MainPage() {
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
@@ -199,8 +188,6 @@ const ContentsContainer = styled.div`
   height: 95vh;
 `;
 
-
-
 const SearchResultsContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -209,7 +196,3 @@ const SearchResultsContainer = styled.div`
   margin: 10px;
   overflow-y: auto;
 `;
-
-
-
-
