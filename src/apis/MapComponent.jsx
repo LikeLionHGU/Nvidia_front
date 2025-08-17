@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Container as MapDiv, NaverMap, Marker, useNavermaps } from "react-naver-maps";
+import ReactDOMServer from "react-dom/server";
+import { Container as MapDiv, NaverMap, useNavermaps, Marker } from "react-naver-maps";
 import PriceMarker from "../components/specific/PriceMarker"; // PriceMarker 가져오기
 
 // 기본 위치 (마커 없을 때 서울 시청)
@@ -215,15 +216,18 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
           <Marker
             key={`marker-${index}-${marker.position.lat}-${marker.position.lng}`}
             position={marker.position}
-            // The 'render' prop allows rendering a custom React component as the marker
-            render={() => (
-              <PriceMarker
-                price={marker.price} // Assuming marker.price exists
-                onClick={() => handlePriceMarkerClick(marker.id)} // Assuming marker.id exists
-                onMouseEnter={() => handlePriceMarkerMouseEnter(marker.id)} // Assuming marker.id exists
-                onMouseLeave={handlePriceMarkerMouseLeave}
-              />
-            )}
+            icon={{
+              content: ReactDOMServer.renderToString(
+                <PriceMarker
+                  price={marker.price}
+                  onClick={() => handlePriceMarkerClick(marker.id)}
+                  onMouseEnter={() => handlePriceMarkerMouseEnter(marker.id)}
+                  onMouseLeave={handlePriceMarkerMouseLeave}
+                />
+              ),
+              anchor: new navermaps.Point(0, 0),
+            }}
+            onClick={() => handlePriceMarkerClick(marker.id)}
           />
         ))}
       </NaverMap>

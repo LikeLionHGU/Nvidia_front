@@ -21,7 +21,6 @@ function MainPage() {
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
   const [recommendList, setRecommendList] = useState([]); // 추천 장소 목록 (API 연동 전 더미 데이터)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [showResults, setShowResults] = useState(false); // 추천 결과 표시 여부 상태
   const [addressInputs, setAddressInputs] = useState([""]); // 주소 입력창 배열
@@ -72,17 +71,9 @@ function MainPage() {
     setSelectedRoomId(roomId);
   };
 
-  const moveToManagePage = () => {
-    setIsManageModalOpen(true);
-  };
-
   const closeDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedRoomId(null);
-  };
-
-  const closeManageModal = () => {
-    setIsManageModalOpen(false);
   };
 
   const navigate = useNavigate();
@@ -114,6 +105,15 @@ function MainPage() {
         price: 30000,
         roadName: "서울특별시 강남구 개포로 623",
       },
+      {
+        roomId: 3,
+        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
+        address: { latitude: "37.3947611", longitude: "127.1111361" },
+        maxPeople: 3,
+        phoneNumber: "010-8765-2321",
+        price: 35000,
+        roadName: "경기도 성남시 분당구 판교역로 160 ",
+      },
     ];
 
     setRecommendList(dummyRecommendList);
@@ -137,8 +137,6 @@ function MainPage() {
   const handleBackClick = () => {
     setShowResults(false);
   };
-
-  const moveToAddPlacePage = () => navigate("/add-place");
 
   const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
 
@@ -247,12 +245,6 @@ function MainPage() {
           <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
         </CommonModal>
       )}
-
-      {isManageModalOpen && (
-        <CommonModal title="장소 관리" onClose={closeManageModal}>
-          <ManageMyPlacePage isModal={true} onClose={closeManageModal} />
-        </CommonModal>
-      )}
     </div>
   );
 }
@@ -272,7 +264,7 @@ const MapContainer = styled.div`
 
 const CurrentLocationButton = styled.button`
   position: absolute;
-  top: 70px;
+  top: 120px;
   right: 20%; /* 수평 중앙 정렬 */
   transform: translateX(-50%); /* 정확한 중앙 정렬을 위한 조정 */
   z-index: 1000;

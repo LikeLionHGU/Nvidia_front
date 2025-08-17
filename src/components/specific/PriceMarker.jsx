@@ -30,7 +30,7 @@ const MarkerContainer = styled.div`
 const PriceMarker = ({ price, onClick, onMouseEnter, onMouseLeave }) => {
   return (
     <MarkerContainer onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      {price} /30분
+      {price}원
     </MarkerContainer>
   );
 };

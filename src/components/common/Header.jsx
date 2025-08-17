@@ -2,12 +2,28 @@ import React from "react";
 import styled from "styled-components";
 import Logo from "../../assets/icons/Logo.svg";
 import SearchIcon from "../../assets/icons/Search.svg";
+import { useNavigate } from "react-router-dom";
 
 function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
+  const navigate = useNavigate();
+
+  const moveToAddPlace = () => {
+    navigate("/add-place");
+  }
+
+  const moveToManagePlace = () => {
+    navigate("/manage-page");
+  }
+
+  const moveToHome = () => {
+    navigate("/");
+    window.location.reload();
+  }
+
   return (
     <div>
       <Wrapper>
-        <LogoImg src={Logo} alt="" />
+        <LogoImg onClick={moveToHome} src={Logo} alt="" />
         <Searchbar>
           <input
             className="search-bar"
@@ -21,8 +37,8 @@ function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
           <img src={SearchIcon} alt="" />
         </Searchbar>
         <BtnContainer>
-          <Leftbtn>내 공실 등록</Leftbtn>
-          <Rightbtn>등록/예약 조회</Rightbtn>
+          <Leftbtn onClick={moveToAddPlace}>내 공실 등록</Leftbtn>
+          <Rightbtn onClick={moveToManagePlace}>등록/예약 조회</Rightbtn>
         </BtnContainer>
       </Wrapper>
     </div>
