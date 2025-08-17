@@ -9,16 +9,16 @@ function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
 
   const moveToAddPlace = () => {
     navigate("/add-place");
-  }
+  };
 
   const moveToManagePlace = () => {
     navigate("/manage-page");
-  }
+  };
 
   const moveToHome = () => {
     navigate("/");
     window.location.reload();
-  }
+  };
 
   return (
     <div>
@@ -89,9 +89,9 @@ const Searchbar = styled.div`
 const BtnContainer = styled.div`
   display: flex;
   justify-content: space-between;
-  width: clamp(212px, 14.72vw, 318px);
-  height: clamp(32px, 3.13vh, 48px);
-  font-size: clamp(12px, 0.83vw, 17px);
+  width: 14.72vw;
+  height: 3.5vh;
+  font-size: 0.83vw;
   margin-left: auto;
   margin-right: 2.83vh;
 `;
