@@ -145,7 +145,7 @@ function MainPage() {
   return (
     <div>
       {/* 상단 네비게이션 */}
-      <div>
+      {/* <div>
         <span>홈페이지 </span>
         <span style={{ cursor: "pointer" }} onClick={moveToAddPlacePage}>
           장소등록{" "}
@@ -158,7 +158,7 @@ function MainPage() {
           placeholder="찾으시는 공실을 검색해보세요!"
           style={{ width: "300px", marginLeft: "200px" }}
         />
-      </div>
+      </div> */}
 
       {/* 메인 컨텐츠 영역 */}
       <ContentsContainer>
@@ -238,9 +238,7 @@ function MainPage() {
               </div>
             )}
           </NavermapsProvider>
-          <CurrentLocationButton onClick={handleGetCurrentLocation}>
-            📍 현재 위치 불러오기
-          </CurrentLocationButton>
+          <CurrentLocationButton onClick={handleGetCurrentLocation}>📍 현재 위치 불러오기</CurrentLocationButton>
         </MapContainer>
       </ContentsContainer>
 
