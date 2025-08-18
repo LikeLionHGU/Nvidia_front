@@ -27,7 +27,7 @@ function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
         <Searchbar>
           <input
             className="search-bar"
-            placeholder="찾으시는 공실을 검색해보세요!"
+            placeholder="어떤 지역의 공실을 찾으시나요?"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -49,16 +49,15 @@ export default Header;
 
 const Wrapper = styled.div`
   width: 99vw;
-  height: 7.71vh;
-  min-height: 79px;
+  height: clamp(47px, 7.71vh, 119px);
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 const LogoImg = styled.img`
   cursor: pointer;
-  width: clamp(204px, 14.23vw, 307px);
-  height: clamp(41px, 4vh, 62px);
+  width: clamp(200px, 14.23vw, 307px);
+  height: clamp(25px, 4vh, 62px);
   margin-right: auto;
   margin-left: 2.83vh;
 `;
@@ -68,15 +67,15 @@ const Searchbar = styled.div`
   align-items: center;
   border-radius: 8px;
   width: clamp(407px, 47.08vw, 1017px);
-  height: clamp(52px, 5.08vh, 78px);
-  font-size: clamp(13px, 1.25vw, 25px);
+  height: clamp(31px, 5.08vh, 78px);
   background-color: #f5f5f5;
   padding-left: 22px;
-  > svg {
-    font-size: 20px;
-    color: gray;
+  > img {
+    width: 1.7vw;
+    height: 1.7vw;
   }
   .search-bar {
+    font-size: 1.1vw;
     margin-left: 5px;
     width: 92%;
     height: 90%;
