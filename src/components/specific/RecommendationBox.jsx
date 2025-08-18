@@ -75,7 +75,7 @@ const CardContainer = styled.div`
 
 const Card = styled.div`
   position: relative;
-  width: 191px;
+  width: 151px;
   background-color: white;
   border-radius: 10px;
   overflow: hidden;
