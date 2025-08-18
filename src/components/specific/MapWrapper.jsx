@@ -38,7 +38,7 @@ function MapWrapper({
 export default MapWrapper;
 
 const MapContainer = styled.div`
-  width: 60%;
+  width: 56.53vw;
   margin: 10px;
 `;
 
