@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "./../styles/global.css";
 
 function DetailPage({ isModal = false, onClose, roomId }) {
   const [roomData, setRoomData] = useState(null);
+  const navigate = useNavigate();
 
   // 임시 데이터
   const dummyData = [
@@ -56,6 +58,10 @@ function DetailPage({ isModal = false, onClose, roomId }) {
     if (roomId) fetchData();
   }, [roomId]);
 
+  const handleReservation = (roomId) => {
+    navigate(`reservation-page/${roomId}`);
+  };
+
   if (!roomData) {
     return <div>로딩중...</div>;
   }
@@ -78,8 +84,10 @@ function DetailPage({ isModal = false, onClose, roomId }) {
       <p>최대 인원: {roomData.maxPeople}명</p>
       <p>연락처: {roomData.phoneNumber}</p>
       <p>가격: {roomData.price.toLocaleString()}원</p>
+      <button onClick={() => handleReservation(roomData.roomId)}>예약하기</button>
     </div>
   );
 }
+
 
 export default DetailPage;
