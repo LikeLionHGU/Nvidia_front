@@ -100,7 +100,7 @@ function MainPage() {
       },
       {
         roomId: 3,
-        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
+        photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
         address: { latitude: "37.3947611", longitude: "127.1111361" },
         maxPeople: 3,
         phoneNumber: "010-8765-2321",

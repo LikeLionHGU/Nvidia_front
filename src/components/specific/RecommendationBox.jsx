@@ -38,7 +38,7 @@ const FloatingBox = styled.div`
   bottom: 40px;
   left: 70%;
   transform: translateX(-50%);
-  width: 33%;
+  width: 55.28vw;
   max-width: 700px;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: 20px;
@@ -75,27 +75,26 @@ const CardContainer = styled.div`
 
 const Card = styled.div`
   position: relative;
-  width: 140px;
+  width: 8.5vw;
   background-color: white;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out;
 
   &:hover {
     transform: translateY(-5px);
+    cursor: pointer;
   }
 `;
 
 const NumberBadge = styled.div`
   position: absolute;
   top: 10px;
-  left: 10px;
   background-color: #28a745;
   color: white;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,12 +105,13 @@ const NumberBadge = styled.div`
 
 const CardImage = styled.img`
   width: 100%;
-  height: 90px;
+  height: 11.04vh;
   object-fit: cover;
 `;
 
 const CardInfo = styled.div`
   padding: 10px;
+  height: 5.46vh;
 `;
 
 const Address = styled.p`
