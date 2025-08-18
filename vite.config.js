@@ -12,6 +12,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/map-reversegeocode/, ''),
         secure: false,
       },
+      '/v1': {
+        target: 'https://openapi.naver.com',
+        changeOrigin: true,
+        secure: false,
+      },
     }
   },
   optimizeDeps: {

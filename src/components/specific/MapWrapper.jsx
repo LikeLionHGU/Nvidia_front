@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { NavermapsProvider } from "react-naver-maps";
 import MapComponent from "../../apis/MapComponent";
+import MyLocationIcon from "../../assets/images/my_location.svg";
 
 function MapWrapper({
   mapClientId,
@@ -29,7 +30,8 @@ function MapWrapper({
         )}
       </NavermapsProvider>
       <CurrentLocationButton onClick={handleGetCurrentLocation} isDetailModalOpen={isDetailModalOpen}>
-        📍 현재 위치 불러오기
+        <Icon src={MyLocationIcon} alt="Current Location" />
+        현재 위치 불러오기
       </CurrentLocationButton>
     </MapContainer>
   );
@@ -49,18 +51,34 @@ const CurrentLocationButton = styled.button`
   transform: translateX(-50%);
   z-index: ${({ isDetailModalOpen }) => (isDetailModalOpen ? 1 : 1000)};
   background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 20px;
+  border: 1px solid #2FB975;
+  border-radius: 30px;
   padding: 10px 15px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5.38px 29.726px 0 rgba(0, 0, 0, 0.25);
   cursor: pointer;
   font-size: 16px;
   color: #333;
   white-space: nowrap;
+
+  color: #2FB975;
+  font-family: Inter;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+
+
   &:hover {
     background-color: #f0f0f0;
   }
 `;
+
+const Icon = styled.img`
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+`;
+
