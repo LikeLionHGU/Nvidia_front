@@ -12,6 +12,7 @@ function MapWrapper({
   currentLocation,
   handleGetCurrentLocation,
   isDetailModalOpen,
+  isSearchLocationModalOpen,
 }) {
   return (
     <MapContainer>
@@ -29,9 +30,9 @@ function MapWrapper({
           </div>
         )}
       </NavermapsProvider>
-      <CurrentLocationButton onClick={handleGetCurrentLocation} isDetailModalOpen={isDetailModalOpen}>
+      <CurrentLocationButton onClick={handleGetCurrentLocation} isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen}>
         <Icon src={MyLocationIcon} alt="Current Location" />
-        현재 위치 불러오기
+        내 위치 불러오기
       </CurrentLocationButton>
     </MapContainer>
   );
@@ -41,36 +42,31 @@ export default MapWrapper;
 
 const MapContainer = styled.div`
   width: 60%;
-  margin: 10px;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 20px 20px 20px 10px;
 `;
 
 const CurrentLocationButton = styled.button`
   position: absolute;
   top: 50px;
-  right: 20%;
+  right: 19%;
   transform: translateX(-50%);
-  z-index: ${({ isDetailModalOpen }) => (isDetailModalOpen ? 1 : 1000)};
+  z-index: ${({ isDetailModalOpen, isSearchLocationModalOpen }) =>
+  (isDetailModalOpen || isSearchLocationModalOpen) ? 1 : 1000};
   background-color: #fff;
-  border: 1px solid #2FB975;
-  border-radius: 30px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
   padding: 10px 15px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 5.38px 29.726px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   font-size: 16px;
   color: #333;
   white-space: nowrap;
-
-  color: #2FB975;
-  font-family: Inter;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: normal;
-
-
   &:hover {
     background-color: #f0f0f0;
   }
@@ -81,4 +77,3 @@ const Icon = styled.img`
   height: 16px;
   margin-right: 8px;
 `;
-

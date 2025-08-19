@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import CommonModal from "../components/common/commonModal";
+import CommonDetailModal from "../components/common/commonDetailModal";
 import DetailPlacePage from "./DetailPage";
+import LocationSearchModal from "./LocationSearchModal";
+
 // import { getRecommendList, searchPlacesByKeyword } from "../apis/MainPageAPI";
 import "./../styles/global.css";
 import MapWrapper from "../components/specific/MapWrapper";
@@ -14,6 +16,7 @@ function MainPage() {
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
   const [recommendList, setRecommendList] = useState([]); // 추천 장소 목록 (API 연동 전 더미 데이터)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isSearchLocationModalOpen, setIsSearchLocationModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [showResults, setShowResults] = useState(false); // 추천 결과 표시 여부 상태
   const [addressInputs, setAddressInputs] = useState([""]); // 주소 입력창 배열
@@ -68,6 +71,11 @@ function MainPage() {
     setIsDetailModalOpen(false);
     setSelectedRoomId(null);
   };
+
+  const closeSearchLocationModal = () => { // props로 주소 리스트 받아오기 (좌표 계산도 여기(?))
+    // 중간위치 받아오는 API 호출 여기서 처리하기
+    setIsSearchLocationModalOpen(false);
+  }
 
   const navigate = useNavigate();
 
@@ -157,6 +165,7 @@ function MainPage() {
               budgetRange={budgetRange}
               setBudgetRange={setBudgetRange}
               handleRecommendClick={handleRecommendClick}
+              setIsSearchLocationModalOpen={setIsSearchLocationModalOpen}
             />
           )}
         </SearchResultsContainer>
@@ -170,15 +179,20 @@ function MainPage() {
           currentLocation={currentLocation}
           handleGetCurrentLocation={handleGetCurrentLocation}
           isDetailModalOpen={isDetailModalOpen}
+          isSearchLocationModalOpen={isSearchLocationModalOpen}
         />
       </ContentsContainer>
 
-      <RecommendationBox recommendList={recommendList} isDetailModalOpen={isDetailModalOpen} onCardClick={moveToDetailPage} />
+      <RecommendationBox recommendList={recommendList} isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen} onCardClick={moveToDetailPage} />
 
       {isDetailModalOpen && (
-        <CommonModal title="장소 상세 정보" onClose={closeDetailModal}>
+        <CommonDetailModal title="장소 상세 정보" onClose={closeDetailModal}>
           <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
-        </CommonModal>
+        </CommonDetailModal>
+      )}
+
+      {isSearchLocationModalOpen &&(
+          <LocationSearchModal isModal={true} onClose={closeSearchLocationModal} />
       )}
     </PageContainer>
   );
@@ -195,14 +209,24 @@ const PageContainer = styled.div`
 const ContentsContainer = styled.div`
   display: flex;
   width: 100%;
-  height: 89vh;
+  height: 90vh;
 `;
 
 const SearchResultsContainer = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid black;
   flex: 1;
-  margin: 10px;
+  margin: 20px 10px 20px 20px;
   overflow-y: auto;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  border-radius: 8px;
+  background: #FFF;
+
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE, Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
 `;

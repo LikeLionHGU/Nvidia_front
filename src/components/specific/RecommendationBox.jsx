@@ -1,12 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const RecommendationBox = ({ recommendList, isDetailModalOpen, onCardClick }) => {
+const RecommendationBox = ({ recommendList, isDetailModalOpen, onCardClick, isSearchLocationModalOpen }) => {
   // Slice the list to only show the first 3 items
   const displayList = recommendList.slice(0, 3);
 
   return (
-    <FloatingBox isDetailModalOpen={isDetailModalOpen}>
+    <FloatingBox isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen}> 
       <TextBox>
         <BoldText>
           내 주변 여기 공실이
@@ -47,7 +47,8 @@ const FloatingBox = styled.div`
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: ${({ isDetailModalOpen }) => (isDetailModalOpen ? 1 : 1000)};
+  z-index: ${({ isDetailModalOpen, isSearchLocationModalOpen }) =>
+  (isDetailModalOpen || isSearchLocationModalOpen) ? 1 : 1000};ㄴ
 `;
 
 const TextBox = styled.div`

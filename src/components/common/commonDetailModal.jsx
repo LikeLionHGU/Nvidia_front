@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-function CommonModal({ title, content, onClose, children }) {
+function commonDetailModal({ title, content, onClose, children }) {
   return (
     <div>
       <ModalBackground>
@@ -21,7 +21,7 @@ function CommonModal({ title, content, onClose, children }) {
   );
 }
 
-export default CommonModal;
+export default commonDetailModal;
 
 const modalBase = `
   width: 100vw;
@@ -100,11 +100,10 @@ const CompleteBtn = styled.div`
     font-size: 14px;
     font-weight: bold;
     color: white;
-    background-color: #798bff;
+    background-color: #2FB975;
     cursor: pointer;
 
     &:active {
-      background-color: #586eff;
+      background-color: #26945E;
     }
-  }
 `;
