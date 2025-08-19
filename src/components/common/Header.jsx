@@ -20,17 +20,10 @@ function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
     window.location.reload();
   };
 
-  const moveToPlace = () => {
-    navigate("/reservation-page");
-  };
-
   return (
     <div>
       <Wrapper>
         <LogoImg onClick={moveToHome} src={Logo} alt="" />
-        <Searchbar>
-          <button onClick={moveToPlace}/> 
-        </Searchbar>
         <BtnContainer>
           <Leftbtn onClick={moveToAddPlace}>내 공실 등록</Leftbtn>
           <Rightbtn onClick={moveToManagePlace}>등록/예약 조회</Rightbtn>
@@ -48,6 +41,7 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 10px;
 `;
 const LogoImg = styled.img`
   cursor: pointer;
@@ -55,29 +49,6 @@ const LogoImg = styled.img`
   height: clamp(25px, 4vh, 62px);
   margin-right: auto;
   margin-left: 2.83vh;
-`;
-
-const Searchbar = styled.div`
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  width: clamp(407px, 47.08vw, 1017px);
-  height: clamp(31px, 5.08vh, 78px);
-  background-color: #f5f5f5;
-  padding-left: 22px;
-  > img {
-    width: 1.7vw;
-    height: 1.7vw;
-  }
-  .search-bar {
-    font-size: 1.1vw;
-    margin-left: 5px;
-    width: 92%;
-    height: 90%;
-    outline: none;
-    border: none;
-    background-color: #f5f5f5;
-  }
 `;
 
 const BtnContainer = styled.div`
@@ -93,6 +64,7 @@ const BtnContainer = styled.div`
 const Leftbtn = styled.div`
   cursor: pointer;
   width: 6.67vw;
+  height: 32px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -101,15 +73,30 @@ const Leftbtn = styled.div`
   border-radius: 7.25px;
   background-color: #2fb975;
   box-shadow: 2px 2px 9.87px 0px rgba(0, 0, 0, 0.1);
+
+  color: #FFF;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
 `;
 
 const Rightbtn = styled.div`
   cursor: pointer;
   width: 6.67vw;
+  height: 32px;
   display: flex;
   justify-content: center;
   align-items: center;
   border: 1px solid #2fb975;
   border-radius: 7.25px;
   box-shadow: 2px 2px 9.87px 0px rgba(0, 0, 0, 0.1);
+
+  color: #048B48;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
 `;
