@@ -184,7 +184,7 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
       const circle = new naver.maps.Circle({
         map: map,
         center: currentLatLng,
-        radius: 0, // meters
+        radius: 500, // meters
         fillColor: 'rgba(47, 185, 117, 0.3)',
         strokeColor: 'rgba(47, 185, 117, 0.8)',
         strokeWeight: 2,

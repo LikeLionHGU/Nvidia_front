@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Question from "../../assets/icons/questionIcon.svg";
 import AddIcon from "../../assets/icons/addLocation.svg";
-import LocationSearchModal from "../../pages/LocationSearchModal";
 
 function FormComponent({
   addressInputs,
@@ -12,7 +11,7 @@ function FormComponent({
   budgetRange,
   setBudgetRange,
   handleRecommendClick,
-  onOpenLocationModal,
+  setIsSearchLocationModalOpen,
 }) {
   // 각 스텝의 완료 상태 관리
   const [stepCompleted, setStepCompleted] = useState({
@@ -93,6 +92,10 @@ function FormComponent({
     }
   };
 
+  const openSearchLocationModal = () =>{
+    setIsSearchLocationModalOpen(true);
+  }
+
   // 초기화 함수
   const handleReset = () => {
     // 모든 input 초기화
@@ -152,8 +155,8 @@ function FormComponent({
                     placeholder="위치를 입력해주세요!"
                     value={input}
                     onChange={(e) => handleAddressInputChange(index, e.target.value)}
-                    onClick={onOpenLocationModal}
                     readOnly
+                    onClick={openSearchLocationModal}
                   />
                   {index > 0 && <RemoveButton onClick={() => removeAddressInput(index)}>X</RemoveButton>}
                 </AddressInputContainer>
@@ -229,11 +232,10 @@ function FormComponent({
 
           <StepContent enabled={stepEnabled.step3}>
             <BudgetInputContainer>
-              <BudgetLabel>예산 범위</BudgetLabel>
               <BudgetInputWrapper>
                 <BudgetInput
                   type="number"
-                  placeholder="직접 입략"
+                  placeholder="직접 입력"
                   value={minBudget}
                   onChange={(e) => setMinBudget(e.target.value)}
                   disabled={!stepEnabled.step3}
@@ -285,12 +287,12 @@ const TopWrapper = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 2.34vh;
+  font-size: 1.5vw;
   font-weight: bold;
 `;
 
 const Subtitle = styled.div`
-  font-size: 1.76vh;
+  font-size: 1.1vw;
   color: #4e4e4e;
 `;
 

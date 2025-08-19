@@ -5,7 +5,6 @@ import DetailPage from "./pages/DetailPage";
 import ManageMyPlacePage from "./pages/ManageMyPlacePage";
 import AddPlacePage from "./pages/AddPlacePage";
 import LandingPage from "./pages/LandingPage";
-import ReservationPage from "./pages/ReservationPage";
 import Header from "./components/common/Header";
 
 function App() {
@@ -24,7 +23,6 @@ function App() {
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/detail-page/:id" element={<DetailPage />} />
-        <Route path="/reservation-page/:id" element={<ReservationPage />} />
         <Route path="/manage-page" element={<ManageMyPlacePage />} />
         <Route path="/add-place" element={<AddPlacePage />} />
         <Route path="/landing" element={<LandingPage />} />
