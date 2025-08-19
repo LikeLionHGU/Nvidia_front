@@ -309,7 +309,7 @@ const ManageMyPlacePage = () => {
           type="tel"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
-          placeholder="010-0000-0000"
+          placeholder="01000000000"
         />
         <ActionButton onClick={handleSearch}>
           내가 등록한 공실 관리하기
