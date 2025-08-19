@@ -20,21 +20,16 @@ function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
     window.location.reload();
   };
 
+  const moveToPlace = () => {
+    navigate("/reservation-page");
+  };
+
   return (
     <div>
       <Wrapper>
         <LogoImg onClick={moveToHome} src={Logo} alt="" />
         <Searchbar>
-          <input
-            className="search-bar"
-            placeholder="어떤 지역의 공실을 찾으시나요?"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-            }}
-            onKeyDown={(e) => SearchEnterHandle(e)}
-          ></input>
-          <img src={SearchIcon} alt="" />
+          <button onClick={moveToPlace}/> 
         </Searchbar>
         <BtnContainer>
           <Leftbtn onClick={moveToAddPlace}>내 공실 등록</Leftbtn>
