@@ -1,38 +1,24 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { X, MapPin } from "lucide-react";
+import { X, MapPin, Navigation } from "lucide-react";
 import { debounce } from "lodash";
-import { searchLocal } from "../apis/NaverLocal"; // 네이버 로컬 검색 함수
+import { searchLocal } from "../apis/NaverLocal";
+import { reverseGeocode } from "../apis/reverseGeocode"; 
 import AddLocationIcon from "../assets/icons/addLocation.svg";
+import MyLocationIcon from "../assets/images/my_location.svg";
 
 function LocationSearchModal({ onClose, onConfirm }) {
   const [locations, setLocations] = useState([{ id: 1, value: "" }]);
-  const [addressList, setAddressList] = useState([]);
-  const [activeIndex, setActiveIndex] = useState(null); // null when no input is active
-  const [items, setItems] = useState([]);
+  const [addressList, setAddressList] = useState([]);      // {roadName, latitude, longitude}[]
+  const [activeIndex, setActiveIndex] = useState(null);    // 포커스된 줄 인덱스
+  const [items, setItems] = useState([]);                  // 드롭다운 결과
   const [loading, setLoading] = useState(false);
-  const [panelStyle, setPanelStyle] = useState({ display: "none" });
-  const inputRefs = useRef([]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
-  useEffect(() => {
-    if (activeIndex === null || !inputRefs.current[activeIndex]) {
-      setPanelStyle({ display: "none" });
-      return;
-    }
-    const rect = inputRefs.current[activeIndex].getBoundingClientRect();
-    setPanelStyle({
-      position: "fixed",
-      top: `${rect.bottom + 6}px`,
-      left: `${rect.left}px`,
-      width: `${rect.width}px`,
-      display: "block",
-    });
-  }, [activeIndex, items, loading]);
+  const searchBoxRefs = useRef([]);
 
-  const addLocation = () => {
-    setLocations((prev) => [...prev, { id: prev.length + 1, value: "" }]);
-  };
-
+  // 네이버 mapx/mapy 좌표 스케일 정규화
   const normalizeCoord = (v) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return null;
@@ -41,9 +27,19 @@ function LocationSearchModal({ onClose, onConfirm }) {
 
   const toAddressEntry = (item) => ({
     roadName: item.roadAddress || "",
-    latitude: normalizeCoord(item.mapy),
-    longitude: normalizeCoord(item.mapx),
+    latitude: normalizeCoord(item.mapy),   // 네이버: mapy=위도
+    longitude: normalizeCoord(item.mapx),  // 네이버: mapx=경도
   });
+
+  const addLocation = () => {
+    // 현재까지 줄들에 선택된 주소가 모두 있는지 체크
+    const hasEmpty = addressList.some((a, idx) => idx < locations.length && (!a || !a.roadName));
+    if (hasEmpty) {
+      alert("모든 위치를 선택한 후 추가해주세요.");
+      return;
+    }
+    setLocations((prev) => [...prev, { id: prev.length + 1, value: "" }]);
+  };
 
   const runSearch = async (query) => {
     const q = (query || "").trim();
@@ -53,30 +49,48 @@ function LocationSearchModal({ onClose, onConfirm }) {
     }
     setLoading(true);
     try {
-      const data = await searchLocal({ query: q, display: 5, sort: "comment" });
+      const data = await searchLocal({ query: q, display: 5, sort: "random" });
       setItems(data.items || []);
-    } catch (e) {
+    } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
   };
-
   const debouncedSearch = useCallback(debounce(runSearch, 250), []);
 
+  const updateDropdownPosition = (idx) => {
+    const searchBox = searchBoxRefs.current[idx];
+    if (!searchBox) return;
+    const rect = searchBox.getBoundingClientRect();
+    setDropdownPosition({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+  };
+
   const updateLocation = (idx, v) => {
-    setLocations((prev) =>
-      prev.map((it, i) => (i === idx ? { ...it, value: v } : it))
-    );
+    setLocations((prev) => prev.map((it, i) => (i === idx ? { ...it, value: v } : it)));
     setActiveIndex(idx);
+    updateDropdownPosition(idx);
+
+    // 수동 입력하면 해당 줄의 addressList 초기화
+    setAddressList((prev) => {
+      const next = [...prev];
+      next[idx] = undefined;
+      return next;
+    });
+
     debouncedSearch(v);
   };
 
+  const handleFocus = (idx, loc) => {
+    setActiveIndex(idx);
+    updateDropdownPosition(idx);
+    if (loc.value) debouncedSearch(loc.value);
+  };
+
+  // X: 첫 줄은 입력만 지우고, 2번째 줄부터는 줄 삭제
   const clickX = (idx) => {
     if (idx === 0) {
-      setLocations((prev) =>
-        prev.map((it, i) => (i === 0 ? { ...it, value: "" } : it))
-      );
+      setLocations((prev) => prev.map((it, i) => (i === 0 ? { ...it, value: "" } : it)));
       setAddressList((prev) => {
         const next = [...prev];
         next[0] = undefined;
@@ -92,23 +106,68 @@ function LocationSearchModal({ onClose, onConfirm }) {
     setItems([]);
   };
 
+  // 제안 클릭 시: 입력 채우고 addressList 업데이트
   const clickSuggestion = (idx, item) => {
     const plainTitle = (item?.title || "").replace(/<\/?b>/g, "");
-    setLocations((prev) =>
-      prev.map((it, i) => (i === idx ? { ...it, value: plainTitle } : it))
-    );
+    setLocations((prev) => prev.map((it, i) => (i === idx ? { ...it, value: plainTitle } : it)));
     setAddressList((prev) => {
       const next = [...prev];
       next[idx] = toAddressEntry(item);
       return next;
     });
     setItems([]);
-    setActiveIndex(null); // Close dropdown after selection
+    setActiveIndex(null);
+  };
+
+  // 현재 위치(브라우저 geolocation) → reverseGeocode 활용
+  const getCurrentLocation = (idx) => {
+    if (!navigator.geolocation) {
+      alert("이 브라우저에서는 위치 서비스를 지원하지 않습니다.");
+      return;
+    }
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const { latitude, longitude } = coords;
+        try {
+          const info = await reverseGeocode({ lat: latitude, lng: longitude }); // 헬퍼 사용
+          setLocations((prev) => prev.map((it, i) => (i === idx ? { ...it, value: info.roadName } : it)));
+          setAddressList((prev) => {
+            const next = [...prev];
+            next[idx] = { roadName: info.roadName, latitude: info.latitude, longitude: info.longitude };
+            return next;
+          });
+          setItems([]);
+          setActiveIndex(null);
+        } catch (e) {
+          console.error(e);
+          alert("주소를 가져오는데 실패했습니다.");
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (err) => {
+        setLocationLoading(false);
+        let msg = "위치를 가져올 수 없습니다.";
+        if (err.code === err.PERMISSION_DENIED) msg = "위치 접근이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.";
+        else if (err.code === err.POSITION_UNAVAILABLE) msg = "위치 정보를 사용할 수 없습니다.";
+        else if (err.code === err.TIMEOUT) msg = "위치 요청 시간이 초과되었습니다.";
+        alert(msg);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
   };
 
   const handleConfirm = () => {
+    const hasEmpty = locations.some((_, idx) => !addressList[idx] || !addressList[idx].roadName);
+    if (hasEmpty) {
+      alert("모든 위치를 선택해주세요.");
+      return;
+    }
     const values = locations.map((l) => l.value.trim());
     const payload = { locations: values, addressList };
+    console.log(addressList);
     onConfirm ? onConfirm(payload) : onClose?.();
   };
 
@@ -116,6 +175,19 @@ function LocationSearchModal({ onClose, onConfirm }) {
     setActiveIndex(null);
     onClose?.();
   };
+
+  // 스크롤/리사이즈 시에도 드롭다운 위치 유지
+  useEffect(() => {
+    if (activeIndex === null) return;
+    const onScrollOrResize = () => updateDropdownPosition(activeIndex);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+    updateDropdownPosition(activeIndex);
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
+  }, [activeIndex]);
 
   return (
     <ModalBackground>
@@ -126,9 +198,7 @@ function LocationSearchModal({ onClose, onConfirm }) {
             <StepPill>Step 1</StepPill>
             <Title>위치를 지정해주세요.</Title>
           </TopRow>
-          <Subtitle>
-            내 위치를 선택하거나, 친구와의 중간 지점을 작성해주세요.
-          </Subtitle>
+          <Subtitle>내 위치를 선택하거나, 친구와의 중간 지점을 작성해주세요.</Subtitle>
         </Header>
 
         <ContentCard>
@@ -136,41 +206,31 @@ function LocationSearchModal({ onClose, onConfirm }) {
             {locations.map((loc, idx) => (
               <Row key={`${loc.id}-${idx}`}>
                 <IndexBadge>{loc.id}</IndexBadge>
+
                 <SearchArea>
-                  <SearchBox>
+                  <SearchBox ref={(el) => (searchBoxRefs.current[idx] = el)}>
                     <MapPin size={18} color="#2fb975" />
                     <SearchInput
-                      ref={(el) => (inputRefs.current[idx] = el)}
                       value={loc.value}
                       onChange={(e) => updateLocation(idx, e.target.value)}
-                      onFocus={() => {
-                        setActiveIndex(idx);
-                        if (loc.value) debouncedSearch(loc.value);
-                      }}
+                      onFocus={() => handleFocus(idx, loc)}
                       onBlur={() => {
+                        // 제안 클릭 허용을 위해 약간 지연 후 닫기
                         setTimeout(() => {
-                          // Check if the new focused element is part of the suggestion panel
-                          if (!document.activeElement.closest('[data-suggest-panel="true"]')) {
-                            setActiveIndex(null);
-                          }
-                        }, 150); // A small delay to allow click on suggestion item
+                          const withinPanel = document.activeElement?.closest('[data-suggest-panel="true"]');
+                          if (!withinPanel) setActiveIndex(null);
+                        }, 120);
                       }}
                       placeholder="위치를 입력해주세요."
                     />
                     {idx > 0 ? (
-                      <IconBtn
-                        type="button"
-                        aria-label={`${loc.id}번 줄 삭제`}
-                        onClick={() => clickX(idx)}
-                        title="삭제"
-                      >
+                      <IconBtn aria-label={`${loc.id}번 줄 삭제`} onMouseDown={() => clickX(idx)} title="삭제">
                         <X size={18} />
                       </IconBtn>
                     ) : (
                       <IconBtn
-                        type="button"
                         aria-label="입력 지우기"
-                        onClick={() => clickX(idx)}
+                        onMouseDown={() => clickX(idx)}
                         title="지우기"
                         style={{ visibility: loc.value ? "visible" : "hidden" }}
                       >
@@ -184,37 +244,10 @@ function LocationSearchModal({ onClose, onConfirm }) {
           </RowsScrollArea>
 
           <AddMore onClick={addLocation}>
-            <img
-              src={AddLocationIcon}
-              alt=""
-              style={{ marginRight: "0.49vh" }}
-            />
+            <img src={AddLocationIcon} alt="" style={{ marginRight: "0.49vh" }} />
             <span> 위치 추가하기 </span>
           </AddMore>
         </ContentCard>
-
-        {/* Suggestion Panel is now rendered here, outside the clipping containers */}
-        {activeIndex !== null && (items.length > 0 || loading) && (
-          <SuggestPanel style={panelStyle} data-suggest-panel="true">
-            {loading && <SuggestLoading>검색 중…</SuggestLoading>}
-            {!loading && (
-              <SuggestList>
-                {items.map((it, i) => (
-                  <SuggestItem
-                    key={i}
-                    onMouseDown={() => clickSuggestion(activeIndex, it)}
-                  >
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: (it.title || "").replace(/<\/?b>/g, ""),
-                      }}
-                    />
-                  </SuggestItem>
-                ))}
-              </SuggestList>
-            )}
-          </SuggestPanel>
-        )}
 
         <Footer>
           <GhostButton type="button" onClick={handleClose}>
@@ -225,6 +258,46 @@ function LocationSearchModal({ onClose, onConfirm }) {
           </PrimaryButton>
         </Footer>
       </Wrapper>
+
+      {/* 🔽 드롭다운: 모달 밖 최상위 레벨에 고정 렌더링 */}
+      {activeIndex !== null && (
+        <SuggestPanel
+          data-suggest-panel="true"
+          style={{
+            position: "fixed",
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+          }}
+        >
+          {/* 내 위치 불러오기 */}
+          <MyLocationButton onMouseDown={() => getCurrentLocation(activeIndex)} disabled={locationLoading}>
+            <Icon src={MyLocationIcon} alt="Current Location" />
+            <span>{locationLoading ? "위치 가져오는 중..." : "내 위치 불러오기"}</span>
+          </MyLocationButton>
+
+          <Divider />
+
+          {loading && <SuggestLoading>검색 중…</SuggestLoading>}
+
+          {!loading && items.length === 0 && locations[activeIndex]?.value.trim() && (
+            <NoResults>검색 결과가 없습니다.</NoResults>
+          )}
+
+          {!loading && items.length > 0 && (
+            <SuggestList>
+              {items.map((it, i) => (
+                <SuggestItem key={i} onMouseDown={() => clickSuggestion(activeIndex, it)}>
+                  <SuggestItemTitle
+                    dangerouslySetInnerHTML={{ __html: (it.title || "").replace(/<\/?b>/g, "") }}
+                  />
+                  <SuggestItemAddress>{it.roadAddress || "-"}</SuggestItemAddress>
+                </SuggestItem>
+              ))}
+            </SuggestList>
+          )}
+        </SuggestPanel>
+      )}
     </ModalBackground>
   );
 }
@@ -243,10 +316,7 @@ const ModalBackground = styled.div`
   background: rgba(0,0,0,0.35);
   z-index: 1000;
 `;
-
-const Overlay = styled.div`
-  ${modalBase}
-`;
+const Overlay = styled.div`${modalBase}`;
 
 const Wrapper = styled.div`
   position: absolute;
@@ -258,50 +328,22 @@ const Wrapper = styled.div`
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.18);
   display: flex; flex-direction: column;
-  /* overflow: hidden; */ /* Removed to prevent clipping the suggestion panel */
+  overflow: hidden;
 `;
 
 const Header = styled.div`
   padding: 24px 28px 8px 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: flex; flex-direction: column; gap: 6px;
   flex: 0 0 auto;
 `;
-
-const TopRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
+const TopRow = styled.div`display:flex; align-items:center; gap:12px;`;
 const StepPill = styled.span`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 72px;
-  height: 28px;
-  border-radius: 10px;
-  background: #2fb975;
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  flex-shrink: 0;
+  display:flex; justify-content:center; align-items:center;
+  width:72px; height:28px; border-radius:10px; background:#2fb975;
+  color:#fff; font-weight:700; font-size:14px; flex-shrink:0;
 `;
-
-const Title = styled.h2`
-  margin: 0;
-  font-size: 22px;
-  font-weight: 800;
-  color: #111827;
-`;
-
-const Subtitle = styled.p`
-  margin: 0;
-  color: #6b7280;
-  font-size: 14px;
-  padding-left: calc(72px + 12px);
-`;
+const Title = styled.h2`margin:0; font-size:22px; font-weight:800; color:#111827;`;
+const Subtitle = styled.p`margin:0; color:#6b7280; font-size:14px; padding-left:calc(72px + 12px);`;
 
 const ContentCard = styled.div`
   margin: 14px 28px 0 28px;
@@ -309,17 +351,10 @@ const ContentCard = styled.div`
   border-radius: 12px;
   padding: 16px;
   background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1 1 auto;
-  min-height: 0;
+  display: flex; flex-direction: column; gap: 12px;
+  flex: 1 1 auto; min-height: 0;
 `;
-
-const RowsScrollArea = styled.div`
-  overflow-y: auto;
-  padding-right: 2px;
-`;
+const RowsScrollArea = styled.div`overflow-y:auto; padding-right:2px;`;
 
 const Row = styled.div`
   display: grid;
@@ -327,23 +362,19 @@ const Row = styled.div`
   gap: 12px;
   align-items: center;
   & + & { margin-top: 10px; }
+  overflow: visible;
+  width: 450px;
+  margin: 50px auto 0 auto;
 `;
-
 const IndexBadge = styled.div`
-  width: 40px; height: 40px;
-  border-radius: 4px;
-  background: #2fb975;
-  color: #fff; font-weight: 600;
-  display: grid; place-items: center;
-  flex: 0 0 auto;
+  width: 40px; height: 40px; border-radius: 4px; background: #2fb975;
+  color:#fff; font-weight:600; display:grid; place-items:center;
 `;
-
 const SearchArea = styled.div`
-  display: flex; flex-direction: column; gap: 8px;
+  display:flex; flex-direction:column; gap:8px; overflow: visible;
 `;
 
 const SearchBox = styled.div`
-  position: relative;
   border: 2px solid #2fb975;
   border-radius: 10px;
   overflow: visible;
@@ -354,97 +385,67 @@ const SearchBox = styled.div`
   padding: 0 12px;
   gap: 8px;
 `;
-
 const SearchInput = styled.input`
-  height: 100%;
-  border: none; outline: none;
-  padding: 0 6px; font-size: 14px;
-  &::placeholder { color: #9ca3af; }
+  height:100%; border:none; outline:none; padding:0 6px; font-size:14px;
+  &::placeholder{ color:#9ca3af; }
 `;
-
 const IconBtn = styled.button`
-  justify-self: center;
-  width: 28px; height: 28px;
-  border: none; background: transparent;
-  color: #9ca3af; border-radius: 6px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  &:hover { background: #f3f4f6; }
-  &:active { background: #e5e7eb; }
+  justify-self:center; width:28px; height:28px; border:none; background:transparent;
+  color:#9ca3af; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  &:hover{ background:#f3f4f6; } &:active{ background:#e5e7eb; }
 `;
 
 const SuggestPanel = styled.div`
-  /* position, top, left, right are now controlled by inline styles */
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px;
   box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-  max-height: 220px;
-  overflow-y: auto;
-  z-index: 1001; /* Must be higher than ModalBackground's z-index (1000) */
+  max-height: 320px; overflow-y: auto; 
+  z-index: 10000;
 `;
 
-const SuggestList = styled.ul`
-  list-style: none;
-  padding: 6px 0;
-  margin: 0;
+const MyLocationButton = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  background: #f8fffe; border: none; cursor: pointer;
+  justify-content: center;
+  font-size: 14px; color: #2fb975; font-weight: 600;
+  &:hover { background: #f0fdf4; }
+  &:disabled { cursor: not-allowed; opacity: 0.6; }
 `;
 
+const Divider = styled.div`height: 1px; background: #e5e7eb; margin: 0;`;
+
+const SuggestList = styled.ul`list-style:none; padding:6px 0; margin:0;`;
 const SuggestItem = styled.li`
-  padding: 10px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 6px;
-  &:hover { background: #f3f4f6; }
+  padding:10px 12px; cursor:pointer; border-radius:8px;
+  &:hover{ background:#f3f4f6; }
 `;
-
-const SuggestLoading = styled.div`
-  padding: 12px;
-  font-size: 13px;
-  color: #6b7280;
-`;
+const SuggestItemTitle = styled.div`font-size:14px; font-weight:600; color:#111827;`;
+const SuggestItemAddress = styled.div`margin-top:2px; font-size:12px; color:#6b7280;`;
+const SuggestLoading = styled.div`padding:12px; font-size:13px; color:#6b7280;`;
+const NoResults = styled.div`padding:12px; font-size:13px; color:#6b7280; text-align: center;`;
 
 const AddMore = styled.button`
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  color: #6b7280;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-  &:hover {
-    background-color: #f3f4f6;
-    color: #6b7280;
-    text-decoration: none;
-  }
-  &:active { background-color: #e5e7eb; }
-  flex: 0 0 auto;
+  align-self:center; display:inline-flex; align-items:center; gap:6px;
+  background:transparent; border:none; color:#6b7280; font-size:14px; cursor:pointer;
+  padding:6px 12px; border-radius:6px;
+  &:hover{ background-color:#f3f4f6; }
+  &:active{ background-color:#e5e7eb; }
+  flex:0 0 auto;
 `;
 
 const Footer = styled.div`
-  display: flex; gap: 12px; justify-content: center;
-  padding: 16px 28px 24px;
-  border-top: 1px solid #f3f4f6;
-  flex: 0 0 auto;
+  display:flex; gap:12px; justify-content:center;
+  padding:16px 28px 24px; border-top:1px solid #f3f4f6; flex:0 0 auto;
 `;
-
 const BaseBtn = styled.button`
-  min-width: 120px; height: 44px;
-  border-radius: 5.5px; font-weight: 700; font-size: 14px;
-  cursor: pointer; outline: none; border: 1px solid transparent;
+  min-width:120px; height:44px; border-radius:5.5px; font-weight:700; font-size:14px;
+  cursor:pointer; outline:none; border:1px solid transparent;
 `;
+const GhostButton = styled(BaseBtn)`background:#fff; border:1px solid #e5e7eb; color:#374151; &:hover{background:#f9fafb;} &:active{background:#f3f4f6;}`;
+const PrimaryButton = styled(BaseBtn)`background:#2fb975; color:#fff; &:hover{filter:brightness(0.96);} &:active{background:#26945e;}`;
 
-const GhostButton = styled(BaseBtn)`
-  background: #fff; border: 1px solid #e5e7eb; color: #374151;
-  &:hover { background: #f9fafb; }
-  &:active { background: #f3f4f6; }
-`;
-
-const PrimaryButton = styled(BaseBtn)`
-  background: #2fb975; color: #fff;
-  &:hover { filter: brightness(0.96); }
-  &:active { background: #26945e; }
+const Icon = styled.img`
+  width: 16px;
+  height: 16px;
 `;
