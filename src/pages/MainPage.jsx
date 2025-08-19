@@ -1,208 +1,222 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import CommonModal from "../components/common/commonModal";
-import DetailPlacePage from "./DetailPage";
-// import { getRecommendList, searchPlacesByKeyword } from "../apis/MainPageAPI";
-import "./../styles/global.css";
-import MapWrapper from "../components/specific/MapWrapper";
-import FormComponent from "../components/specific/FormComponent";
-import SearchResultContainer from "../components/specific/SearchResultContainer";
-import RecommendationBox from "../components/specific/RecommendationBox";
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { NaverMap, Marker } from 'react-naver-maps';
+import MainPageApi from '../apis/MainPageAPI';
+import my_location from '../assets/images/my_location.svg';
+import LocationSearchModal from './LocationSearchModal';
+import FormComponent from '../components/specific/FormComponent';
+import RecommendationBox from '../components/specific/RecommendationBox';
 
-function MainPage() {
-  const [markers, setMarkers] = useState([]); // 기본 장소 마커들
-  const [recommendList, setRecommendList] = useState([]); // 추천 장소 목록 (API 연동 전 더미 데이터)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedRoomId, setSelectedRoomId] = useState(null);
-  const [showResults, setShowResults] = useState(false); // 추천 결과 표시 여부 상태
-  const [addressInputs, setAddressInputs] = useState([""]); // 주소 입력창 배열
-  const [budgetRange, setBudgetRange] = useState([0, 100000]);
-  const [hoveredRoomId, setHoveredRoomId] = useState(null); // New state for hovered room ID
-  const [currentLocation, setCurrentLocation] = useState(null); // { lat: ..., lng: ... }
+const MainPage = () => {
+  const [isRecommendationVisible, setIsRecommendationVisible] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [mapInfo, setMapInfo] = useState({
+    center: { lat: 37.5665, lng: 126.978 },
+    level: 4,
+  });
+  const [offices, setOffices] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
-  const handleGetCurrentLocation = () => {
+  const handleMyLocationClick = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCurrentLocation({
+          const newCenter = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          setMapInfo((prev) => ({ ...prev, center: newCenter }));
         },
-        (error) => {
-          console.error("Error getting current location:", error);
-          alert("현재 위치를 가져올 수 없습니다. 위치 권한을 허용해주세요.");
-        }
+        (err) => {
+          console.error(err);
+        },
       );
-    } else {
-      alert("이 브라우저에서는 Geolocation이 지원되지 않습니다.");
     }
   };
 
-  const handleAddressInputChange = (index, value) => {
-    const newAddressInputs = [...addressInputs];
-    newAddressInputs[index] = value;
-    setAddressInputs(newAddressInputs);
+  const handleMapDragEnd = (map) => {
+    const newCenter = {
+      lat: map.getCenter().getLat(),
+      lng: map.getCenter().getLng(),
+    };
+    setMapInfo((prev) => ({ ...prev, center: newCenter }));
   };
 
-  const addAddressInput = () => {
-    if (addressInputs.length < 5) {
-      setAddressInputs([...addressInputs, ""]);
-    } else {
-      alert("최대 5개의 주소만 입력 가능합니다.");
-    }
+  const handleRecommendationClick = () => {
+    setIsRecommendationVisible(!isRecommendationVisible);
+    setIsFormVisible(!isFormVisible);
   };
 
-  const removeAddressInput = (index) => {
-    const newAddressInputs = addressInputs.filter((_, i) => i !== index);
-    setAddressInputs(newAddressInputs);
+  const handleSearchClick = () => {
+    setShowModal(true);
   };
 
-  const moveToDetailPage = (roomId) => {
-    setIsDetailModalOpen(true);
-    setSelectedRoomId(roomId);
+  const handleCloseModal = () => {
+    setShowModal(false);
   };
 
-  const closeDetailModal = () => {
-    setIsDetailModalOpen(false);
-    setSelectedRoomId(null);
+  const openLocationModal = () => {
+    setIsLocationModalOpen(true);
   };
 
-  const navigate = useNavigate();
-
-  // New handler for marker hover
-  const handleMarkerHover = (roomId, isHovering) => {
-    setHoveredRoomId(isHovering ? roomId : null);
+  const closeLocationModal = () => {
+    setIsLocationModalOpen(false);
   };
 
-  // 1. 초기 로딩 시 추천 목록(더미 데이터) 가져오고, 마커와 주소 설정
+  const handleLocationSelect = (location) => {
+    setSelectedLocation(location);
+    setMapInfo((prev) => ({ ...prev, center: location }));
+    setShowModal(false); // also closes the modal
+    setIsLocationModalOpen(false);
+  };
+
   useEffect(() => {
-    // API 연동 전까지 사용할 더미 데이터
-    const dummyRecommendList = [
-      {
-        roomId: 1,
-        photo: "https://pbs.twimg.com/media/GUyPp8eaYAAhzbz.jpg",
-        address: { latitude: "37.4782", longitude: "127.0282" },
-        maxPeople: 4,
-        phoneNumber: "010-1234-5678",
-        price: 50000,
-        roadName: "서울특별시 서초구 서초중앙로 188",
-      },
-      {
-        roomId: 2,
-        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-        address: { latitude: "37.4592", longitude: "127.1292" },
-        maxPeople: 2,
-        phoneNumber: "010-8765-4321",
-        price: 30000,
-        roadName: "서울특별시 강남구 개포로 623",
-      },
-      {
-        roomId: 3,
-        photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
-        address: { latitude: "37.3947611", longitude: "127.1111361" },
-        maxPeople: 3,
-        phoneNumber: "010-8765-2321",
-        price: 35000,
-        roadName: "경기도 성남시 분당구 판교역로 160 ",
-      },
-    ];
+    const fetchOffices = async () => {
+      try {
+        const response = await MainPageApi.getOfficeListByLocation(
+          mapInfo.center.lat,
+          mapInfo.center.lng,
+        );
+        setOffices(response.data);
+      } catch (error) {
+        console.error('Failed to fetch offices:', error);
+      }
+    };
 
-    setRecommendList(dummyRecommendList);
-
-    // 더미 데이터 기반으로 지도에 표시할 마커 생성
-    const newMarkers = dummyRecommendList.map((item) => ({
-      position: { lat: parseFloat(item.address.latitude), lng: parseFloat(item.address.longitude) },
-      title: `장소 ${item.roomId}`,
-      id: item.roomId, // Pass roomId as id
-      price: item.price.toLocaleString(), // Pass price
-    }));
-    setMarkers(newMarkers);
-  }, []); // 컴포넌트 마운트 시 1회만 실행
-
-  const handleRecommendClick = () => {
-    // NOTE: 실제 추천 로직은 여기서 처리해야 합니다.
-    // 현재는 단순히 결과 카드 표시 상태만 변경합니다.
-    setShowResults(true);
-  };
-
-  const handleBackClick = () => {
-    setShowResults(false);
-  };
-
-  const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
+    fetchOffices();
+  }, [mapInfo.center]);
 
   return (
-    <PageContainer>
-      {/* 상단 네비게이션 */}
+    <MainPageContainer>
+      {(showModal || isLocationModalOpen) && <div className="modal-overlay"></div>}
+      <NaverMap
+        center={mapInfo.center}
+        style={{ width: '100%', height: '100vh' }}
+        level={mapInfo.level}
+        onDragEnd={handleMapDragEnd}
+      >
+        {offices.map((office) => (
+          <Marker
+            key={office.id}
+            position={{ lat: office.latitude, lng: office.longitude }}
+            icon={{
+              url: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+              size: { width: 64, height: 69 },
+              options: { offset: { x: 27, y: 69 } },
+            }}
+          />
+        ))}
+        {selectedLocation && (
+          <Marker
+            position={selectedLocation}
+            icon={{
+              url: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_blue.png',
+              size: { width: 64, height: 69 },
+              options: { offset: { x: 27, y: 69 } },
+            }}
+          />
+        )}
+      </NaverMap>
 
-      {/* 메인 컨텐츠 영역 */}
-      <ContentsContainer>
-        {/* 장소 검색 결과 목록 또는 추천 입력 폼 */}
-        <SearchResultsContainer>
-          {showResults ? (
-            <SearchResultContainer
-              handleBackClick={handleBackClick}
-              recommendList={recommendList}
-              moveToDetailPage={moveToDetailPage}
-              hoveredRoomId={hoveredRoomId}
-            />
-          ) : (
-            <FormComponent
-              addressInputs={addressInputs}
-              handleAddressInputChange={handleAddressInputChange}
-              removeAddressInput={removeAddressInput}
-              addAddressInput={addAddressInput}
-              budgetRange={budgetRange}
-              setBudgetRange={setBudgetRange}
-              handleRecommendClick={handleRecommendClick}
-            />
-          )}
-        </SearchResultsContainer>
+      <OverlayContainer>
+        <FormComponent onOpenLocationModal={openLocationModal} />
+        <ShowRecommendationButton onClick={handleRecommendationClick}>
+          {isRecommendationVisible ? '조건 접기' : '내 주변 추천'}
+        </ShowRecommendationButton>
+        {isRecommendationVisible && <RecommendationBox />}
+      </OverlayContainer>
 
-        {/* 네이버 지도 */}
-        <MapWrapper
-          mapClientId={mapClientId}
-          markers={markers}
-          moveToDetailPage={moveToDetailPage}
-          handleMarkerHover={handleMarkerHover}
-          currentLocation={currentLocation}
-          handleGetCurrentLocation={handleGetCurrentLocation}
-          isDetailModalOpen={isDetailModalOpen}
+      <FloatingButton onClick={handleMyLocationClick}>
+        <img src={my_location} alt="내 위치" />
+      </FloatingButton>
+
+      <FloatingBox>
+        <p>내 주변 ‘여기’ 공실이 제일 가까워요!</p>
+        <p>도보 5분</p>
+      </FloatingBox>
+
+      {showModal && (
+        <LocationSearchModal
+          onClose={handleCloseModal}
+          onLocationSelect={handleLocationSelect}
         />
-      </ContentsContainer>
-
-      <RecommendationBox recommendList={recommendList} isDetailModalOpen={isDetailModalOpen} onCardClick={moveToDetailPage} />
-
-      {isDetailModalOpen && (
-        <CommonModal title="장소 상세 정보" onClose={closeDetailModal}>
-          <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
-        </CommonModal>
       )}
-    </PageContainer>
+      {isLocationModalOpen && (
+        <LocationSearchModal
+          onClose={closeLocationModal}
+          onLocationSelect={handleLocationSelect}
+        />
+      )}
+    </MainPageContainer>
   );
-}
+};
+
 export default MainPage;
 
-const PageContainer = styled.div`
+const MainPageContainer = styled.div`
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
 `;
 
-// 스타일 컴포넌트들은 그대로 유지
-const ContentsContainer = styled.div`
-  display: flex;
-  width: 100%;
-  height: 89vh;
+const OverlayContainer = styled.div`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
 `;
 
-const SearchResultsContainer = styled.div`
+const ShowRecommendationButton = styled.button`
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+`;
+
+const FloatingButton = styled.button`
+  position: absolute;
+  bottom: 150px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  z-index: 10;
   display: flex;
-  flex-direction: column;
-  border: 1px solid black;
-  flex: 1;
-  margin: 10px;
-  overflow-y: auto;
+  justify-content: center;
+  align-items: center;
+  img {
+    width: 30px;
+    height: 30px;
+  }
+`;
+
+const FloatingBox = styled.div`
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
+  p {
+    margin: 0;
+  }
 `;

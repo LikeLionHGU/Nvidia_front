@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Question from "../../assets/icons/questionIcon.svg";
 import AddIcon from "../../assets/icons/addLocation.svg";
+import LocationSearchModal from "../../pages/LocationSearchModal";
 
 function FormComponent({
   addressInputs,
@@ -11,6 +12,7 @@ function FormComponent({
   budgetRange,
   setBudgetRange,
   handleRecommendClick,
+  onOpenLocationModal,
 }) {
   // 각 스텝의 완료 상태 관리
   const [stepCompleted, setStepCompleted] = useState({
@@ -147,9 +149,11 @@ function FormComponent({
                 <AddressInputContainer key={index}>
                   <Input
                     type="text"
-                    placeholder={index === 0 ? "양덕동" : "친구 위치"}
+                    placeholder="위치를 입력해주세요!"
                     value={input}
                     onChange={(e) => handleAddressInputChange(index, e.target.value)}
+                    onClick={onOpenLocationModal}
+                    readOnly
                   />
                   {index > 0 && <RemoveButton onClick={() => removeAddressInput(index)}>X</RemoveButton>}
                 </AddressInputContainer>
@@ -229,7 +233,7 @@ function FormComponent({
               <BudgetInputWrapper>
                 <BudgetInput
                   type="number"
-                  placeholder="5,000원"
+                  placeholder="직접 입략"
                   value={minBudget}
                   onChange={(e) => setMinBudget(e.target.value)}
                   disabled={!stepEnabled.step3}
@@ -237,7 +241,7 @@ function FormComponent({
                 <BudgetSeparator>~</BudgetSeparator>
                 <BudgetInput
                   type="number"
-                  placeholder="15,000원"
+                  placeholder="직접 입력"
                   value={maxBudget}
                   onChange={(e) => setMaxBudget(e.target.value)}
                   disabled={!stepEnabled.step3}
@@ -261,7 +265,7 @@ function FormComponent({
 export default FormComponent;
 
 const FormContainer = styled.div`
-  padding: 2.73vh;
+  padding: 40px;
   background-color: #fff;
 `;
 
@@ -281,12 +285,12 @@ const TopWrapper = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 1.5vw;
+  font-size: 2.34vh;
   font-weight: bold;
 `;
 
 const Subtitle = styled.div`
-  font-size: 1.1vw;
+  font-size: 1.76vh;
   color: #4e4e4e;
 `;
 

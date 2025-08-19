@@ -31,7 +31,7 @@ function MapWrapper({
       </NavermapsProvider>
       <CurrentLocationButton onClick={handleGetCurrentLocation} isDetailModalOpen={isDetailModalOpen}>
         <Icon src={MyLocationIcon} alt="Current Location" />
-        현재 위치 불러오기
+        내 위치 불러오기
       </CurrentLocationButton>
     </MapContainer>
   );
@@ -40,8 +40,11 @@ function MapWrapper({
 export default MapWrapper;
 
 const MapContainer = styled.div`
-  width: 60%;
-  margin: 10px;
+  flex: 1;
+  margin: 20px 20px 20px 10px;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  border-radius: 8px;
+  overflow: hidden;
 `;
 
 const CurrentLocationButton = styled.button`
