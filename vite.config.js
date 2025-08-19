@@ -1,24 +1,24 @@
+// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // ✅ 기존 리버스지오코드
+      // ✅ Reverse Geocode: rewrite 제거!
       '/map-reversegeocode': {
         target: 'https://naveropenapi.apigw.ntruss.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/map-reversegeocode/, ''),
-        secure: false,
+        // ❌ rewrite: (path) => path.replace(/^\/map-reversegeocode/, ''),  // 지우세요
+        secure: true, // ntruss는 정상 cert, true로 둬도 OK
       },
 
-      // 추가: Naver Search API
+      // ✅ Naver Search API (그대로)
       '/api': {
         target: 'https://openapi.naver.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''), // /api/v1/... -> /v1/...
+        rewrite: (path) => path.replace(/^\/api/, ''),
         secure: true,
       },
     },

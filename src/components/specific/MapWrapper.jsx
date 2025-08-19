@@ -67,6 +67,14 @@ const CurrentLocationButton = styled.button`
   font-size: 16px;
   color: #333;
   white-space: nowrap;
+
+  color: #2FB975;
+  font-family: Inter;
+  font-size: 12.426px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+
   &:hover {
     background-color: #f0f0f0;
   }
