@@ -7,6 +7,8 @@ import AddPlacePage from "./pages/AddPlacePage";
 import LandingPage from "./pages/LandingPage";
 import Header from "./components/common/Header";
 
+import ReservationPage from "./pages/ReservationPage";
+
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -25,6 +27,7 @@ function App() {
         <Route path="/detail-page/:id" element={<DetailPage />} />
         <Route path="/manage-page" element={<ManageMyPlacePage />} />
         <Route path="/add-place" element={<AddPlacePage />} />
+        <Route path="/reservation-page" element={<ReservationPage />} />
         <Route path="/landing" element={<LandingPage />} />
       </Routes>
     </>

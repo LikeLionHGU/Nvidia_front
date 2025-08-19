@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Question from "../../assets/icons/questionIcon.svg";
-import AddIcon from "../../assets/icons/addLocation.svg";
 
 function FormComponent({
   addressInputs,
   handleAddressInputChange,
-  removeAddressInput,
-  addAddressInput,
-  budgetRange,
-  setBudgetRange,
   handleRecommendClick,
   setIsSearchLocationModalOpen,
 }) {
@@ -158,14 +153,9 @@ function FormComponent({
                     readOnly
                     onClick={openSearchLocationModal}
                   />
-                  {index > 0 && <RemoveButton onClick={() => removeAddressInput(index)}>X</RemoveButton>}
                 </AddressInputContainer>
               ))}
             </AddressListContainer>
-            <AddBtnContainer>
-              <AddFriendButton onClick={addAddressInput}> </AddFriendButton>
-              <img src={AddIcon} alt="" style={{ marginRight: "0.49vh" }} /> <span> 위치 추가하기 </span>
-            </AddBtnContainer>
           </StepContent>
         </RightContainer>
       </StepContainer>

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const NAVER_BASE = "/v1/search";
+const NAVER_BASE = "/api/v1/search";
 
 const clientId = import.meta.env.VITE_SEARCH_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_SEARCH_CLIENT_SECRET;
@@ -26,5 +26,6 @@ export async function searchLocal({
   const res = await NaverLocal.get("/local.json", {
     params: { query, display, start, sort },
   });
+  console.log(res.data);
   return res.data; // { items: [...] }
 }

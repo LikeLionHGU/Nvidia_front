@@ -38,7 +38,8 @@ export default function ReservationPage() {
     setLoading(true);
     setErr(null);
     try {
-      const data = await searchLocal({ query: query.trim(), display: 5, sort: "random" });
+      const data = await searchLocal({ query: query.trim(), display: 5, sort: "comment" });
+      console.log(data);
       setItems(data.items || []);
     } catch (e) {
       setErr(e?.response?.data?.errorMessage || e.message);
