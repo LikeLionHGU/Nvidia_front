@@ -277,8 +277,9 @@ const TopWrapper = styled.div`
 `;
 
 const Title = styled.div`
+  font-family: 'Pretendard';
+  font-weight: 700;
   font-size: 1.5vw;
-  font-weight: bold;
 `;
 
 const Subtitle = styled.div`
@@ -389,34 +390,6 @@ const Input = styled.input`
   }
 `;
 
-const RemoveButton = styled.button`
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin-left: 8px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #c82333;
-  }
-`;
-
-const AddBtnContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin-top: 1.46vh;
-  color: #727272;
-  font-size: 0.9vw;
-`;
-
-const AddFriendButton = styled.div`
-  cursor: pointer;
-`;
-
 const TextareaContainer = styled.div`
   position: relative;
   width: 100%;
@@ -476,14 +449,6 @@ const BudgetInputContainer = styled.div`
   margin-bottom: 16px;
   display: flex;
   align-items: center;
-`;
-
-const BudgetLabel = styled.div`
-  font-size: 0.69vw;
-  color: #007f41;
-  margin-right: 0.69vw;
-  font-weight: 500;
-  width: 10%;
 `;
 
 const BudgetInputWrapper = styled.div`

@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import React, { useState } from "react";
+import React from "react";
 import MainPage from "./pages/MainPage";
 import DetailPage from "./pages/DetailPage";
 import ManageMyPlacePage from "./pages/ManageMyPlacePage";
@@ -9,19 +9,12 @@ import Header from "./components/common/Header";
 
 import ReservationPage from "./pages/ReservationPage";
 
-function App() {
-  const [searchQuery, setSearchQuery] = useState("");
+import "./assets/fonts/pretendard.css";
 
-  const SearchEnterHandle = (e) => {
-    if (e.key === "Enter") {
-      // 엔터 키 입력 시 동작할 로직 (예: 검색 페이지로 이동)
-      // 이 부분은 추후에 실제 검색 기능으로 구현해야 합니다.
-      console.log("Search triggered:", searchQuery);
-    }
-  };
+function App() {
   return (
     <>
-      <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} SearchEnterHandle={SearchEnterHandle} />
+      <Header/>
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/detail-page/:id" element={<DetailPage />} />

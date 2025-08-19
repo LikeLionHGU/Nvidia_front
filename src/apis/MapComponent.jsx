@@ -233,6 +233,7 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
               content: ReactDOMServer.renderToString(
                 <PriceMarker
                   price={marker.price}
+                  number={index + 1}
                   onClick={() => handlePriceMarkerClick(marker.id)}
                   onMouseEnter={() => handlePriceMarkerMouseEnter(marker.id)}
                   onMouseLeave={handlePriceMarkerMouseLeave}

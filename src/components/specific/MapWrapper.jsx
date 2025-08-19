@@ -46,12 +46,14 @@ const MapContainer = styled.div`
   border-radius: 8px;
   overflow: hidden;
   margin: 20px 20px 20px 10px;
+
+  position: relative;
 `;
 
 const CurrentLocationButton = styled.button`
   position: absolute;
-  top: 50px;
-  right: 19%;
+  top: 30px;
+  left: 50%;
   transform: translateX(-50%);
   z-index: ${({ isDetailModalOpen, isSearchLocationModalOpen }) =>
   (isDetailModalOpen || isSearchLocationModalOpen) ? 1 : 1000};
