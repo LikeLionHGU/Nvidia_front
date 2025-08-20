@@ -77,137 +77,6 @@ const dummyEnrollmentList = [
       },
     ];
 
-// #region Styled Components
-const PageContainer = styled.div`
-  display: flex;
-  padding: 40px;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-  font-family: 'Pretendard', sans-serif;
-`;
-
-const LeftPanel = styled.div`
-  flex: 0 0 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const RightPanel = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-`;
-
-const InputLabel = styled.label`
-  font-weight: 600;
-  font-size: 16px;
-`;
-
-const Input = styled.input`
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-`;
-
-const ActionButton = styled.button`
-  padding: 14px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-`;
-
-const TabContainer = styled.div`
-  display: flex;
-  border-bottom: 2px solid #eee;
-  margin-bottom: 24px;
-`;
-
-const TabButton = styled.button`
-  padding: 12px 24px;
-  font-size: 18px;
-  font-weight: 600;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-  color: ${props => (props.active ? '#007bff' : '#666')};
-  border-bottom: ${props => (props.active ? '3px solid #007bff' : '3px solid transparent')};
-  margin-bottom: -2px; /* To align with the container's border */
-`;
-
-const ContentArea = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const Card = styled.div`
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-`;
-
-const CardRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const CardLabel = styled.span`
-  font-weight: 500;
-  color: #555;
-`;
-
-const CardValue = styled.span`
-  font-weight: 700;
-  color: #333;
-`;
-
-const DetailsButton = styled.button`
-  background: none;
-  border: none;
-  color: #007bff;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-`;
-
-const InfoText = styled.p`
-  text-align: center;
-  color: #888;
-  font-size: 18px;
-  margin-top: 40px;
-`;
-
-const ErrorBanner = styled.div`
-  background-color: #ffdddd;
-  color: #d8000c;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 16px;
-`;
-// #endregion
-
 const ManageMyPlacePage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [activeTab, setActiveTab] = useState('enroll'); // 'enroll' | 'reserve'
@@ -344,3 +213,135 @@ const ManageMyPlacePage = () => {
 };
 
 export default ManageMyPlacePage;
+
+
+// #region Styled Components
+const PageContainer = styled.div`
+  display: flex;
+  padding: 40px;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Pretendard', sans-serif;
+`;
+
+const LeftPanel = styled.div`
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const RightPanel = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const InputLabel = styled.label`
+  font-weight: 600;
+  font-size: 16px;
+`;
+
+const Input = styled.input`
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+`;
+
+const ActionButton = styled.button`
+  padding: 14px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+const TabContainer = styled.div`
+  display: flex;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 24px;
+`;
+
+const TabButton = styled.button`
+  padding: 12px 24px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  color: ${props => (props.active ? '#007bff' : '#666')};
+  border-bottom: ${props => (props.active ? '3px solid #007bff' : '3px solid transparent')};
+  margin-bottom: -2px; /* To align with the container's border */
+`;
+
+const ContentArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const Card = styled.div`
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+`;
+
+const CardRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const CardLabel = styled.span`
+  font-weight: 500;
+  color: #555;
+`;
+
+const CardValue = styled.span`
+  font-weight: 700;
+  color: #333;
+`;
+
+const DetailsButton = styled.button`
+  background: none;
+  border: none;
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+`;
+
+const InfoText = styled.p`
+  text-align: center;
+  color: #888;
+  font-size: 18px;
+  margin-top: 40px;
+`;
+
+const ErrorBanner = styled.div`
+  background-color: #ffdddd;
+  color: #d8000c;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+// #endregion
