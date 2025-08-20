@@ -6,6 +6,7 @@ import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   addDays, isSameMonth
 } from "date-fns";
+import ImgUploadField from "../assets/images/DragUploadImg.svg";
 
 /* ===================== Palette / Tokens ===================== */
 const colors = {
@@ -46,13 +47,22 @@ const compressSlots = (slotsArr) => {
   const arr = [...slotsArr].sort((a,b)=>a-b);
   const ranges = [];
   let start = arr[0], prev = arr[0];
-  for (let i=1;i<arr.length;i++){
+  for (let i=1;i<arr.length;i++) {
     if (arr[i] === prev + 1) prev = arr[i];
     else { ranges.push([start, prev]); start = prev = arr[i]; }
   }
   ranges.push([start, prev]);
   return ranges;
 };
+
+const formatBytes = (bytes, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 export default function RegisterFormStyled() {
   /* ---------- 기본 정보 ---------- */
@@ -90,15 +100,27 @@ export default function RegisterFormStyled() {
     const arr = Array.from(files || []); if (!arr.length) return;
     setPhotoList((prev) => [...prev, ...arr]);
   };
-  const onFileInput = (e) => addFiles(e.target.files);
+  const onFileInput = (e) => {
+    addFiles(e.target.files);
+    e.target.value = null;
+  };
   const onDragOver = (e) => { e.preventDefault(); setDragging(true); };
   const onDragLeave = () => setDragging(false);
   const onDrop = (e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); };
 
   useEffect(() => {
-    const urls = photoList.map((file) => ({ url: URL.createObjectURL(file), name: file.name }));
-    setPreviews((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return urls; });
-    return () => { urls.forEach((p) => URL.revokeObjectURL(p.url)); };
+    const urls = photoList.map((file) => ({
+      url: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+    }));
+    setPreviews((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p.url));
+      return urls;
+    });
+    return () => {
+      urls.forEach((p) => URL.revokeObjectURL(p.url));
+    };
   }, [photoList]);
 
   const removePhoto = (idx) => setPhotoList((prev) => prev.filter((_, i) => i !== idx));
@@ -230,11 +252,63 @@ export default function RegisterFormStyled() {
 
   return (
     <>
-      <Title>등록</Title>
       <Page>
         {/* 왼쪽: 입력 폼 */}
         <FormWrap>
-          <div>
+
+        <InfoContainer>
+          <TopWrapper>
+            <Title>호스트이신가요? 나의 공실을 등록해보세요!</Title>
+          </TopWrapper>
+          <Subtitle>간단한 조건 입력으로 맞춤 공실을 찾아보세요</Subtitle>
+        </InfoContainer>
+
+        <Divider/>
+
+          <ImageUploadRow>
+            <ImgUploadArea
+              $dragging={dragging}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+            >
+              <input
+                type="file"
+                multiple
+                onChange={onFileInput}
+                style={{ display: 'none' }}
+                id="file-upload"
+                accept="image/jpeg, image/png"
+              />
+              <label htmlFor="file-upload">
+                <img src={ImgUploadField} alt="Upload" />
+              </label>
+            </ImgUploadArea>
+
+            <PreviewContainer>
+              <UploadTitle>등록할 사진을 업로드해주세요</UploadTitle>
+              <UploadSubtitle>jpg, png 파일만 가능합니다</UploadSubtitle>
+              <PreviewList>
+                {previews.length > 0 ? (
+                  previews.map((p, i) => (
+                    <PreviewItem key={p.url}>
+                      <PreviewThumb src={p.url} alt={p.name} />
+                      <FileInfo>
+                        <FileName>{p.name}</FileName>
+                        <FileSize>{formatBytes(p.size)}</FileSize>
+                      </FileInfo>
+                      <DeleteBtn onClick={(e) => { e.stopPropagation(); removePhoto(i); }}>×</DeleteBtn>
+                    </PreviewItem>
+                  ))
+                ) : (
+                  <div style={{ fontSize: '0.8rem', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.sub }}>
+                    업로드된 이미지가 없습니다.
+                  </div>
+                )}
+              </PreviewList>
+            </PreviewContainer>
+          </ImageUploadRow>
+          <InputField>
             <Row>
               <Input placeholder="장소명을 입력해주세요." value={name} onChange={(e)=>setName(e.target.value)} />
               <Input placeholder="전화번호를 입력해주세요." value={phoneNumber} onChange={(e)=>setPhoneNumber(e.target.value)} />
@@ -247,9 +321,7 @@ export default function RegisterFormStyled() {
               <Input type="number" placeholder="최대 가능 인원은 몇 명인가요?" value={maxPeople} onChange={(e)=>setMaxPeople(e.target.value)} />
               <Input type="number" placeholder="30분 당 금액을 알려주세요." value={price} onChange={(e)=>setPrice(e.target.value)} />
             </Row>
-          </div>
-
-          <div>
+          
             <SectionLabel>칩 리스트</SectionLabel>
             <Pills>{chipList.map((c)=> <Pill key={c}>{c}</Pill>)}</Pills>
             <AddPillWrap>
@@ -257,47 +329,17 @@ export default function RegisterFormStyled() {
               <SmallButton onClick={addChip}>＋ 추가</SmallButton>
             </AddPillWrap>
             <Hint>※ 등록자가 직접 추가합니다. 초기값은 없습니다.</Hint>
-          </div>
-
-          <div>
+          
             <SectionLabel>옵션(편의시설) 입력</SectionLabel>
             <ChipsInputWrap>
               <Input placeholder="예: 에어컨, 와이파이, 주차…" value={optionInput} onChange={(e)=>setOptionInput(e.target.value)} />
               <SmallButton onClick={addOption}>＋ 추가</SmallButton>
             </ChipsInputWrap>
             <Pills style={{marginTop: 8}}>{optionList.map((o)=> <Pill key={o}>{o}</Pill>)}</Pills>
-          </div>
-
-          <div>
+          
             <SectionLabel>하실 말씀이 있으시다면 편하게 적어주세요.</SectionLabel>
             <TextArea value={memo} onChange={(e)=>setMemo(e.target.value)} placeholder="예) 야외 소음이 있을 수 있습니다." />
-          </div>
-
-          <div>
-            <SectionLabel>사진 업로드</SectionLabel>
-            <PhotosBox
-              dragging={dragging}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-            >
-              <DropArea>파일을 여기로 드래그 앤 드롭하거나, 아래에서 선택하세요.</DropArea>
-              <div style={{marginTop: 10}}>
-                <input type="file" multiple onChange={onFileInput} />
-              </div>
-
-              {previews.length > 0 && (
-                <PreviewGrid>
-                  {previews.map((p, i) => (
-                    <Thumb key={p.url}>
-                      <img src={p.url} alt={p.name} />
-                      <RemoveBtn onClick={()=>removePhoto(i)}>×</RemoveBtn>
-                    </Thumb>
-                  ))}
-                </PreviewGrid>
-              )}
-            </PhotosBox>
-          </div>
+          </InputField>
         </FormWrap>
 
         {/* 오른쪽: 캘린더 + 타임테이블 + 선택 요약 */}
@@ -309,10 +351,10 @@ export default function RegisterFormStyled() {
             </CalendarHeader>
 
             <CalendarGrid>
-              {["SUN","MON","TUE","WED","THU","FRI","SAT"].map((w,i)=>(
+              {["SUN","MON","TUE","WED","THU","FRI","SAT"].map((w,i)=> (
                 <DayCell
                   key={i}
-                  dim={i===0}
+                  $dim={i===0}
                   style={{color: i===0 ? "#ff6b6b" : i===6 ? "#4a7bff" : colors.sub}}
                 >
                   {w}
@@ -326,7 +368,7 @@ export default function RegisterFormStyled() {
                     key={idx}
                     onClick={()=>toggleDate(d)}
                     selected={selected}
-                    dim={!isSameMonth(d, monthStart)}
+                    $dim={!isSameMonth(d, monthStart)}
                   >
                     {format(d, "d")}
                   </DateCell>
@@ -422,24 +464,53 @@ export default function RegisterFormStyled() {
 }
 
 /* ===================== Styles ===================== */
+
+
+const InfoContainer = styled.div`
+  margin-bottom: 2.49vh;
+`;
+
+const TopWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.98vh;
+  > img {
+    width: 1.67vw;
+    height: 2.34vh;
+  }
+`;
+
+const Title = styled.div`
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-size: 1.5vw;
+`;
+
+const Subtitle = styled.div`
+  font-size: 1.1vw;
+  color: #4e4e4e;
+`;
+
+const Divider = styled.div`
+  width: 100%;
+  height: 1px;
+  background-color: #efefef;
+  margin-bottom: 2.98vh;
+`;
+
 const Page = styled.div`
   display: grid;
-  grid-template-columns: 1.05fr 1.95fr;
-  gap: 24px;
-  padding: 24px;
-  max-width: 1200px;
+  grid-template-columns: 1fr 60%;
+  gap: 20px;
+  padding: 20px;
   margin: 0 auto;
+  font-family: 'Pretendard';
 `;
-const Title = styled.h1`
-  grid-column: 1 / -1;
-  font-size: 36px;
-  font-weight: 800;
-  margin: 8px 0 0;
-  color: ${colors.ink};
-`;
+
 const Panel = styled.div`
   background: ${colors.surface};
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 18px;
   border: 1px solid ${colors.line};
   box-shadow: 0 6px 22px rgba(0,0,0,0.05);
@@ -469,7 +540,7 @@ const MonthText = styled.div`font-size: 20px; font-weight: 800; color: ${colors.
 const CalendarGrid = styled.div`display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;`;
 const DayCell = styled.div`
   padding: 8px 0; text-align: center; border-radius: 10px; font-weight: 700;
-  ${({ dim }) => dim && css`opacity: 0.95;`}
+  ${({ $dim }) => $dim && css`opacity: 0.95;`}
 `;
 const DateCell = styled.button`
   padding: 10px 0;
@@ -487,7 +558,7 @@ const DateCell = styled.button`
     border-color: ${colors.brand};
     box-shadow: 0 6px 16px rgba(47,185,117,0.28);
   `}
-  ${({ dim }) => dim && css`opacity: 0.55;`}
+  ${({ $dim }) => $dim && css`opacity: 0.55;`}
 `;
 
 /* ---------- 타임테이블 ---------- */
@@ -533,8 +604,17 @@ const SlotCell = styled.button`
 /* ---------- 폼 입력 ---------- */
 const FormWrap = styled(Panel)`
   display: grid; grid-template-rows: auto auto 1fr auto; gap: 14px; height: fit-content;
+  padding: 24px;
 `;
 const Row = styled.div`display: grid; grid-template-columns: 1fr 1fr; gap: 12px;`;
+
+const InputField = styled.div`
+  border-radius: 4px;
+  border: 1px solid #FBFBFB;
+  background: #FBFBFB;
+  padding: 18px 11px 18px 12px;
+`
+
 const Input = styled.input`
   width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid ${colors.line};
   background: ${colors.surface}; font-size: 15px; color: ${colors.ink};
@@ -562,25 +642,126 @@ const SmallButton = styled(GhostButton)`padding: 8px 10px;` ;
 const Hint = styled.div`font-size: 12px; color: ${colors.sub}; margin-top: 6px;`;
 
 /* ---------- 사진 업로드 ---------- */
-const PhotosBox = styled.div`
-  border: 2px dashed ${({ dragging }) => (dragging ? colors.brand : colors.line)};
-  border-radius: 14px; padding: 16px; background: ${colors.brandSofter}; transition: 0.15s;
+const ImageUploadRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+  height: 159px;
 `;
-const DropArea = styled.div`
-  display: flex; align-items: center; justify-content: center;
-  height: 120px; border-radius: 12px; background: ${colors.surface}; color: ${colors.sub};
-  border: 1px dashed ${colors.line};
+
+const ImgUploadArea = styled.div`
+  border-radius: 14px;
+  background: ${({ $dragging }) => ($dragging ? colors.brandSofter : '#FBFBFB')};
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  cursor: pointer;
+
+  label {
+    cursor: pointer;
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 `;
-const PreviewGrid = styled.div`display: grid; grid-template-columns: repeat(auto-fill, 120px); gap: 10px; margin-top: 12px;`;
-const Thumb = styled.div`
-  width: 120px; height: 120px; border-radius: 12px; overflow: hidden; position: relative; background: ${colors.surfaceSoft};
-  border: 1px solid ${colors.line};
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+const PreviewContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  background-color: #FBFBFB;
+  padding: 8px 15px;
+  overflow-y: auto;
 `;
-const RemoveBtn = styled.button`
-  position: absolute; top: 6px; right: 6px; width: 24px; height: 24px;
-  border: none; border-radius: 50%;
-  background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
+
+const UploadTitle = styled.div`
+  font-weight: 700;
+  font-size: 1rem;
+  color: ${colors.ink};
+`;
+
+const UploadSubtitle = styled.div`
+  font-size: 0.7rem;
+  color: ${colors.sub};
+  margin-bottom: 10px;
+`;
+
+const PreviewList = styled.div`
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #FBFBFB;
+  height: 100%;
+`;
+
+const PreviewItem = styled.div`
+  display: flex;
+  align-items: center;
+  background: ${colors.surface};
+  border-radius: 8px;
+  border: 1px solid ${colors.lineSoft};
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  width: 100%;
+`;
+
+const PreviewThumb = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  margin-right: 12px;
+  flex-shrink: 0;
+`;
+
+const FileInfo = styled.div`
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-right: 8px;
+`;
+
+const FileName = styled.div`
+  font-size: 14px;
+  color: ${colors.text};
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const FileSize = styled.div`
+  font-size: 12px;
+  color: ${colors.sub};
+`;
+
+const DeleteBtn = styled.button`
+  width: 1px;
+  height: 15px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 50%;
+  background: ${colors.line};
+  color: ${colors.sub};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background: ${colors.warn};
+    color: #fff;
+  }
 `;
 
 /* ---------- 선택 요약 ---------- */
