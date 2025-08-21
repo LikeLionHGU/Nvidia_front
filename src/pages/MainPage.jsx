@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import CommonDetailModal from "../components/common/commonDetailModal";
 import DetailPlacePage from "./DetailPage";
 import LocationSearchModal from "./LocationSearchModal";
 
@@ -11,6 +10,7 @@ import MapWrapper from "../components/specific/MapWrapper";
 import FormComponent from "../components/specific/FormComponent";
 import SearchResultContainer from "../components/specific/SearchResultContainer";
 import RecommendationBox from "../components/specific/RecommendationBox";
+import MapComponent from "../apis/MapComponent";
 
 function MainPage() {
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
@@ -186,9 +186,7 @@ function MainPage() {
       <RecommendationBox recommendList={recommendList} isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen} onCardClick={moveToDetailPage} />
 
       {isDetailModalOpen && (
-        <CommonDetailModal title="장소 상세 정보" onClose={closeDetailModal}>
           <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
-        </CommonDetailModal>
       )}
 
       {isSearchLocationModalOpen &&(

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import styled from "styled-components";
 import "./../styles/global.css";
+import { useNavigate } from "react-router-dom";
 
-function DetailPage({ isModal = false, onClose, roomId }) {
+function DetailPage({ onClose, roomId }) {
   const [roomData, setRoomData] = useState(null);
+
+  const navigate = useNavigate();
 
   // 임시 데이터
   const dummyData = [
@@ -57,29 +61,159 @@ function DetailPage({ isModal = false, onClose, roomId }) {
   }, [roomId]);
 
   if (!roomData) {
-    return <div>로딩중...</div>;
+    return (
+        <ModalBackground>
+            <Wrapper>
+                <div>로딩중...</div>
+            </Wrapper>
+        </ModalBackground>
+    );
   }
 
+  const handleReserve = (roomId) => {
+    navigate(`/reservation-page/${roomId}`);
+    // TODO: 예약 API 호출 로직 추가
+  };
+
   return (
-    <div>
-      {!isModal && (
-        <h1 style={{ cursor: "pointer" }} onClick={() => window.history.back()}>
-          로고
-        </h1>
-      )}
-      <h1>장소 상세정보 페이지</h1>
-      <img
-        src={roomData.photo}
-        alt="장소 사진"
-        style={{ width: "300px", borderRadius: "8px" }}
-      />
-      <h3>방번호: {roomData.roomId}</h3>
-      <p>주소: {roomData.roadName}</p>
-      <p>최대 인원: {roomData.maxPeople}명</p>
-      <p>연락처: {roomData.phoneNumber}</p>
-      <p>가격: {roomData.price.toLocaleString()}원</p>
-    </div>
+    <ModalBackground>
+        <Overlay onClick={onClose} />
+        <Wrapper>
+            <div className="title">장소 상세정보 페이지</div>
+            <div className="save-content">
+                <img
+                    src={roomData.photo}
+                    alt="장소 사진"
+                    style={{ width: "300px", borderRadius: "8px" }}
+                />
+                <h3>방번호: {roomData.roomId}</h3>
+                <p>주소: {roomData.roadName}</p>
+                <p>최대 인원: {roomData.maxPeople}명</p>
+                <p>연락처: {roomData.phoneNumber}</p>
+                <p>가격: {roomData.price.toLocaleString()}원</p>
+            </div>
+            <BtnContainer>
+              <CancelBtn className="cancel" onClick={onClose}>취소</CancelBtn>
+              <ReserveBtn className="reserve" onClick={() => handleReserve(roomId)}>예약하기</ReserveBtn>
+            </BtnContainer>
+        </Wrapper>
+    </ModalBackground>
   );
 }
 
 export default DetailPage;
+
+const modalBase = `
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  position: fixed;
+`;
+
+const ModalBackground = styled.div`
+  ${modalBase}
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 4;
+  cursor: default;
+`;
+
+const Overlay = styled.div`
+  ${modalBase}
+  cursor: default;
+`;
+
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  width: 80vw;
+  max-width: 800px;
+  min-height: 500px;
+  max-height: 90vh;
+  border-radius: 12px;
+  overflow-y: auto;
+
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 18px;
+    margin-bottom: 8px;
+    line-height: 150%;
+  }
+
+  .save-content {
+    width: 90%;
+    font-size: 14px;
+    text-align: center;
+    line-height: 150%;
+    flex: 1;
+    overflow-y: auto;
+  }
+`;
+
+const BtnContainer = styled.div`
+  display: flex;
+  width: 100%;
+  height: auto;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  gap: 10px;
+`;
+
+const CancelBtn = styled.button`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  outline: none;
+  border: none;
+  border-radius: 8px;
+  width: 201px;
+  height: 37px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #B3B3B3;
+  background-color: #F7F7F7;
+  cursor: pointer;
+
+  &:active {
+    background-color: #26945E;
+  }
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+`;
+
+const ReserveBtn = styled.button`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  outline: none;
+  border: none;
+  border-radius: 8px;
+  width: 201px;
+  height: 37px;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  background-color: #2FB975;
+  cursor: pointer;
+
+  &:active {
+    background-color: #26945E;
+  }
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+`;
