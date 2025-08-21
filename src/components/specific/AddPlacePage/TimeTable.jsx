@@ -40,8 +40,37 @@ export default function TimeTable({
   slotsByDate,
   handleSlotMouseDown,
   handleSlotMouseEnter,
-  setAllForDate
+  setAllForDate,
 }) {
+  const noDate = !selectedDateArr || selectedDateArr.length === 0;
+
+  if (noDate) {
+    return (
+      <TimeTableWrap>
+        <Table cols={1}>
+          <TableInfo cols={2}>가능 시간대 30min / 24 Hour</TableInfo>
+
+          <TH>Time</TH>
+          {/* 메시지를 헤더(요일/날짜 자리)에 표기 — 배경은 흰색 */}
+          <TH $whitebg>
+            <THMessage>위에서 날짜를 선택해주세요!</THMessage>
+          </TH>
+
+          {timeLabels.map((label, hour) => (
+            <TR key={hour}>
+              <TimeCell>{label}</TimeCell>
+              {/* 시간표 옆 칸: 하얀 빈 칸(두 개, 30분 x 2) */}
+              <EmptySlotColumn>
+                <EmptySlotCell />
+                <EmptySlotCell />
+              </EmptySlotColumn>
+            </TR>
+          ))}
+        </Table>
+      </TimeTableWrap>
+    );
+  }
+
   return (
     <TimeTableWrap>
       <Table cols={selectedDateArr.length}>
@@ -104,26 +133,35 @@ export default function TimeTable({
   );
 }
 
+/* ===== styles ===== */
+
 const TimeTableWrap = styled.div`
   margin-top: 16px;
-  overflow-x: auto;
   background: ${colors.surface};
   border-radius: 8px;
   padding: 18px;
   box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
-  height: 500px;
+  font-family: 'Pretendard';
+
+  /* 부모 그리드에서 1fr로 남은 공간을 채울 때 대비 */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden; /* 내부 표가 스크롤 담당 */
 `;
 
 const Table = styled.div`
   display: grid;
   grid-template-columns: 130px repeat(${({ cols }) => cols}, 1fr);
   border-radius: 5px;
-  overflow: hidden;
   border: 1px solid ${colors.line};
   min-width: ${({ cols }) => 130 + cols * 100}px;
+
+  /* 세로 스크롤 담당 */
+  max-height: 100%;
+  overflow: auto;
 `;
 
-/* 👉 새로 추가된 안내 헤더 */
+/* 맨 위 안내 헤더 */
 const TableInfo = styled.div`
   grid-column: span ${({ cols }) => cols};
   background: #EDEDED;
@@ -132,11 +170,12 @@ const TableInfo = styled.div`
   padding: 12px;
   color: ${colors.text};
 `;
+
 const TH = styled.div`
-  background: ${colors.surfaceSoft};
-  padding: 12px 12px;
+  background: ${({ $whitebg }) => ($whitebg ? colors.surface : colors.surfaceSoft)};
+  padding: 15px 12px;
   display: flex;
-  flex-direction: column;   /* 세로 방향으로 쌓기 */
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   border-right: 1px solid ${colors.line};
@@ -145,9 +184,14 @@ const TH = styled.div`
   text-align: center;
 `;
 
+const THMessage = styled.div`
+  padding: 25px 0;
+  font-weight: 700;
+`;
+
 const THHead = styled.div`
   font-weight: 800;
-  margin-bottom: 6px; /* 날짜와 버튼 사이 간격 */
+  margin-bottom: 6px;
   line-height: 1.4;
 `;
 
@@ -160,7 +204,7 @@ const THControls = styled.div`
 
   label {
     display: flex;
-    align-items: center;   /* 체크박스랑 텍스트를 세로 중앙 정렬 */
+    align-items: center;
     gap: 4px;
     cursor: pointer;
   }
@@ -206,11 +250,23 @@ const SlotCell = styled.button`
   height: 24px;
 
   &:hover {
-    background: ${({ active }) =>
-      active ? colors.slotActiveHover : colors.slotHover};
+    background: ${({ active }) => (active ? colors.slotActiveHover : colors.slotHover)};
   }
 
   &:not(:last-child) {
     border-bottom: 1px solid ${colors.line};
   }
+`;
+
+/* 날짜 미선택일 때 사용하는 빈 칸들 */
+const EmptySlotColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid ${colors.line};
+  background: ${colors.surface};
+`;
+
+const EmptySlotCell = styled.div`
+  height: 24px;
+  background: ${colors.surface};
 `;
