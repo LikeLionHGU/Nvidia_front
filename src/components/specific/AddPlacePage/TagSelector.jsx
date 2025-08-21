@@ -104,7 +104,12 @@ export default function TagSelector({
             <ModalTitle>나의 공실 TAG</ModalTitle>
 
             {/* 인풋형 가이드 */}
-            <GuideBar>{placeholder}</GuideBar>
+            <GuideBar $hasTags={tempSelectedTags.length > 0}>
+              {tempSelectedTags.length > 0
+                ? tempSelectedTags.map((t) => <PillPreview key={t}>{t}</PillPreview>)
+                : <Placeholder style={{ margin: 0 }}>이 공간을 어떻게 쓰고 싶으신가요? 무드와 목적을 선택해주세요!</Placeholder>
+              }
+            </GuideBar>
 
             {/* 패널 */}
             <Panel>
@@ -153,6 +158,7 @@ const Wrap = styled.div`
   background: ${colors.surface};
   border-radius: 10px;
   padding: 10px 12px;
+  font-family: 'Pretendard';
 `;
 
 const Inner = styled.div`
@@ -189,7 +195,20 @@ const Pill = styled.span`
   color: ${colors.ink};
   background: ${colors.surfaceSoft};
   border: 1px solid #EEF2F5;
-  border-radius: 999px;
+  border-radius: 5px;
+  white-space: nowrap;
+`;
+
+const PillPreview = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: ${colors.ink};
+  background: ${colors.surface};
+  border: 1px solid #EEF2F5;
+  border-radius: 5px;
   white-space: nowrap;
 `;
 
@@ -237,33 +256,39 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalCard = styled.div`
-  width: min(820px, 94vw);
+  width: 700px;
+  height: 430px;
   background: ${colors.surface};
   border-radius: 16px;
   border: 1px solid ${colors.line};
-  padding: 28px 28px 20px;
+  padding: 70px;
   box-shadow: 0 18px 48px rgba(0,0,0,0.18);
 `;
 
 const ModalTitle = styled.h3`
   margin: 0 0 16px;
-  font-size: 22px;
-  font-weight: 800;
-  color: ${colors.ink};
+  font-size: 20px;
+  font-weight: 700;
+  color: black;
   text-align: center;
 `;
 
 const GuideBar = styled.div`
-  margin: 0 auto 18px;
-  width: 100%;
-  height: 42px;
+  margin: 20px auto;
+  width: 620px;
+  min-height: 30px;
   border-radius: 10px;
-  border: 1px solid ${colors.line};
-  background: #F7F7F7;
-  display: flex; align-items: center;
-  padding: 0 14px;
-  color: ${colors.sub};
+  border: 1px solid ${({ $hasTags }) => ($hasTags ? colors.brand : colors.line)};
+  background: ${({ $hasTags }) => ($hasTags ? '#F0FFF9' : '#F7F7F7')};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  color: #979BA5;
   font-weight: 600;
+  transition: background-color 0.2s, border-color 0.2s;
+  flex-wrap: wrap;
+  gap: 8px;
 `;
 
 /* 패널 */
@@ -276,15 +301,16 @@ const Panel = styled.div`
 
 const PanelHint = styled.div`
   text-align: center;
-  color: ${colors.sub};
+  font-size: 16px;
+  color: #A2A2A2;
   font-weight: 700;
-  margin-bottom: 14px;
+  margin-bottom: 30px;
 `;
 
 const TagsGrid = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 12px;
+  gap: 13px 14px;
   justify-content: center;
 `;
 
@@ -292,10 +318,10 @@ const ChipButton = styled.button`
   border: 1px solid ${({ $selected }) => ($selected ? colors.brand : "#EEF2F5")};
   background: ${({ $selected }) => ($selected ? colors.brand : colors.surface)};
   color: ${({ $selected }) => ($selected ? "#fff" : colors.ink)};
-  padding: 8px 12px;
-  border-radius: 999px;
+  padding: 7px 10px;
+  border-radius: 5px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
   cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   opacity: ${({ $disabled }) => ($disabled ? 0.5 : 1)};
   transition: transform .06s ease, filter .15s ease, background .15s ease, border-color .15s ease;
@@ -324,7 +350,7 @@ const BaseBtn = styled.button`
 
 const CancelBtn = styled(BaseBtn)`
   background: #F2F4F5;
-  color: ${colors.text};
+  color: #B3B3B3;
   border: 1px solid ${colors.line};
   &:hover { filter: brightness(0.98); }
 `;

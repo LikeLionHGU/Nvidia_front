@@ -144,7 +144,7 @@ const TimeTableWrap = styled.div`
   font-family: 'Pretendard';
 
   /* 부모 그리드에서 1fr로 남은 공간을 채울 때 대비 */
-  height: 100%;
+  height: 500px;
   min-height: 0;
   overflow: hidden; /* 내부 표가 스크롤 담당 */
 `;

@@ -130,6 +130,11 @@ export default function AddPlacePage() {
 
   /* ---------- 제출 ---------- */
   const onSubmit = async () => {
+    // 필수 입력 필드 검사
+    if (!name || !phoneNumber || !roadName || !account || !maxPeople || !price || chipList.length === 0 || photoList.length === 0 || selectedDates.size === 0) {
+      alert("필수 입력 항목을 모두 채워주세요. (옵션과 주의사항 제외)");
+      return;
+    }
     // 선택한 날짜별로 슬롯 인덱스(int) 배열 생성
     const enrollmentTimeDto = Array.from(selectedDates)
       .map((dateKey) => {
