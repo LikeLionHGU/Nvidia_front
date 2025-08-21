@@ -45,9 +45,8 @@ export default function TimeTable({
   return (
     <TimeTableWrap>
       <Table cols={selectedDateArr.length}>
-        {/* 👉 맨 위 안내 헤더 */}
         <TableInfo cols={selectedDateArr.length + 1}>
-          가능 시간대 (30min / 24 Hour)
+          가능 시간대 30min / 24 Hour
         </TableInfo>
 
         <TH>Time</TH>
@@ -111,8 +110,8 @@ const TimeTableWrap = styled.div`
   background: ${colors.surface};
   border-radius: 8px;
   padding: 18px;
-  border: 1px solid ${colors.line};
-  box-shadow: 0 6px 22px rgba(0,0,0,0.05);
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  height: 500px;
 `;
 
 const Table = styled.div`
@@ -168,6 +167,7 @@ const THControls = styled.div`
 
   input {
     transform: scale(1.1);
+    accent-color: #00A453;
   }
 `;
 
