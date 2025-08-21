@@ -121,7 +121,7 @@ const ImageUploadRow = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 0.7vw;
   height: 159px;
 `;
 
@@ -156,12 +156,12 @@ const PreviewContainer = styled.div`
 
 const UploadTitle = styled.div`
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1vw;
   color: ${colors.ink};
 `;
 
 const UploadSubtitle = styled.div`
-  font-size: 0.7rem;
+   font-size: 0.83vw;
   color: ${colors.sub};
   margin-bottom: 10px;
 `;
@@ -186,10 +186,10 @@ const PreviewItem = styled.div`
 `;
 
 const PreviewThumb = styled.img`
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  object-fit: cover;
+  width: 35px;
+  height: 35px;
+  padding: 4px;
+  object-fit: fit;
   margin-right: 12px;
   flex-shrink: 0;
 `;

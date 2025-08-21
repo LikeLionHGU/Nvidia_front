@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import { format, startOfMonth, isSameMonth, addDays, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
+import { useNavigate } from 'react-router-dom';
 
 import ImageUploader from "../components/specific/AddPlacePage/ImageUploader";
 import BasicInfoForm from "../components/specific/AddPlacePage/BasicInfoForm";
-import ChipInput from "../components/specific/AddPlacePage/ChipInput";
+
 import Calendar from "../components/specific/AddPlacePage/Calendar";
 import TimeTable from "../components/specific/AddPlacePage/TimeTable";
-import SelectionSummary from "../components/specific/AddPlacePage/SelectionSummary";
+import { Geocode } from "../apis/Geocode";
 
 const colors = {
   brand: "#2FB975",
@@ -24,7 +25,9 @@ export default function AddPlacePage() {
   /* ---------- 기본 정보 ---------- */
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [address, setAddress] = useState("");
+  const [roadName, setRoadName] = useState("");
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [account, setAccount] = useState("");
   const [maxPeople, setMaxPeople] = useState("");
   const [price, setPrice] = useState("");
@@ -32,7 +35,7 @@ export default function AddPlacePage() {
 
   /* ---------- 칩/옵션 ---------- */
   const [chipList, setChipList] = useState([]);
-  const [optionList, setOptionList] = useState([]);
+  const [optionList, setOptionList] = useState("");
 
   /* ---------- 사진 업로드 ---------- */
   const [photoList, setPhotoList] = useState([]);
@@ -40,6 +43,12 @@ export default function AddPlacePage() {
   /* ---------- 캘린더 ---------- */
   const today = new Date();
   const [selectedDates, setSelectedDates] = useState(new Set());
+
+  const navigate = useNavigate();
+
+  const handleCancel = () => { // 이 함수 추가
+    navigate('/');
+  };
 
   const toggleDate = (d) => {
     const key = format(d, "yyyy-MM-dd");
@@ -121,27 +130,49 @@ export default function AddPlacePage() {
 
   /* ---------- 제출 ---------- */
   const onSubmit = async () => {
-    const enrollmentTimeTable = Array.from(selectedDates)
+    // 선택한 날짜별로 슬롯 인덱스(int) 배열 생성
+    const enrollmentTimeDto = Array.from(selectedDates)
       .map((dateKey) => {
         const set = slotsByDate.get(dateKey) || new Set();
-        const sorted = Array.from(set).sort((a, b) => a - b).map((s) => ({ slot: s }));
-        return { date: dateKey, availableSlot: sorted };
+        const sorted = Array.from(set)
+          .sort((a, b) => a - b)
+          .map((n) => Number(n)); // 정수 배열로
+        return { date: dateKey, selectedTimeSlotIndex: sorted };
       })
-      .filter((row) => row.availableSlot.length > 0);
-
+      .filter((row) => row.selectedTimeSlotIndex.length > 0);
+  
     const fd = new FormData();
-    fd.append("name", name);
-    fd.append("phoneNumber", phoneNumber);
-    fd.append("address", address);
+    fd.append("enName", name);
+    fd.append("enPhoneNumber", phoneNumber);
+  
+    // 주소(roadName) → 위경도 변환
+    let geoData = { roadName, latitude: null, longitude: null };
+    try {
+      const result = await Geocode({ query: roadName });
+      geoData.latitude = result.latitude;
+      geoData.longitude = result.longitude;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      alert("올바른 주소를 입력해주세요.");
+      return;
+    }
+
+    const optionArray = (optionList || "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+  
+    // payload 구성
+    fd.append("address", JSON.stringify(geoData));
     fd.append("account", account);
     fd.append("maxPeople", parseInt(maxPeople || "0", 10));
     fd.append("price", parseInt(price || "0", 10));
     fd.append("memo", memo);
-    fd.append("optionList", JSON.stringify(optionList));
+    fd.append("optionList", JSON.stringify(optionArray));
     fd.append("chipList", JSON.stringify(chipList));
-    fd.append("enrollmentTimeTable", JSON.stringify(enrollmentTimeTable));
+    fd.append("enrollmentTimeDto", JSON.stringify(enrollmentTimeDto));
     photoList.forEach((f) => fd.append("photoList", f));
-
+  
     try {
       const res = await axios.post("/api/register", fd, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -149,6 +180,8 @@ export default function AddPlacePage() {
       alert("등록 완료!");
       console.log(res.data);
     } catch (e) {
+      // FormData 디버깅
+      console.table(Array.from(fd.entries()));
       console.error(e);
       alert("등록 실패. 콘솔을 확인하세요.");
     }
@@ -170,42 +203,36 @@ export default function AddPlacePage() {
           <Divider/>
 
           <ImageUploader photoList={photoList} setPhotoList={setPhotoList} />
-          
           <BasicInfoForm 
             name={name} setName={setName}
             phoneNumber={phoneNumber} setPhoneNumber={setPhoneNumber}
-            address={address} setAddress={setAddress}
+            address={roadName} setAddress={setRoadName}
             account={account} setAccount={setAccount}
             maxPeople={maxPeople} setMaxPeople={setMaxPeople}
             price={price} setPrice={setPrice}
             memo={memo} setMemo={setMemo}
+            selectedTags={chipList} // Pass chipList as selectedTags
+            onConfirmSelection={setChipList} // Pass setChipList as onConfirmSelection
+            optionList={optionList}
+            setOptionList={setOptionList}
           />
 
-          <ChipInput 
-            label="칩 리스트"
-            placeholder="예: 조용한, 햇살좋음, 반려동물가능…"
-            hint="※ 등록자가 직접 추가합니다. 초기값은 없습니다."
-            chipList={chipList}
-            setChipList={setChipList}
-          />
-
-          <ChipInput
-            label="옵션(편의시설) 입력"
-            placeholder="예: 에어컨, 와이파이, 주차…"
-            chipList={optionList}
-            setChipList={setOptionList}
-          />
-
+        <ButtonContainer>
+          <CancelButton type="button" onClick={handleCancel}>
+            취소
+          </CancelButton>
+          <SubmitButton type="submit" onClick={onSubmit}>
+            등록
+          </SubmitButton>
+        </ButtonContainer>
         </FormWrap>
-
-        <div>
+        <RightCol>
           <Calendar 
             today={today}
             selectedDates={selectedDates}
             toggleDate={toggleDate}
             selectAllThisMonth={selectAllThisMonth}
           />
-
           <TimeTable 
             selectedDateArr={selectedDateArr}
             slotsByDate={slotsByDate}
@@ -213,17 +240,8 @@ export default function AddPlacePage() {
             handleSlotMouseEnter={handleSlotMouseEnter}
             setAllForDate={setAllForDate}
           />
-
-          <SelectionSummary 
-            selectedDateArr={selectedDateArr}
-            slotsByDate={slotsByDate}
-          />
-        </div>
+        </RightCol>
       </Page>
-
-      <SubmitBar>
-        <SubmitBtn onClick={onSubmit}>등록</SubmitBtn>
-      </SubmitBar>
     </>
   );
 }
@@ -235,6 +253,14 @@ const Page = styled.div`
   padding: 20px;
   margin: 0 auto;
   font-family: 'Pretendard';
+  align-items: stretch;       /* 두 칼럼을 같은 트랙 높이로 스트레치 */
+`;
+
+const RightCol = styled.div`
+  display: grid;
+  grid-template-rows: auto 1fr; /* 캘린더는 내용 높이, 타임테이블은 남은 공간 */
+  min-height: 0;                /* overflow 계산을 위해 필요 */
+  height: 100%;                 /* 왼쪽(FormWrap) 높이에 맞춰 전체 채우기 */
 `;
 
 const Panel = styled.div`
@@ -251,6 +277,7 @@ const FormWrap = styled(Panel)`
   gap: 14px;
   height: fit-content;
   padding: 24px;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
 `;
 
 const InfoContainer = styled.div`
@@ -286,24 +313,43 @@ const Divider = styled.div`
   margin-bottom: 2.98vh;
 `;
 
-const SubmitBar = styled.div`
-  grid-column: 1 / -1; 
-  margin-top: 10px; 
-  display: flex; 
+
+const ButtonContainer = styled.div`
+  display: flex;
   justify-content: center;
+  gap: 10px;
 `;
 
-const SubmitBtn = styled.button`
-  width: 320px; 
-  padding: 16px 20px; 
-  font-size: 20px; 
-  font-weight: 800;
-  border-radius: 14px; 
-  border: none; 
-  background: ${colors.brand}; 
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(47,185,117,0.28); 
+const SubmitButton = styled.button`
+  padding: 15px;
+  background-color: #27D580;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1em;
   cursor: pointer;
-  transition: 140ms ease;
-  &:hover { background: ${colors.brandDark}; }
+  transition: background-color 0.3s ease;
+  flex: 1;
+  width: 100px; /* 버튼 너비 조정 */
+
+  &:hover {
+    background-color: #23C172;
+  }
+`;
+
+const CancelButton = styled.button`
+  padding: 15px;
+  background-color: #F7F7F7;
+  color: #B3B3B3;
+  border: none;
+  border-radius: 5px;
+  flex: 1;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100px; /* 버튼 너비 조정 */
+
+  &:hover {
+    background-color: #EDEDED;
+  }
 `;
