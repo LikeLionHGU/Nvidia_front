@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import CommonDetailModal from "../components/common/commonDetailModal";
 import DetailPlacePage from "./DetailPage";
 import LocationSearchModal from "./LocationSearchModal";
+import axios from "axios";
 
 // import { getRecommendList, searchPlacesByKeyword } from "../apis/MainPageAPI";
 import "./../styles/global.css";
@@ -11,6 +11,7 @@ import MapWrapper from "../components/specific/MapWrapper";
 import FormComponent from "../components/specific/FormComponent";
 import SearchResultContainer from "../components/specific/SearchResultContainer";
 import RecommendationBox from "../components/specific/RecommendationBox";
+import MapComponent from "../apis/MapComponent";
 
 function MainPage() {
   const [markers, setMarkers] = useState([]); // 기본 장소 마커들
@@ -85,49 +86,76 @@ function MainPage() {
   };
 
   // 1. 초기 로딩 시 추천 목록(더미 데이터) 가져오고, 마커와 주소 설정
-  useEffect(() => {
-    // API 연동 전까지 사용할 더미 데이터
-    const dummyRecommendList = [
-      {
-        roomId: 1,
-        photo: "https://pbs.twimg.com/media/GUyPp8eaYAAhzbz.jpg",
-        address: { latitude: "37.4782", longitude: "127.0282" },
-        maxPeople: 4,
-        phoneNumber: "010-1234-5678",
-        price: 50000,
-        roadName: "서울특별시 서초구 서초중앙로 188",
-      },
-      {
-        roomId: 2,
-        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-        address: { latitude: "37.4592", longitude: "127.1292" },
-        maxPeople: 2,
-        phoneNumber: "010-8765-4321",
-        price: 30000,
-        roadName: "서울특별시 강남구 개포로 623",
-      },
-      {
-        roomId: 3,
-        photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
-        address: { latitude: "37.3947611", longitude: "127.1111361" },
-        maxPeople: 3,
-        phoneNumber: "010-8765-2321",
-        price: 35000,
-        roadName: "경기도 성남시 분당구 판교역로 160 ",
-      },
-    ];
+  // 기존 "1. 초기 로딩 시 추천 목록..." useEffect 를 아래로 교체
+useEffect(() => {
+  // 더미 데이터 (백업)
+  const fallback = [
+    {
+      roomId: 1,
+      photo: "https://picsum.photos/seed/spaceon1/640/480",
+      address: { roadName: "서울 강남구 테헤란로 123", latitude: 37.498, longitude: 127.028 },
+      maxPeople: 4,
+      phoneNumber: "010-1234-5678",
+      price: 30000,
+    },
+    {
+      roomId: 2,
+      photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
+      address: { roadName: "서울 서초구 서초대로 77", latitude: 37.496, longitude: 127.024 },
+      maxPeople: 2,
+      phoneNumber: "010-8765-4321",
+      price: 45000,
+    },
+    {
+      roomId: 3,
+      photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
+      address: { roadName: "성남 분당구 판교역로 160", latitude: 37.3947611, longitude: 127.1111361 },
+      maxPeople: 3,
+      phoneNumber: "010-2222-3333",
+      price: 35000,
+    },
+  ];
 
-    setRecommendList(dummyRecommendList);
-
-    // 더미 데이터 기반으로 지도에 표시할 마커 생성
-    const newMarkers = dummyRecommendList.map((item) => ({
-      position: { lat: parseFloat(item.address.latitude), lng: parseFloat(item.address.longitude) },
+  const applyData = (list) => {
+    setRecommendList(list);
+    const newMarkers = (list || []).map((item) => ({
+      position: {
+        lat: Number(item.address?.latitude),
+        lng: Number(item.address?.longitude),
+      },
       title: `장소 ${item.roomId}`,
-      id: item.roomId, // Pass roomId as id
-      price: item.price.toLocaleString(), // Pass price
+      id: item.roomId,
+      price: Number(item.price).toLocaleString(),
     }));
     setMarkers(newMarkers);
-  }, []); // 컴포넌트 마운트 시 1회만 실행
+  };
+
+  const fetchRecommend = async () => {
+    try {
+      const params =
+        currentLocation
+          ? { latitude: currentLocation.lat, longitude: currentLocation.lng }
+          : undefined;
+
+      // 프록시(vite)에서 /spaceon -> http(s)://janghong.asia/spaceon 으로 전달된다고 가정
+      const { data } = await axios.get("/spaceon/main", { params });
+
+      // 응답 스키마: { recommendList: [...] }
+      const list = Array.isArray(data?.recommendList) ? data.recommendList : [];
+      if (list.length === 0) {
+        console.warn("recommendList가 비어 있어 더미 데이터로 대체합니다.");
+        applyData(fallback);
+      } else {
+        applyData(list);
+      }
+    } catch (err) {
+      console.error("추천 목록 호출 실패, 더미 데이터 사용:", err);
+      applyData(fallback);
+    }
+  };
+
+  fetchRecommend();
+}, [currentLocation]); // 현재 위치가 바뀌면 다시 호출
 
   const handleRecommendClick = () => {
     // NOTE: 실제 추천 로직은 여기서 처리해야 합니다.
@@ -186,9 +214,7 @@ function MainPage() {
       <RecommendationBox recommendList={recommendList} isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen} onCardClick={moveToDetailPage} />
 
       {isDetailModalOpen && (
-        <CommonDetailModal title="장소 상세 정보" onClose={closeDetailModal}>
           <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
-        </CommonDetailModal>
       )}
 
       {isSearchLocationModalOpen &&(
