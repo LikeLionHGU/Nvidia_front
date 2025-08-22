@@ -1,9 +1,10 @@
 // vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import svgr from 'vite-plugin-svgr';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), svgr()],
   server: {
     proxy: {
       // Reverse Geocode
@@ -26,7 +27,7 @@ export default defineConfig({
       '/spaceon': {
         target: 'http://janghong.asia',   // 서버가 https면 이걸로, http면 http로 변경
         changeOrigin: true,
-        secure: true,                      // self-signed면 false, 정식 인증서면 true
+        secure: false,                      // http 통신이므로 false로 설정
         rewrite: (path) => path.replace(/^\/spaceon/, ''),
       },
     },

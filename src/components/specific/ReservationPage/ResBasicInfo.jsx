@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import SelectionSummary from "./ResSelectionSummary";
 
 const colors = {
   brand: "#2FB975",
@@ -23,84 +24,65 @@ export default function ResBasicInfo({
   numPeople, setNumPeople,
   price, setPrice,
   memo, setMemo,
-  selectedTags, // Changed from chipList
-  onConfirmSelection, // New prop
+  selectedTags,
+  onConfirmSelection,
   optionList, setOptionList,
   formWidth = "100%",
-  columns = 2
+  columns = 2,
+  slotsByDate,
+  placeData
 }) {
-
-  // 기본값 4명
   useEffect(() => {
     const n = Number(numPeople);
     if (!Number.isFinite(n) || n <= 0) setNumPeople(4);
   }, [numPeople, setNumPeople]);
 
   const decPeople = () => {
-    setNumPeople(prev => {
-      const n = Math.max(0, Number(prev || 0) - 1);
-      return n;
-    });
+    setNumPeople(prev => Math.max(0, Number(prev || 0) - 1));
   };
   const incPeople = () => {
-    setNumPeople(prev => {
-      const n = Math.min(99, Number(prev || 0) + 1);
-      return n;
-    });
+    setNumPeople(prev => Math.min(99, Number(prev || 0) + 1));
   };
 
   const people = Number(numPeople || 0);
 
+  // 선택된 총 시간(H)
+  const totalSlots = Array.from(slotsByDate.values()).reduce((acc, s) => acc + s.size, 0);
+  const totalHours = totalSlots * 0.5;
+
+  // 단가(시간당)과 총 금액
+  const unitPrice = Number(placeData?.price || 0);
+  const totalPrice = Math.max(0, totalHours * unitPrice);
+
   return (
     <InputField $formWidth={formWidth}>
-      <Grid $columns={columns}>
-        {/* 호스트명 */}
-        <Field>
-          <Label htmlFor="placeName">호스트명</Label>
+      <Divider />
+
+      <Title>에약 정보</Title>
+
+      <TopGrid>
+        <Field style={{ gridArea: 'name' }}>
+          <Label htmlFor="rsvName">예약자 성함</Label>
           <Input
-            id="placeName"
-            placeholder="호스트명을 입력해주세요."
+            id="rsvName"
+            placeholder="예약자 성함을 작성해주세요."
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </Field>
 
-        {/* 주소 */}
-        <Field>
-          <Label htmlFor="address">주소</Label>
+        <Field style={{ gridArea: 'phone' }}>
+          <Label htmlFor="rsvPhone">전화번호</Label>
           <Input
-            id="address"
-            placeholder="주소를 입력해주세요."
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </Field>
-
-        {/* 계좌번호 */}
-        <Field>
-          <Label htmlFor="account">계좌번호</Label>
-          <Input
-            id="account"
-            placeholder="계좌번호를 입력해주세요. (은행 포함)"
-            value={account}
-            onChange={(e) => setAccount(e.target.value)}
-          />
-        </Field>
-
-        {/* 전화번호 */}
-        <Field>
-          <Label htmlFor="phoneNumber">전화번호</Label>
-          <Input
-            id="phoneNumber"
-            placeholder="전화번호를 입력해주세요."
+            id="rsvPhone"
+            placeholder="전화번호를 입력해주세요. ( - 제외)"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </Field>
 
-        {/* 최대 가능 인원 – 스텝퍼 */}
-        <Field>
-          <Label>사용 인원</Label>
+        <Field style={{ gridArea: 'people' }}>
+          <Label>최대 가능 인원</Label>
           <StepperBox>
             <RoundBtn type="button" onClick={decPeople} aria-label="인원 감소">−</RoundBtn>
             <CountText><strong>{people}</strong>명</CountText>
@@ -108,40 +90,54 @@ export default function ResBasicInfo({
           </StepperBox>
         </Field>
 
-        {/* 금액 */}
-        <Field>
-          <Label htmlFor="price">금액</Label>
-          <Input
-            id="price"
-            type="number"
-            placeholder="30분 당 금액을 작성해주세요."
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            min="0"
-          />
-        </Field>
-
-        {/* 옵션 */}
-        <Field>
-          <Label>옵션</Label>
-            <TextArea
-              placeholder="예: 에어컨, 와이파이, 주차…"
-              value={optionList}
-              onChange={(e) => setOptionList(e.target.value)}
+        <TallField>
+          <Label>
+            선택한 총 시간
+            <BigSummary>{totalHours}H</BigSummary>
+          </Label>
+          <SummaryWrapper>
+            <SelectionSummary
+              placeName={placeData?.name}
+              slotsByDate={slotsByDate}
+              price={placeData?.price}
             />
-        </Field>
+          </SummaryWrapper>
+        </TallField>
+      </TopGrid>
 
-        {/* 메모 */}
-        <Field>
-          <Label htmlFor="memo">주의사항</Label>
-          <TextArea
-            id="memo"
-            placeholder="하실 말씀이 있으시다면 편하게 적어주세요."
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-          />
+      <Grid $columns={columns}>
+        <Field $span={columns}>
+          <CheckboxLabel>
+            <Checkbox type="checkbox" id="agreement" required />
+            <span>
+              예약 서비스 이용을 위한 <strong>약관</strong>, 
+              <strong> 개인정보 수집 및 제3자 제공 규정</strong>을 확인하였으며
+              이에 동의합니다.
+            </span>
+          </CheckboxLabel>
         </Field>
       </Grid>
+
+      {/* ▼ 요금 세부 정보 */}
+      <BreakLine />
+
+      <PriceSection>
+        <PriceHeader>요금 세부 정보</PriceHeader>
+
+        <PriceRow>
+          <PriceFormula>
+            <strong>{totalHours || 0}h</strong>
+            <span>&nbsp;X&nbsp;</span>
+            <strong>{unitPrice.toLocaleString('ko-KR')}</strong>
+            <span>&nbsp;₩</span>
+          </PriceFormula>
+
+          <TotalPriceWrap>
+            <TotalPrice>{totalPrice.toLocaleString('ko-KR')}</TotalPrice>
+            <TotalUnit>원</TotalUnit>
+          </TotalPriceWrap>
+        </PriceRow>
+      </PriceSection>
     </InputField>
   );
 }
@@ -149,23 +145,60 @@ export default function ResBasicInfo({
 /* ===================== styles ===================== */
 const InputField = styled.div`
   border-radius: 8px;
-  background: #FBFBFB;
-  padding: 18px 12px;
   width: ${({ $formWidth }) => $formWidth};
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
   margin-top: 1.5vw;
+  font-family: "Pretendard";
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(${({ $columns }) => $columns}, minmax(0, 1fr));
-  gap: 12px;
+  gap: 15px;
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
   }
+`;
+
+const TopGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "name   total"
+    "phone  total"
+    "people total";
+  gap: 12px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "name"
+      "phone"
+      "people"
+      "total";
+  }
+`;
+
+const TallField = styled.div`
+  grid-area: total;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 0;
+`;
+
+const BigSummary = styled.span`
+  font-size: 18px;
+  font-weight: 900;
+  color: ${colors.brandDark};
+  line-height: 1.1;
+  margin-left: 10px;
 `;
 
 const Field = styled.div`
@@ -176,11 +209,18 @@ const Field = styled.div`
   min-width: 0;
 `;
 
-const Label = styled.label`
-  font-size: 1vw;
+const Title = styled.label`
+  font-size: 1.5vw;
   font-weight: 700;
   color: ${colors.text};
   margin-top: 3px;
+`;
+
+const Label = styled.label`
+  font-size: 1vw;
+  font-weight: 600;
+  color: ${colors.text};
+  margin: 15px 0;
 `;
 
 const Input = styled.input`
@@ -229,19 +269,6 @@ const TextArea = styled.textarea`
   }
 `;
 
-const GhostButton = styled.button`
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid ${colors.line};
-  background: ${colors.surface};
-  font-weight: 600;
-  color: ${colors.text};
-  cursor: pointer;
-  &:hover { background: ${colors.surfaceSoft}; }
-`;
-const SmallButton = styled(GhostButton)`padding: 8px 10px;`;
-const Hint = styled.div`font-size: 12px; color: ${colors.sub}; margin-top: 6px;`;
-
 /* 인원 스텝퍼 */
 const StepperBox = styled.div`
   width: 100%;
@@ -277,5 +304,99 @@ const RoundBtn = styled.button`
 const CountText = styled.div`
   font-size: 18px;
   font-weight: 800;
+  color: ${colors.ink};
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9vw;
+  font-weight: 400;
+  line-height: 1.5;
+  color: ${colors.text};
+  cursor: pointer;
+  margin-top: 25px;
+
+  span {
+    flex: 1;
+    word-break: keep-all;
+  }
+  strong {
+    color: ${colors.brandDark};
+  }
+`;
+
+const Checkbox = styled.input`
+  margin-top: 3px;
+  accent-color: ${colors.brand};
+  cursor: pointer;
+`;
+
+const SummaryWrapper = styled.div`
+  width: 100%;
+  overflow-y: hidden;
+  flex-shrink: 0;
+`;
+
+const Divider = styled.div`
+  width: 100%;
+  height: 1px;
+  background-color: #efefef;
+  margin-bottom: 2.5vh;
+`;
+
+/* --- Price Section --- */
+const BreakLine = styled.div`
+  width: 100%;
+  height: 1px;
+  background-color: #efefef;
+  margin: 12px 0 8px;
+`;
+
+const PriceSection = styled.div`
+  width: 100%;
+  box-sizing: border-box;
+  margin: 15px 0;
+`;
+
+const PriceHeader = styled.div`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: ${colors.ink};
+  margin-bottom: 10px;
+`;
+
+const PriceRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+`;
+
+const PriceFormula = styled.div`
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: ${colors.ink};
+  letter-spacing: 0.2px;
+
+  strong { font-weight: 600; }
+`;
+
+const TotalPriceWrap = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+`;
+
+const TotalPrice = styled.div`
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: ${colors.ink};
+  line-height: 1;
+`;
+
+const TotalUnit = styled.div`
+  font-size: 1.2rem;
+  font-weight: 600;
   color: ${colors.ink};
 `;

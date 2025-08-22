@@ -1,7 +1,10 @@
-import React from 'react';
-import styled from 'styled-components';
+// src/components/specific/ReservationPage/ResSelectionSummary.jsx
+import React from "react";
+import styled from "styled-components";
+import { format, parseISO } from "date-fns";
 
 const colors = {
+  brand: "#2FB975",
   brandDark: "#269964",
   brandSoft: "#EAF9F2",
   sub: "#6B7280",
@@ -10,120 +13,151 @@ const colors = {
   text: "#374151",
 };
 
-const labelForSlot = (slot) => {
-  const idx = slot - 1, startMin = idx * 30, endMin = startMin + 30;
-  const sh = String(Math.floor(startMin / 60)).padStart(2, "0");
-  const sm = String(startMin % 60).padStart(2, "0");
-  const eh = String(Math.floor(endMin / 60)).padStart(2, "0");
-  const em = String(endMin % 60).padStart(2, "0");
+/** 단일 슬롯(1~48)을 HH:mm~HH:mm 라벨로 변환 (끝은 다음 슬롯 시작시간) */
+const slotToRangeLabel = (startSlot, endSlot) => {
+  // endSlot은 포함 구간의 마지막 슬롯 번호 (1~48)
+  // 실제 표시 종료 시각은 endSlot의 다음 슬롯 시작시각
+  const sIdx = startSlot - 1;
+  const eIdx = endSlot; // 다음 슬롯 시작
+
+  const sMin = sIdx * 30;
+  const eMin = eIdx * 30;
+
+  const sh = String(Math.floor(sMin / 60)).padStart(2, "0");
+  const sm = String(sMin % 60).padStart(2, "0");
+  const eh = String(Math.floor(eMin / 60)).padStart(2, "0");
+  const em = String(eMin % 60).padStart(2, "0");
+
   return `${sh}:${sm}~${eh}:${em}`;
 };
 
-const compressSlots = (slotsArr) => {
-  if (slotsArr.length === 0) return [];
-  const arr = [...slotsArr].sort((a, b) => a - b);
+/** 같은 날의 슬롯 배열(숫자)을 연속 구간으로 병합 */
+const mergeContinuousSlots = (slots = []) => {
+  if (!slots.length) return [];
+  const sorted = [...slots].sort((a, b) => a - b);
+
+  // 풀타임(1~48)인 경우 바로 리턴
+  if (sorted.length === 48 && sorted[0] === 1 && sorted[47] === 48) {
+    return [{ full: true }];
+  }
+
   const ranges = [];
-  let start = arr[0], prev = arr[0];
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] === prev + 1) {
-      prev = arr[i];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const cur = sorted[i];
+    if (cur === prev + 1) {
+      // 연속
+      prev = cur;
     } else {
-      ranges.push([start, prev]);
-      start = prev = arr[i];
+      // 끊김 → 구간 확정
+      ranges.push({ start, end: prev });
+      start = cur;
+      prev = cur;
     }
   }
-  ranges.push([start, prev]);
-  return ranges;
+  // 마지막 구간
+  ranges.push({ start, end: prev });
+
+  return ranges.map(({ start, end }) => ({
+    label: slotToRangeLabel(start, end),
+  }));
 };
 
-export default function ResSelectionSummary({ placeName, selectedDate, selectedSlots, price }) {
-  const slotsArray = Array.from(selectedSlots);
-  const compressed = compressSlots(slotsArray);
-  const totalHours = slotsArray.length * 0.5;
-  const totalPrice = totalHours * price;
+export default function ResSelectionSummary({ slotsByDate }) {
+  // slotsByDate: Map<"yyyy-MM-dd", Set<number>>
+  const rows = [];
+
+  if (slotsByDate instanceof Map) {
+    const dateKeys = Array.from(slotsByDate.keys()).sort();
+    for (const dateKey of dateKeys) {
+      const set = slotsByDate.get(dateKey);
+      if (!set || set.size === 0) continue;
+
+      const dayLabel = format(parseISO(dateKey), "yyyy/MM/dd");
+      const merged = mergeContinuousSlots(Array.from(set));
+
+      if (merged.length === 1 && merged[0].full) {
+        rows.push({ date: dayLabel, text: "FULL-TIME", full: true });
+      } else {
+        for (const r of merged) {
+          rows.push({ date: dayLabel, text: r.label, full: false });
+        }
+      }
+    }
+  }
 
   return (
-    <SummaryContainer>
-      <SectionLabel>예약 요약</SectionLabel>
-      {!selectedDate ? (
-        <Hint>날짜와 시간을 선택하면 요약이 표시됩니다.</Hint>
-      ) : (
-        <DetailsGrid>
-          <Label>공간</Label>
-          <Value>{placeName}</Value>
-
-          <Label>날짜</Label>
-          <Value>{selectedDate}</Value>
-
-          <Label>시간</Label>
-          <Value>
-            {compressed.length > 0 ? 
-              compressed.map(([start, end], i) => (
-                <div key={i}>
-                  {labelForSlot(start).split('~')[0]} - {labelForSlot(end).split('~')[1]}
-                </div>
-              )) : '시간을 선택해주세요.'
-            }
-          </Value>
-
-          <Label>총 시간</Label>
-          <Value>{totalHours} 시간</Value>
-
-          <Divider />
-
-          <Label>총 금액</Label>
-          <TotalPrice>{totalPrice.toLocaleString()} 원</TotalPrice>
-        </DetailsGrid>
-      )}
-    </SummaryContainer>
+    <Box>
+      <List aria-label="예약 요약 목록">
+        {rows.length === 0 ? (
+          <Empty>날짜와 시간을 선택하면 요약이 표시됩니다.</Empty>
+        ) : (
+          rows.map((r, i) => (
+            <Item key={`${r.date}-${i}`}>
+              <DateText>{r.date}</DateText>
+              <TimeText $full={r.full}>{r.full ? "FULL-TIME" : r.text}</TimeText>
+            </Item>
+          ))
+        )}
+      </List>
+    </Box>
   );
 }
 
-const SummaryContainer = styled.div`
+/* ===== styles ===== */
+
+const BOX_WIDTH = 230;     //  오른쪽 요약 박스 고정 폭
+const BOX_HEIGHT = 240;    //  박스 높이 제한 (내부 스크롤)
+
+const Box = styled.div`
+  width: 100%;
+`;
+
+const List = styled.div`
+  height: 31vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: ${colors.surface};
   border: 1px solid ${colors.line};
-  border-radius: 8px;
-  padding: 16px;
-  background-color: ${colors.brandSoft};
+  border-radius: 10px;
+  padding: 8px 10px;
 `;
 
-const SectionLabel = styled.div`
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: ${colors.text};
-  font-size: 1.1rem;
-`;
-
-const Hint = styled.div`
-  font-size: 0.9rem;
+const Empty = styled.div`
+  font-size: 12.5px;
   color: ${colors.sub};
+  padding: 6px 2px;
 `;
 
-const DetailsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 12px;
+const Item = styled.div`
+  display: flex;
+  gap: 10px;
   align-items: center;
+  padding: 9px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  background: #f7f7f7;
+
+  &:nth-child(odd) {
+    background: #f9fafb;
+  }
 `;
 
-const Label = styled.span`
-  font-weight: 600;
-  color: ${colors.sub};
-`;
-
-const Value = styled.span`
-  font-weight: 600;
-  color: ${colors.text};
-`;
-
-const TotalPrice = styled(Value)`
-  font-size: 1.2rem;
+const DateText = styled.span`
+  flex: 0 0 auto;
   font-weight: 700;
-  color: ${colors.brandDark};
+  color: ${colors.text};
+  font-size: 12px;
 `;
 
-const Divider = styled.hr`
-  grid-column: 1 / -1;
-  border: none;
-  border-top: 1px solid ${colors.line};
-  margin: 4px 0;
+const TimeText = styled.span`
+  flex: 1 1 auto;
+  font-weight: 800;
+  font-size: 13px;
+  color: ${({ $full }) => ($full ? colors.brandDark : colors.brand)};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;

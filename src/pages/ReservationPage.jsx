@@ -1,12 +1,25 @@
+// src/pages/ReservationPage.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { format, getYear, getMonth, getDate, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, addDays } from "date-fns";
+import {
+  format,
+  getYear,
+  getMonth,
+  getDate,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  addDays,
+} from "date-fns";
 
 import BasicInfo from "../components/specific/ReservationPage/ResBasicInfo";
 import Calendar from "../components/specific/ReservationPage/ResCalendar";
 import TimeTable from "../components/specific/ReservationPage/ResTimeTable";
+import Thumbnail from "../components/specific/ReservationPage/Thumbnail";
 
 const colors = {
   brand: "#2FB975",
@@ -39,23 +52,18 @@ export default function ReservationPage() {
 
   const today = new Date();
 
-  const handleCancel = () => {
-    navigate('/');
-  };
+  const handleCancel = () => navigate("/");
 
   const toggleDate = (d) => {
     const key = format(d, "yyyy-MM-dd");
     setSelectedDates((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
-  
+
   const selectAllThisMonth = () => {
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
@@ -64,9 +72,7 @@ export default function ReservationPage() {
     const all = new Set();
     let cur = gridStart;
     while (cur <= gridEnd) {
-      if (isSameMonth(cur, monthStart)) {
-        all.add(format(cur, "yyyy-MM-dd"));
-      }
+      if (isSameMonth(cur, monthStart)) all.add(format(cur, "yyyy-MM-dd"));
       cur = addDays(cur, 1);
     }
     setSelectedDates(all);
@@ -74,17 +80,18 @@ export default function ReservationPage() {
 
   /* ---------- 날짜별 슬롯 상태 ---------- */
   const setSlotState = (dateKey, slot, on) => {
-    setSlotsByDate(prev => {
+    setSlotsByDate((prev) => {
       const next = new Map(prev);
       const set = new Set(next.get(dateKey) || []);
-      if (on) set.add(slot); else set.delete(slot);
+      if (on) set.add(slot);
+      else set.delete(slot);
       next.set(dateKey, set);
       return next;
     });
   };
 
   const setAllForDate = (dateKey, on) => {
-    setSlotsByDate(prev => {
+    setSlotsByDate((prev) => {
       const next = new Map(prev);
       const availableSlots = availableSlotsByDate.get(dateKey) || [];
       const slotsToSet = on ? availableSlots : [];
@@ -133,70 +140,82 @@ export default function ReservationPage() {
     setSlotState(dateKey, slot, dragMode === "add");
   };
 
-  // 1. 페이지 진입 시 장소 기본 정보 조회
+  /* ========== 1) 장소 기본 정보 (POST) ========== */
   useEffect(() => {
-    const fetchAvailableDays = async () => {
+    const fetchPlace = async () => {
       try {
-        setLoading(prev => ({ ...prev, days: true }));
-  
-        // 현재 보고 있는 달(또는 원하는 달)
-        const month = (new Date().getMonth() + 1); // 1~12
-  
-        const { data } = await axios.post(
-          `/spaceon/reservation/3`, // 테스트용
-          // `http://janghong.asia/reservation/available/days/${roomId}`,
-        );
-  
-        // API 응답 예: { "days": [20, 21] }
-        setAvailableDays(
-          (data?.days ?? []).map(d =>
-            // 필요하다면 YYYY-MM-DD 형태로 변환
-            // 예시는 올해/이번달 기준
-            format(new Date(new Date().getFullYear(), month - 1, d), "yyyy-MM-dd")
-          )
-        );
-  
-        console.log("available days:", data);
+        setLoading((p) => ({ ...p, page: true }));
+        const { data } = await axios.post(`/spaceon/reservation/${roomId}`);
+        setPlaceData(data);
       } catch (err) {
+        console.error("Failed to fetch place data:", err);
         setError(err);
-        console.error("Failed to fetch available days:", err);
-        setAvailableDays([]);
+        // 더미 폴백
+        const dummy = {
+          roomId: Number(roomId),
+          photoList: [
+            "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1200&auto=format&fit=crop",
+          ],
+          address: {
+            roadName: "서울특별시 강남구 테헤란로 521",
+            latitude: 37.5061,
+            longitude: 127.0537,
+          },
+          maxPeople: 6,
+          phoneNumber: "010-1234-5678",
+          price: 40000,
+          account: "신한 110-123-456789",
+          chipList: ["WIFI", "주차 가능"],
+          optionList: ["TV", "화이트보드"],
+        };
+        setPlaceData(dummy);
       } finally {
-        setLoading(prev => ({ ...prev, days: false }));
+        setLoading((p) => ({ ...p, page: false }));
       }
     };
-  
-    if (roomId) fetchAvailableDays();
+    if (roomId) fetchPlace();
   }, [roomId]);
 
-  // 2. 월(month) 변경 시 예약 가능한 날짜 조회
+  /* ========== 2) 월 변경 시 가능 날짜 (POST body:{month}) ========== */
   useEffect(() => {
     const fetchAvailableDays = async () => {
       try {
-        setLoading(prev => ({ ...prev, days: true }));
+        setLoading((p) => ({ ...p, days: true }));
         const year = getYear(currentMonth);
         const month = getMonth(currentMonth) + 1;
-        const response = await axios.post(`/api/reservation/available/days/${roomId}`, {
-          params: { month },
-        });
-        const formattedDates = (response.data.availableDay || []).map(day => 
+
+        const { data } = await axios.post(
+          `/spaceon/reservation/available/days/${roomId}`,
+          { month }
+        );
+
+        // 서버 스펙: { availableDay: Set<int, ...> }
+        const list = Array.from(data?.availableDay ?? []);
+        const formatted = list.map((day) =>
           format(new Date(year, month - 1, day), "yyyy-MM-dd")
         );
-        setAvailableDays(formattedDates);
+        setAvailableDays(formatted);
+        // 월이 바뀌면 해당 월 외의 선택은 초기화(선택 유지 원하면 제거)
+        setSelectedDates((prev) => {
+          const next = new Set(
+            Array.from(prev).filter((d) => getMonth(new Date(d)) + 1 === month)
+          );
+          return next;
+        });
       } catch (err) {
         console.error("Failed to fetch available days:", err);
         setAvailableDays([]);
       } finally {
-        setLoading(prev => ({ ...prev, days: false }));
+        setLoading((p) => ({ ...p, days: false }));
       }
     };
     if (roomId) fetchAvailableDays();
   }, [roomId, currentMonth]);
 
-  // 3. 날짜 선택 시 예약 가능한 시간 조회
+  /* ========== 3) 날짜 선택 시 가능 슬롯 (POST body:{month,day}) ========== */
   useEffect(() => {
     const fetchSlotsForSelectedDates = async () => {
-      setLoading(prev => ({ ...prev, slots: true }));
+      setLoading((p) => ({ ...p, slots: true }));
       const newSlotsByDate = new Map(availableSlotsByDate);
       let needsUpdate = false;
 
@@ -206,11 +225,15 @@ export default function ReservationPage() {
             const dateObj = new Date(dateKey);
             const month = getMonth(dateObj) + 1;
             const day = getDate(dateObj);
-            const response = await axios.post(`/api/reservation/available/timeslots/${roomId}`, {
-              params: { month, day },
-            });
-            newSlotsByDate.set(dateKey, response.data.schedule || []);
+
+            const resp = await axios.post(
+              `/spaceon/reservation/available/timeslots/${roomId}`,
+              { month, day }
+            );
+            const schedule = Array.from(resp?.data?.schedule ?? []);
+            newSlotsByDate.set(dateKey, schedule);
             needsUpdate = true;
+            console.log("slots for", dateKey, "=>", schedule);
           } catch (err) {
             console.error(`Failed to fetch slots for ${dateKey}:`, err);
             newSlotsByDate.set(dateKey, []); // 에러 시 빈 배열
@@ -218,31 +241,33 @@ export default function ReservationPage() {
           }
         }
       }
-      if(needsUpdate) {
-        setAvailableSlotsByDate(newSlotsByDate);
-      }
-      setLoading(prev => ({ ...prev, slots: false }));
+      if (needsUpdate) setAvailableSlotsByDate(newSlotsByDate);
+      setLoading((p) => ({ ...p, slots: false }));
     };
 
     if (roomId && selectedDates.size > 0) {
       fetchSlotsForSelectedDates();
     }
-  }, [roomId, selectedDates]);
+  }, [roomId, selectedDates]); // eslint-disable-line
 
-
-  // 4. 예약 완료 처리
+  /* ========== 4) 예약 완료 (POST body: reservedScheduleList[]) ========== */
   const handleReservation = async () => {
     if (!name || !phoneNumber) {
       alert("예약자 이름과 연락처를 입력해주세요.");
       return;
     }
-    
+
+    // spec: reservedScheduleList : List[{ name, phoneNumber, reservation:{ date, schedule:int[] } }]
     const reservedScheduleList = [];
     for (const [date, slots] of slotsByDate.entries()) {
       if (slots.size > 0) {
         reservedScheduleList.push({
-          date: date,
-          schedule: Array.from(slots).sort((a, b) => a - b),
+          name,
+          phoneNumber,
+          reservation: {
+            date, // "yyyy-MM-dd"
+            schedule: Array.from(slots).sort((a, b) => a - b),
+          },
         });
       }
     }
@@ -251,18 +276,13 @@ export default function ReservationPage() {
       alert("날짜와 시간을 선택해주세요.");
       return;
     }
-  
-    const payload = {
-      name,
-      phoneNumber,
-      numPeople: Number(numPeople),
-      reservedScheduleList,
-    };
-  
+
     try {
-      await axios.post(`/api/reservation/done/${roomId}`, payload);
+      await axios.post(`/spaceon/reservation/done/${roomId}`, {
+        reservedScheduleList,
+      });
       alert("예약이 완료되었습니다!");
-      navigate('/');
+      navigate("/");
     } catch (err) {
       console.error("Reservation failed:", err);
       alert(`예약에 실패했습니다: ${err.response?.data?.message || err.message}`);
@@ -277,28 +297,36 @@ export default function ReservationPage() {
         <FormWrap>
           <InfoContainer>
             <TopWrapper>
-              <Title>호스트이신가요? 나의 공실을 등록해보세요!</Title>
+              <Title>오늘의 공간을 찾아보세요</Title>
             </TopWrapper>
             <Subtitle>간단한 조건 입력으로 맞춤 공실을 찾아보세요</Subtitle>
           </InfoContainer>
 
-          <Divider/>
+          <Divider />
 
-          <BasicInfo 
+          <Thumbnail placeData={placeData} />
+
+          <BasicInfo
             setName={setName}
             setPhoneNumber={setPhoneNumber}
-            numPeople={numPeople} setNumPeople={setNumPeople}
+            numPeople={numPeople}
+            setNumPeople={setNumPeople}
             placeData={placeData}
+            slotsByDate={slotsByDate}
           />
 
           <ButtonContainer>
-            <CancelButton type="button" onClick={handleCancel}>취소</CancelButton>
-            <SubmitButton type="submit" onClick={handleReservation}>등록</SubmitButton>
+            <CancelButton type="button" onClick={handleCancel}>
+              취소
+            </CancelButton>
+            <SubmitButton type="button" onClick={handleReservation}>
+              등록
+            </SubmitButton>
           </ButtonContainer>
         </FormWrap>
 
         <RightCol>
-          <Calendar 
+          <Calendar
             currentMonth={currentMonth}
             setCurrentMonth={setCurrentMonth}
             today={today}
@@ -307,7 +335,7 @@ export default function ReservationPage() {
             selectAllThisMonth={selectAllThisMonth}
             availableDays={availableDays}
           />
-          <TimeTable 
+          <TimeTable
             selectedDateArr={selectedDateArr}
             availableSlotsByDate={availableSlotsByDate}
             slotsByDate={slotsByDate}
@@ -320,6 +348,7 @@ export default function ReservationPage() {
     </>
   );
 }
+
 /* ========= styles ========= */
 const Page = styled.div`
   display: grid;
@@ -327,7 +356,7 @@ const Page = styled.div`
   gap: 20px;
   padding: 20px;
   margin: 0 auto;
-  font-family: 'Pretendard';
+  font-family: "Pretendard";
   align-items: stretch;
 `;
 
@@ -343,7 +372,7 @@ const Panel = styled.div`
   border-radius: 8px;
   padding: 18px;
   border: 1px solid ${colors.line};
-  box-shadow: 0 6px 22px rgba(0,0,0,0.05);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.05);
 `;
 
 const FormWrap = styled(Panel)`
@@ -352,7 +381,7 @@ const FormWrap = styled(Panel)`
   gap: 14px;
   height: fit-content;
   padding: 24px;
-  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.1);
 `;
 
 const InfoContainer = styled.div`
@@ -360,7 +389,9 @@ const InfoContainer = styled.div`
 `;
 
 const TopWrapper = styled.div`
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.98vh;
 `;
 
@@ -375,30 +406,46 @@ const Subtitle = styled.div`
 `;
 
 const Divider = styled.div`
-  width: 100%; height: 1px; background-color: #efefef; margin-bottom: 2.98vh;
+  width: 100%;
+  height: 1px;
+  background-color: #efefef;
+  margin-bottom: 1vh;
 `;
 
 const ButtonContainer = styled.div`
-  display: flex; justify-content: center; gap: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 `;
 
 const SubmitButton = styled.button`
   padding: 15px;
   background-color: #27D580;
   color: white;
-  border: none; border-radius: 5px;
-  font-size: 1.1em; cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1em;
+  cursor: pointer;
   transition: background-color 0.3s ease;
-  flex: 1; width: 100px;
-  &:hover { background-color: #23C172; }
+  flex: 1;
+  width: 100px;
+  &:hover {
+    background-color: #23c172;
+  }
 `;
 
 const CancelButton = styled.button`
   padding: 15px;
-  background-color: #F7F7F7; color: #B3B3B3;
-  border: none; border-radius: 5px;
-  flex: 1; font-size: 1.1em; cursor: pointer;
+  background-color: #f7f7f7;
+  color: #b3b3b3;
+  border: none;
+  border-radius: 5px;
+  flex: 1;
+  font-size: 1.1em;
+  cursor: pointer;
   transition: background-color 0.3s ease;
   width: 100px;
-  &:hover { background-color: #EDEDED; }
+  &:hover {
+    background-color: #ededed;
+  }
 `;
