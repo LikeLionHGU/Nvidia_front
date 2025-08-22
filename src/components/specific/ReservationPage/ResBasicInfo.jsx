@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import TagSelector from './TagSelector';
 
 const colors = {
   brand: "#2FB975",
@@ -21,7 +20,7 @@ export default function ResBasicInfo({
   phoneNumber, setPhoneNumber,
   address, setAddress,
   account, setAccount,
-  maxPeople, setMaxPeople,
+  numPeople, setNumPeople,
   price, setPrice,
   memo, setMemo,
   selectedTags, // Changed from chipList
@@ -33,29 +32,24 @@ export default function ResBasicInfo({
 
   // 기본값 4명
   useEffect(() => {
-    const n = Number(maxPeople);
-    if (!Number.isFinite(n) || n <= 0) setMaxPeople(4);
-  }, [maxPeople, setMaxPeople]);
+    const n = Number(numPeople);
+    if (!Number.isFinite(n) || n <= 0) setNumPeople(4);
+  }, [numPeople, setNumPeople]);
 
   const decPeople = () => {
-    setMaxPeople(prev => {
+    setNumPeople(prev => {
       const n = Math.max(0, Number(prev || 0) - 1);
       return n;
     });
   };
   const incPeople = () => {
-    setMaxPeople(prev => {
+    setNumPeople(prev => {
       const n = Math.min(99, Number(prev || 0) + 1);
       return n;
     });
   };
 
-  const people = Number(maxPeople || 0);
-
-  const toggleTag = (t) => {
-    // This toggleTag is for removing tags from the displayed pills, not for the modal selection
-    onConfirmSelection(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]));
-  };
+  const people = Number(numPeople || 0);
 
   return (
     <InputField $formWidth={formWidth}>
@@ -104,20 +98,9 @@ export default function ResBasicInfo({
           />
         </Field>
 
-        {/* TAG */}
-        <Field $span={columns}>
-          <Label>나의 공실 TAG</Label>
-          <TagSelector
-            selectedTags={selectedTags}
-            onTagToggle={toggleTag}
-            onConfirmSelection={onConfirmSelection} // Pass the new prop
-            placeholder="공실과 관련된 무드와 목적을 칩으로 나타내보세요!"
-          />
-        </Field>
-
         {/* 최대 가능 인원 – 스텝퍼 */}
         <Field>
-          <Label>최대 가능 인원</Label>
+          <Label>사용 인원</Label>
           <StepperBox>
             <RoundBtn type="button" onClick={decPeople} aria-label="인원 감소">−</RoundBtn>
             <CountText><strong>{people}</strong>명</CountText>

@@ -148,7 +148,7 @@ export default function AddPlacePage() {
 
   /* ---------- 제출 ---------- */
   const onSubmit = async () => {
-    // 필수 입력 필드 검사
+    // 필수값 체크
     if (
       !name || !phoneNumber || !roadName || !account ||
       !maxPeople || !price || chipList.length === 0 ||
@@ -157,8 +157,8 @@ export default function AddPlacePage() {
       alert("필수 입력 항목을 모두 채워주세요. (옵션과 주의사항 제외)");
       return;
     }
-
-    // 선택한 날짜별로 슬롯 인덱스 배열 생성
+  
+    // 날짜별 슬롯 구성
     const enrollmentTimeDto = Array.from(selectedDates)
       .map((dateKey) => {
         const set = slotsByDate.get(dateKey) || new Set();
@@ -166,11 +166,13 @@ export default function AddPlacePage() {
         return { date: dateKey, selectedTimeSlotIndex: sorted };
       })
       .filter((row) => row.selectedTimeSlotIndex.length > 0);
-
-    const fd = new FormData();
-    fd.append("enName", name);
-    fd.append("enPhoneNumber", phoneNumber);
-
+  
+    // 옵션 문자열 → 리스트
+    const optionArray = (optionList || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+  
     // 주소 → 위경도
     let geoData = { roadName, latitude: null, longitude: null };
     try {
@@ -182,36 +184,49 @@ export default function AddPlacePage() {
       alert("올바른 주소를 입력해주세요.");
       return;
     }
+  
+    // ----- 여기부터 서버 스펙에 맞게 FormData 구성 -----
+    // ...생략...
 
-    const optionArray = (optionList || "")
-      .split(",")
-      .map((v) => v.trim())
-      .filter((v) => v.length > 0);
+    // ----- 여기부터 서버 스펙에 맞게 FormData 구성 -----
+    const fd = new FormData();
 
-    // payload
-    fd.append("address", JSON.stringify(geoData));
-    fd.append("account", account);
-    fd.append("maxPeople", parseInt(maxPeople || "0", 10));
-    fd.append("price", parseInt(price || "0", 10));
-    fd.append("memo", memo);
-    fd.append("optionList", JSON.stringify(optionArray));
-    fd.append("chipList", JSON.stringify(chipList));
-    fd.append("enrollmentTimeDto", JSON.stringify(enrollmentTimeDto));
-    photoList.forEach((f) => fd.append("photoList", f));
+    // request JSON은 그대로
+    const requestPayload = {
+      enName: name,
+      enPhoneNumber: phoneNumber,
+      address: {
+        roadName: geoData.roadName,
+        latitude: geoData.latitude,
+        longitude: geoData.longitude,
+      },
+      account,
+      maxPeople: parseInt(maxPeople || "0", 10),
+      price: parseInt(price || "0", 10),
+      memo,
+      optionList: optionArray,
+      chipList,
+      enrollmentTimeDto,
+    };
+    fd.append("request", new Blob([JSON.stringify(requestPayload)], { type: "application/json" }));
 
+    // 이미지: 배열형 키로 전송 (imageFileList[0], imageFileList[1], ...)
+    photoList.forEach((file, idx) => {
+      fd.append(`photo[${idx}]`, file);
+    });
+
+    // 전송
     try {
-      const res = await axios.post("/api/register", fd, {
+      const res = await axios.post("/spaceon/enrollment/done", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log(res.data);
-
-      // ✅ 성공 시 완료 모달 오픈
+      console.log("등록 성공:", res.data);
+  
       const first = photoList[0];
       const url = first ? URL.createObjectURL(first) : null;
-      openSuccess(url);
+      openSuccess(url);              // 성공 모달 열기
     } catch (e) {
-      console.table(Array.from(fd.entries()));
-      console.error(e);
+      console.error("등록 실패:", e);
       alert("등록 실패. 콘솔을 확인하세요.");
     }
   };

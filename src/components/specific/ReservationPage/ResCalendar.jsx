@@ -1,41 +1,35 @@
-
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled, { css } from 'styled-components';
+import ArrowLeft from "../../../assets/icons/ArrowIconLeft.svg";
+import ArrowRight from "../../../assets/icons/ArrowIconRight.svg";
 import {
   format,
   startOfMonth, endOfMonth,
   startOfWeek, endOfWeek,
   addDays, isSameMonth,
   addMonths, subMonths,
-  isSameDay, parseISO
+  isBefore, startOfToday, isSameDay,
+  parseISO
 } from "date-fns";
+import { ko } from "date-fns/locale";
 
 const colors = {
   brand: "#2FB975",
+  brandSofter: "#F5FBF8",
   ink: "#111827",
   text: "#374151",
   sub: "#6B7280",
   line: "#E5E7EB",
   surface: "#FFFFFF",
+  surfaceSoft: "#FAFBFC",
   selectedHover: "#00C66A",
 };
 
-const ArrowButton = ({ onClick, direction }) => (
-  <ArrowBtn onClick={onClick}>
-    {direction === 'left' ? '<' : '>'}
-  </ArrowBtn>
-);
+export default function Calendar({ today, selectedDates, toggleDate }) {
+  const [currentDate, setCurrentDate] = useState(today);
 
-export default function ResCalendar({
-  currentMonth,
-  setCurrentMonth,
-  availableDates, // 'YYYY-MM-DD'[]
-  selectedDate,   // 'YYYY-MM-DD'
-  onDateClick,
-  isLoading
-}) {
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
@@ -49,90 +43,188 @@ export default function ResCalendar({
     return cells;
   }, [gridStart, gridEnd]);
 
-  const availableDatesSet = useMemo(() => new Set(availableDates), [availableDates]);
+  const selectedDatesArray = Array.from(selectedDates).sort();
 
   return (
     <Container>
-      <CalendarHeader>
-        <ArrowButton direction="left" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} />
-        <MonthText>{format(currentMonth, "yyyy년 M월")}</MonthText>
-        <ArrowButton direction="right" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} />
-      </CalendarHeader>
+      <ContentsContainer>
+        <CalendarWrap>
+          <CalendarHeader>
+            <ArrowButton src={ArrowLeft} onClick={() => setCurrentDate(subMonths(currentDate, 1))}/>
+            <MonthText>{format(currentDate, "yyyy년 M월")}</MonthText>
+            <ArrowButton src={ArrowRight} onClick={() => setCurrentDate(addMonths(currentDate, 1))}/>
+          </CalendarHeader>
 
-      <CalendarGrid>
-        {["S", "M", "T", "W", "T", "F", "S"].map((w, i) => (
-          <DayCell key={i}>{w}</DayCell>
-        ))}
-        {calendarCells.map((day) => {
-          const dateKey = format(day, "yyyy-MM-dd");
-          const isSelected = selectedDate === dateKey;
-          const isAvailable = availableDatesSet.has(dateKey);
-          const isDimmed = !isSameMonth(day, monthStart);
-          
-          return (
-            <DateCell
-              key={dateKey}
-              onClick={() => isAvailable && !isDimmed && onDateClick(dateKey)}
-              $selected={isSelected}
-              $dim={isDimmed}
-              $disabled={!isAvailable || isDimmed}
-              $isToday={isSameDay(day, new Date())}
-            >
-              {format(day, "d")}
-            </DateCell>
-          );
-        })}
-      </CalendarGrid>
-      {isLoading && <LoadingOverlay>월별 데이터를 불러오는 중...</LoadingOverlay>}
+          <CalendarGrid>
+            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w, i) => (
+              <DayCell>{w}</DayCell>
+            ))}
+            {calendarCells.map((d, idx) => {
+              const key = format(d, "yyyy-MM-dd");
+              const selected = selectedDates.has(key);
+              const disabled = isBefore(d, startOfToday());
+              return (
+                <DateCell
+                  key={idx}
+                  onClick={() => {
+                    if (disabled) return;
+                    if (!selected && selectedDates.size >= 5) {
+                      alert("최대 5일까지 선택 가능합니다.");
+                      return;
+                    }
+                    toggleDate(d);
+                  }}
+                  selected={selected}
+                  $dim={!isSameMonth(d, monthStart)}
+                  $disabled={disabled}
+                  $isToday={isSameDay(d, startOfToday())}
+                >
+                  {format(d, "d")}
+                </DateCell>
+              );
+            })}
+          </CalendarGrid>
+        </CalendarWrap>
+
+        <VDivider />
+
+        <SelectionPanel>
+          <SelectionTitle>선택한 날짜</SelectionTitle>
+          <SelectionSubtitle>최대 5일까지 선택 가능합니다.</SelectionSubtitle>
+          <SelectedDatesList>
+            {selectedDatesArray.map(dateStr => {
+              const d = parseISO(dateStr); // 'yyyy-MM-dd'
+              const label = format(d, "yyyy/MM/dd/EEEE", { locale: ko });
+              return (
+                <SelectedDateItem key={dateStr}>
+                  <span>{label}</span>
+                  <RemoveBtn
+                    type="button"
+                    aria-label={`${label} 삭제`}
+                    onClick={() => toggleDate(d)}
+                  >
+                    ×
+                  </RemoveBtn>
+                </SelectedDateItem>
+              );
+            })}
+          </SelectedDatesList>
+        </SelectionPanel>
+      </ContentsContainer>
     </Container>
   );
 }
 
-// Styles
+/* ======================= styles ======================= */
+
 const Container = styled.div`
   font-family: Pretendard;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
   background: ${colors.surface};
   border-radius: 8px;
-  padding: 18px;
-  position: relative;
   overflow: hidden;
 `;
 
-const LoadingOverlay = styled.div`
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
+const ContentsContainer = styled.div`
   display: flex;
-  justify-content: center;
+  gap: 24px;
+  padding: 8px 18px;
+`;
+
+const Panel = styled.div`
+  padding: 18px;
+`;
+
+const CalendarWrap = styled(Panel)`
+  flex: 2;
+`;
+
+const SelectionPanel = styled(Panel)`
+  flex: 1;
+`;
+
+const SelectionTitle = styled.h3`
+  font-size: 1.05vw;
+  font-weight: 700;
+  color: ${colors.ink};
+  margin: 0 0 8px;
+`;
+
+const SelectionSubtitle = styled.p`
+  font-size: 0.9vw;
+  color: ${colors.sub};
+  margin: 0 0 16px;
+`;
+
+const SelectedDatesList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+`;
+
+const SelectedDateItem = styled.li`
+  display: flex;
   align-items: center;
-  font-size: 1rem;
-  font-weight: 600;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.95vw;
+  background-color: #ffffff;
+  border: 1px solid #00A453;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-weight: 700;
+`;
+
+const RemoveBtn = styled.button`
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: ${colors.line};
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
+  line-height: 1;
+  font-size: 16px;
+
+  &:active {
+    transform: scale(0.96);
+  }
 `;
 
 const CalendarHeader = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 12px;
+  position: relative;
+  background-color: #F7F7F7;
+  border-radius: 100px;
 `;
 
 const MonthText = styled.div`
-  font-size: 1.2rem;
+  font-size: 1.09vw;
   font-weight: 700;
   color: ${colors.ink};
+  text-align: center;
+  flex-grow: 1;
 `;
 
-const ArrowBtn = styled.button`
-  border: 1px solid ${colors.line};
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  background-color: ${colors.surface};
+const ArrowButton = styled.img`
+  border: none;
+  border-radius: 100px;
   cursor: pointer;
-  font-size: 1rem;
+  height: 40px;
   color: ${colors.sub};
   &:hover {
-    background-color: #f3f4f6;
+    color: ${colors.ink};
   }
 `;
 
@@ -143,47 +235,57 @@ const CalendarGrid = styled.div`
 `;
 
 const DayCell = styled.div`
-  font-size: 0.9rem;
+  font-size: 0.90vw;
   text-align: center;
-  font-weight: 600;
-  color: ${colors.sub};
+  font-weight: 700;
+  border: none;
+  color: #C4C4C4;
 `;
 
 const DateCell = styled.button`
-  padding: 8px 0;
-  border-radius: 50%;
-  background: transparent;
+  padding: 10px 5px;
+  border-radius: 5px;
+  background: ${colors.surface};
   color: ${colors.text};
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: 120ms ease;
-  border: 2px solid transparent;
-  font-size: 0.9rem;
+  border: none;
+  background: #F5F5F5;
+  font-size: 0.90vw;
 
   &:hover {
-    background: ${({ $disabled }) => !$disabled && '#EAF9F2'};
+    background: ${({ $disabled }) => !$disabled && colors.selectedHover};
   }
 
   ${({ $isToday }) => $isToday && css`
-    border-color: ${colors.brand};
+    color: #00A453;
   `}
 
-  ${({ $selected }) => $selected && css`
+  ${({ selected }) => selected && css`
     background: ${colors.brand};
     color: #fff;
-    border-color: ${colors.brand};
   `}
 
   ${({ $dim }) => $dim && css`
-    opacity: 0.4;
+    opacity: 0.55;
+    background: #FFF;
   `}
 
   ${({ $disabled }) => $disabled && css`
     cursor: not-allowed;
-    text-decoration: line-through;
-    opacity: 0.4;
+    opacity: 0.16;
     &:hover {
-      background: transparent;
+      background: #F5F5F5;
     }
   `}
+`;
+
+const VDivider = styled.div`
+  margin-top: 15px;
+  margin-bottom: 10px;
+  width: 1px;
+  align-self: stretch;
+  background: #efefef;
+  border-radius: 1px;
 `;

@@ -2,7 +2,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import Logo from '../../../assets/icons/LogoWhite.svg';
-import {useNavigate} from "react-router-dom";
 
 
 const colors = {
@@ -14,12 +13,6 @@ const colors = {
 const SuccessModal = ({ show, onClose, previewUrl, name }) => {
   if (!show) {
     return null;
-  }
-
-  const navigate = useNavigate();
-
-  const moveToMain = () => {
-    navigate("/");
   }
 
   return (
@@ -45,7 +38,7 @@ const SuccessModal = ({ show, onClose, previewUrl, name }) => {
 
         <Actions>
           <GhostBtn onClick={onClose}>취소</GhostBtn>
-          <PrimaryBtn onClick={moveToMain}>확인</PrimaryBtn>
+          <PrimaryBtn onClick={onClose}>확인</PrimaryBtn>
         </Actions>
       </SuccessCard>
     </Overlay>
