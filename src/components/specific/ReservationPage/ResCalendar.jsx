@@ -279,13 +279,17 @@ const DateCell = styled.button`
   `}
 
   ${({ $dim }) => $dim && css`
-    opacity: 0.55;
+    opacity: 0.35;
     background: #FFF;
+    cursor: default;
+    &:hover {
+      background: #FFF;
+    }
   `}
 
   ${({ $disabled }) => $disabled && css`
     cursor: not-allowed;
-    opacity: 0.16;
+    opacity: 0.5;
     &:hover {
       background: #F5F5F5;
     }

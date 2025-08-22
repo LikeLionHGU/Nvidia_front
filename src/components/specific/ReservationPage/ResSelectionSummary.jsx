@@ -109,15 +109,14 @@ export default function ResSelectionSummary({ slotsByDate }) {
 /* ===== styles ===== */
 
 const BOX_WIDTH = 230;     //  오른쪽 요약 박스 고정 폭
-const BOX_HEIGHT = 220;    //  박스 높이 제한 (내부 스크롤)
+const BOX_HEIGHT = 240;    //  박스 높이 제한 (내부 스크롤)
 
 const Box = styled.div`
   width: 100%;
-  max-width: ${BOX_WIDTH}px;
 `;
 
 const List = styled.div`
-  height: ${BOX_HEIGHT}px;
+  height: 31vh;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: ${colors.surface};

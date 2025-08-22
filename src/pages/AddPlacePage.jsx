@@ -148,7 +148,7 @@ export default function AddPlacePage() {
 
   /* ---------- 제출 ---------- */
   const onSubmit = async () => {
-    // 필수값 체크
+    // 1) 필수값 검증
     if (
       !name || !phoneNumber || !roadName || !account ||
       !maxPeople || !price || chipList.length === 0 ||
@@ -158,40 +158,39 @@ export default function AddPlacePage() {
       return;
     }
   
-    // 날짜별 슬롯 구성
+    // 2) 날짜별 슬롯 → DTO
     const enrollmentTimeDto = Array.from(selectedDates)
       .map((dateKey) => {
         const set = slotsByDate.get(dateKey) || new Set();
         const sorted = Array.from(set).sort((a, b) => a - b).map(Number);
         return { date: dateKey, selectedTimeSlotIndex: sorted };
       })
-      .filter((row) => row.selectedTimeSlotIndex.length > 0);
+      .filter(row => row.selectedTimeSlotIndex.length > 0);
   
-    // 옵션 문자열 → 리스트
+    if (enrollmentTimeDto.length === 0) {
+      alert("선택된 시간이 없습니다. 시간 슬롯을 선택해주세요.");
+      return;
+    }
+  
+    // 3) 옵션 문자열 → 리스트
     const optionArray = (optionList || "")
       .split(",")
-      .map((v) => v.trim())
+      .map(v => v.trim())
       .filter(Boolean);
   
-    // 주소 → 위경도
+    // 4) 주소 → 위경도
     let geoData = { roadName, latitude: null, longitude: null };
     try {
       const result = await Geocode({ query: roadName });
       geoData.latitude = result.latitude;
       geoData.longitude = result.longitude;
-    } catch (error) {
-      console.error("Geocoding error:", error);
+    } catch (err) {
+      console.error("Geocoding error:", err);
       alert("올바른 주소를 입력해주세요.");
       return;
     }
   
-    // ----- 여기부터 서버 스펙에 맞게 FormData 구성 -----
-    // ...생략...
-
-    // ----- 여기부터 서버 스펙에 맞게 FormData 구성 -----
-    const fd = new FormData();
-
-    // request JSON은 그대로
+    // 5) FormData 구성
     const requestPayload = {
       enName: name,
       enPhoneNumber: phoneNumber,
@@ -204,30 +203,40 @@ export default function AddPlacePage() {
       maxPeople: parseInt(maxPeople || "0", 10),
       price: parseInt(price || "0", 10),
       memo,
-      optionList: optionArray,
-      chipList,
-      enrollmentTimeDto,
+      optionList: optionArray,     // List<String>
+      chipList,                    // List<String>
+      enrollmentTimeDto,           // List<{ date, selectedTimeSlotIndex:int[] }>
     };
-    fd.append("request", new Blob([JSON.stringify(requestPayload)], { type: "application/json" }));
-
-    // 이미지: 배열형 키로 전송 (imageFileList[0], imageFileList[1], ...)
-    photoList.forEach((file, idx) => {
-      fd.append(`photo[${idx}]`, file);
+  
+    const fd = new FormData();
+  
+    // JSON 파트 (request)
+    fd.append(
+      "request",
+      new Blob([JSON.stringify(requestPayload)], { type: "application/json" })
+    );
+  
+    // 파일 파트 (imageFile 여러 번 추가) → @RequestPart("imageFile") List<MultipartFile> files
+    photoList.forEach((file) => {
+      fd.append("imageFile", file, file.name);
     });
-
-    // 전송
+  
+    // 디버그: 실제 전송되는 FormData 확인
+    for (const [k, v] of fd.entries()) {
+      console.log(k, v instanceof File ? `${v.name} (${v.type}, ${v.size}B)` : v);
+    }
+  
+    // 6) 전송 (Content-Type 수동 지정 X)
     try {
-      const res = await axios.post("/spaceon/enrollment/done", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await axios.post("/spaceon/enrollment/done", fd);
       console.log("등록 성공:", res.data);
   
       const first = photoList[0];
       const url = first ? URL.createObjectURL(first) : null;
-      openSuccess(url);              // 성공 모달 열기
+      openSuccess(url);
     } catch (e) {
-      console.error("등록 실패:", e);
-      alert("등록 실패. 콘솔을 확인하세요.");
+      console.error("등록 실패:", e.response?.status, e.response?.data || e);
+      alert(`등록 실패: ${e.response?.data?.error || e.message}`);
     }
   };
 

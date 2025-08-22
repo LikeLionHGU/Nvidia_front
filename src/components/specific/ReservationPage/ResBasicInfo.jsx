@@ -24,122 +24,127 @@ export default function ResBasicInfo({
   numPeople, setNumPeople,
   price, setPrice,
   memo, setMemo,
-  selectedTags, // Changed from chipList
-  onConfirmSelection, // New prop
+  selectedTags,
+  onConfirmSelection,
   optionList, setOptionList,
   formWidth = "100%",
   columns = 2,
   slotsByDate,
   placeData
 }) {
-
-  // 기본값 4명
   useEffect(() => {
     const n = Number(numPeople);
     if (!Number.isFinite(n) || n <= 0) setNumPeople(4);
   }, [numPeople, setNumPeople]);
 
   const decPeople = () => {
-    setNumPeople(prev => {
-      const n = Math.max(0, Number(prev || 0) - 1);
-      return n;
-    });
+    setNumPeople(prev => Math.max(0, Number(prev || 0) - 1));
   };
   const incPeople = () => {
-    setNumPeople(prev => {
-      const n = Math.min(99, Number(prev || 0) + 1);
-      return n;
-    });
+    setNumPeople(prev => Math.min(99, Number(prev || 0) + 1));
   };
 
   const people = Number(numPeople || 0);
 
-  const totalSlots = Array.from(slotsByDate.values()).reduce((acc, slots) => acc + slots.size, 0);
+  // 선택된 총 시간(H)
+  const totalSlots = Array.from(slotsByDate.values()).reduce((acc, s) => acc + s.size, 0);
   const totalHours = totalSlots * 0.5;
 
+  // 단가(시간당)과 총 금액
+  const unitPrice = Number(placeData?.price || 0);
+  const totalPrice = Math.max(0, totalHours * unitPrice);
+
   return (
-    // 상단 입력 블럭만 교체 (컴포넌트 내부의 return 부분에서)
-<InputField $formWidth={formWidth}>
-  <Title>에약 정보</Title>
-  
-  {/* 좌 3칸 + 우 1칸(3행 합친 높이) */}
-  <TopGrid>
-    {/* 왼쪽 3개 */}
-    <Field style={{ gridArea: 'name' }}>
-      <Label htmlFor="rsvName">예약자 성함</Label>
-      <Input
-        id="rsvName"
-        placeholder="예약자 성함을 작성해주세요."
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-    </Field>
+    <InputField $formWidth={formWidth}>
+      <Divider />
 
-    <Field style={{ gridArea: 'phone' }}>
-      <Label htmlFor="rsvPhone">전화번호</Label>
-      <Input
-        id="rsvPhone"
-        placeholder="전화번호를 입력해주세요. ( - 제외)"
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-      />
-    </Field>
+      <Title>에약 정보</Title>
 
-    <Field style={{ gridArea: 'people' }}>
-      <Label>최대 가능 인원</Label>
-      <StepperBox>
-        <RoundBtn type="button" onClick={decPeople} aria-label="인원 감소">−</RoundBtn>
-        <CountText><strong>{people}</strong>명</CountText>
-        <RoundBtn type="button" onClick={incPeople} aria-label="인원 증가">＋</RoundBtn>
-      </StepperBox>
-    </Field>
+      <TopGrid>
+        <Field style={{ gridArea: 'name' }}>
+          <Label htmlFor="rsvName">예약자 성함</Label>
+          <Input
+            id="rsvName"
+            placeholder="예약자 성함을 작성해주세요."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Field>
 
-    {/* 오른쪽: 왼쪽 3칸 높이를 전부 차지 */}
-    <TallField>
-      <Label>선택한 총 시간
-        {/* 읽기 전용 요약 or 입력값 표시 (필요에 맞게 바꾸세요) */}
-        <BigSummary>
-          {totalHours}H
-        </BigSummary>
-      </Label>
-      <SummaryWrapper>
-        <SelectionSummary
-            placeName={placeData?.name}
-            slotsByDate={slotsByDate}
-            price={placeData?.price}
-        />
-      </SummaryWrapper>
-    </TallField>
-  </TopGrid>
+        <Field style={{ gridArea: 'phone' }}>
+          <Label htmlFor="rsvPhone">전화번호</Label>
+          <Input
+            id="rsvPhone"
+            placeholder="전화번호를 입력해주세요. ( - 제외)"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+          />
+        </Field>
 
-  {/* 아래부터는 기존처럼 이어서 다른 필드들 배치 */}
-  <Grid $columns={columns}>
-    {/* 약관 동의 */}
-    <Field $span={columns}> 
-      <CheckboxLabel>
-        <Checkbox
-          type="checkbox"
-          id="agreement"
-          required
-        />
-        <span>
-          예약 서비스 이용을 위한 <strong>약관</strong>, 
-          <strong> 개인정보 수집 및 제3자 제공 규정</strong>을 확인하였으며
-          이에 동의합니다.
-        </span>
-      </CheckboxLabel>
-    </Field>
-  </Grid>
+        <Field style={{ gridArea: 'people' }}>
+          <Label>최대 가능 인원</Label>
+          <StepperBox>
+            <RoundBtn type="button" onClick={decPeople} aria-label="인원 감소">−</RoundBtn>
+            <CountText><strong>{people}</strong>명</CountText>
+            <RoundBtn type="button" onClick={incPeople} aria-label="인원 증가">＋</RoundBtn>
+          </StepperBox>
+        </Field>
 
-</InputField>
+        <TallField>
+          <Label>
+            선택한 총 시간
+            <BigSummary>{totalHours}H</BigSummary>
+          </Label>
+          <SummaryWrapper>
+            <SelectionSummary
+              placeName={placeData?.name}
+              slotsByDate={slotsByDate}
+              price={placeData?.price}
+            />
+          </SummaryWrapper>
+        </TallField>
+      </TopGrid>
+
+      <Grid $columns={columns}>
+        <Field $span={columns}>
+          <CheckboxLabel>
+            <Checkbox type="checkbox" id="agreement" required />
+            <span>
+              예약 서비스 이용을 위한 <strong>약관</strong>, 
+              <strong> 개인정보 수집 및 제3자 제공 규정</strong>을 확인하였으며
+              이에 동의합니다.
+            </span>
+          </CheckboxLabel>
+        </Field>
+      </Grid>
+
+      {/* ▼ 요금 세부 정보 */}
+      <BreakLine />
+
+      <PriceSection>
+        <PriceHeader>요금 세부 정보</PriceHeader>
+
+        <PriceRow>
+          <PriceFormula>
+            <strong>{totalHours || 0}h</strong>
+            <span>&nbsp;X&nbsp;</span>
+            <strong>{unitPrice.toLocaleString('ko-KR')}</strong>
+            <span>&nbsp;₩</span>
+          </PriceFormula>
+
+          <TotalPriceWrap>
+            <TotalPrice>{totalPrice.toLocaleString('ko-KR')}</TotalPrice>
+            <TotalUnit>원</TotalUnit>
+          </TotalPriceWrap>
+        </PriceRow>
+      </PriceSection>
+    </InputField>
   );
 }
 
 /* ===================== styles ===================== */
 const InputField = styled.div`
   border-radius: 8px;
-  background: #FBFBFB;
-  padding: 18px 12px;
   width: ${({ $formWidth }) => $formWidth};
   box-sizing: border-box;
   max-width: 100%;
@@ -160,8 +165,8 @@ const Grid = styled.div`
 
 const TopGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;          /* 좌/우 반반 */
-  grid-template-rows: auto auto auto;      /* 왼쪽 3행 */
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
   grid-template-areas:
     "name   total"
     "phone  total"
@@ -169,7 +174,6 @@ const TopGrid = styled.div`
   gap: 12px;
 
   @media (max-width: 900px) {
-    /* 모바일/협소 화면에선 세로 스택 */
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto auto;
     grid-template-areas:
@@ -185,14 +189,12 @@ const TallField = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border: 1px solid ${colors.line};
-  background: ${colors.surface};
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 0;
 `;
 
 const BigSummary = styled.span`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 900;
   color: ${colors.brandDark};
   line-height: 1.1;
@@ -212,7 +214,7 @@ const Title = styled.label`
   font-weight: 700;
   color: ${colors.text};
   margin-top: 3px;
-`
+`;
 
 const Label = styled.label`
   font-size: 1vw;
@@ -307,28 +309,26 @@ const CountText = styled.div`
 
 const CheckboxLabel = styled.label`
   display: flex;
-  align-items: flex-start; /* 체크박스는 위쪽 정렬 */
+  align-items: flex-start;
   gap: 8px;
   font-size: 0.9vw;
   font-weight: 400;
   line-height: 1.5;
   color: ${colors.text};
   cursor: pointer;
-
   margin-top: 25px;
 
   span {
-    flex: 1;              /* 텍스트 영역이 줄바꿈 되도록 */
-    word-break: keep-all; /* 단어 단위 줄바꿈 */
+    flex: 1;
+    word-break: keep-all;
   }
-
   strong {
     color: ${colors.brandDark};
   }
 `;
 
 const Checkbox = styled.input`
-  margin-top: 3px; /* 텍스트 첫줄과 높이 맞추기 */
+  margin-top: 3px;
   accent-color: ${colors.brand};
   cursor: pointer;
 `;
@@ -337,4 +337,66 @@ const SummaryWrapper = styled.div`
   width: 100%;
   overflow-y: hidden;
   flex-shrink: 0;
-`
+`;
+
+const Divider = styled.div`
+  width: 100%;
+  height: 1px;
+  background-color: #efefef;
+  margin-bottom: 2.5vh;
+`;
+
+/* --- Price Section --- */
+const BreakLine = styled.div`
+  width: 100%;
+  height: 1px;
+  background-color: #efefef;
+  margin: 12px 0 8px;
+`;
+
+const PriceSection = styled.div`
+  width: 100%;
+  box-sizing: border-box;
+  margin: 15px 0;
+`;
+
+const PriceHeader = styled.div`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: ${colors.ink};
+  margin-bottom: 10px;
+`;
+
+const PriceRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+`;
+
+const PriceFormula = styled.div`
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: ${colors.ink};
+  letter-spacing: 0.2px;
+
+  strong { font-weight: 600; }
+`;
+
+const TotalPriceWrap = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+`;
+
+const TotalPrice = styled.div`
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: ${colors.ink};
+  line-height: 1;
+`;
+
+const TotalUnit = styled.div`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: ${colors.ink};
+`;

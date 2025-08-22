@@ -1,7 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
 
-export default function ResBasicInfo({ placeData }) {
+import AddressIcon from '../../../assets/icons/AddressIcon.svg';
+import AccountIcon from '../../../assets/icons/AccountIcon.svg';
+import ScheduleIcon from '../../../assets/icons/ScheduleIcon.svg';
+import MaxPeopleIcon from '../../../assets/icons/MaxPeopleIcon.svg';
+import CheckboxIcon from '../../../assets/icons/CheckBoxIcon.svg';
+
+export default function Thumbnail({ placeData }) {
   if (!placeData) return null;
 
   const {
@@ -15,7 +21,7 @@ export default function ResBasicInfo({ placeData }) {
     optionList = [],
   } = placeData || {};
 
-  // 썸네일 결정
+  // Determine thumbnail
   let firstPhoto = null;
   if (Array.isArray(photoList) && photoList.length > 0) {
     if (typeof photoList[0] === 'string') firstPhoto = photoList[0];
@@ -47,30 +53,36 @@ export default function ResBasicInfo({ placeData }) {
       </PhotoDisplayWrapper>
 
       <RightCol>
-        <TextRow>
-          주소: <strong>{address?.roadName ?? '-'}</strong>
-        </TextRow>
-        <TextRow>
-          연락처: <strong>{phoneNumber ?? '-'}</strong>
-        </TextRow>
-        <TextRow>
-          가격: <strong>{typeof price === 'number' ? price.toLocaleString() : price ?? '-'}</strong>
-        </TextRow>
-        <TextRow>
-          최대 수용 인원: <strong>{maxPeople ?? '-'}</strong>명
-        </TextRow>
-        <TextRow>
-          계좌: <strong>{account ?? '-'}</strong>
-        </TextRow>
+        <InfoList>
+          <IconTextRow>
+            <Icon src={AddressIcon} alt="주소" />
+            <strong>{address?.roadName ?? '-'}</strong>
+          </IconTextRow>
+          <IconTextRow>
+            <Icon src={ScheduleIcon} alt="영업시간" />
+            <strong>영업시간</strong>
+          </IconTextRow>
+          <IconTextRow>
+            <Icon src={AccountIcon} alt="계좌" />
+            <strong>{account ?? '-'}</strong>
+          </IconTextRow>
+          <IconTextRow>
+            <Icon src={MaxPeopleIcon} alt="최대 인원" />
+            <strong>최대 수용 인원 {maxPeople ?? '-'}명</strong>
+          </IconTextRow>
+        </InfoList>
 
         {safeOptions.length > 0 && (
           <OptionsBox>
-            <OptTitle>옵션</OptTitle>
-            <ul>
+            <OptTitle>제공되는 항목</OptTitle>
+            <OptionList>
               {safeOptions.map((opt, i) => (
-                <li key={`${opt}-${i}`}>{opt}</li>
+                <OptionItem key={`${opt}-${i}`}>
+                  <CheckBox src={CheckboxIcon} alt="체크" />
+                  <span>{opt}</span>
+                </OptionItem>
               ))}
-            </ul>
+            </OptionList>
           </OptionsBox>
         )}
       </RightCol>
@@ -80,13 +92,14 @@ export default function ResBasicInfo({ placeData }) {
 
 /* ===== styles ===== */
 const Wrapper = styled.div`
-  width: calc(100% - 30px);
-  padding: 10px;
+  width: 100%;
+  padding: 15px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
   display: flex;
-  gap: 23px;
+  gap: 20px;
+  box-sizing: border-box;
 `;
 
 const PhotoDisplayWrapper = styled.div`
@@ -94,9 +107,7 @@ const PhotoDisplayWrapper = styled.div`
   max-width: 50%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  justify-content: flex-start;
-  align-items: stretch;
+  gap: 10px;
 `;
 
 const RightCol = styled.div`
@@ -104,29 +115,30 @@ const RightCol = styled.div`
   max-width: 50%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 5px 0;
 `;
 
 const ImgWrapper = styled.img`
   width: 100%;
-  height: auto;
-  aspect-ratio: 1;
+  height: 150px;
   object-fit: cover;
   border-radius: 8px;
   display: block;
+  background-color: #f3f4f6;
 `;
 
 const EmptyThumb = styled.div`
   width: 100%;
-  aspect-ratio: 1;
+  height: 150px;
   border-radius: 8px;
   background: #f3f4f6;
   color: #9ca3af;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 500;
+  font-size: 14px;
 `;
 
 const ChipRow = styled.div`
@@ -136,8 +148,8 @@ const ChipRow = styled.div`
 `;
 
 const Chip = styled.span`
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: 12px;
   background: #f3faf6;
   border: 1px solid #e5f4ea;
   color: #2fb975;
@@ -145,27 +157,64 @@ const Chip = styled.span`
   font-weight: 700;
 `;
 
-const TextRow = styled.div`
+const InfoList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const IconTextRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #374151;
-  font-size: 14px;
+  font-size: 0.85vw;
+
+  strong {
+    font-weight: 500;
+  }
 `;
 
 const OptionsBox = styled.div`
-  margin-top: 6px;
-
-  ul {
-    margin: 6px 0 0;
-    padding-left: 18px;
-  }
-  li {
-    line-height: 1.6;
-    color: #374151;
-    font-size: 14px;
-  }
+  margin-top: 12px;
+  border-radius: 4px;
+  border: 1px solid #F7F7F7;
+  padding: 10px;
 `;
 
 const OptTitle = styled.div`
   color: #6b7280;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 1vw;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: center;
 `;
+
+const OptionList = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 7.32vh;
+  overflow-y: auto;
+`;
+
+const OptionItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-size: 0.9vw;
+`;
+
+const Icon = styled.img`
+  width: 1.81vw;
+  height: 1.81vw;
+`;
+
+const CheckBox = styled.img`
+  width: 1vw;
+  height: 1vw;
+`
