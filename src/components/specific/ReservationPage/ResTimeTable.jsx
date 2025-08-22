@@ -154,7 +154,7 @@ const TimeTableWrap = styled.div`
   padding: 18px;
   box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
   font-family: 'Pretendard';
-  height: 500px;
+  height: 700px;
   min-height: 0;
   overflow: hidden;
 `;

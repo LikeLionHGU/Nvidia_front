@@ -87,69 +87,49 @@ function MainPage() {
 
   // 1. 초기 로딩 시 추천 목록(더미 데이터) 가져오고, 마커와 주소 설정
   // 기존 "1. 초기 로딩 시 추천 목록..." useEffect 를 아래로 교체
+// 기존 useEffect 전체 교체
+// MainPage.jsx — 추천 호출 useEffect 전체 교체
 useEffect(() => {
-  // 더미 데이터 (백업)
   const fallback = [
-    {
-      roomId: 1,
-      photo: "https://picsum.photos/seed/spaceon1/640/480",
+    { roomId: 1, photo: "https://picsum.photos/seed/spaceon1/640/480",
       address: { roadName: "서울 강남구 테헤란로 123", latitude: 37.498, longitude: 127.028 },
-      maxPeople: 4,
-      phoneNumber: "010-1234-5678",
-      price: 30000,
-    },
-    {
-      roomId: 2,
-      photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
+      maxPeople: 4, phoneNumber: "010-1234-5678", price: 30000 },
+    { roomId: 2, photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
       address: { roadName: "서울 서초구 서초대로 77", latitude: 37.496, longitude: 127.024 },
-      maxPeople: 2,
-      phoneNumber: "010-8765-4321",
-      price: 45000,
-    },
-    {
-      roomId: 3,
-      photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
+      maxPeople: 2, phoneNumber: "010-8765-4321", price: 45000 },
+    { roomId: 3, photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
       address: { roadName: "성남 분당구 판교역로 160", latitude: 37.3947611, longitude: 127.1111361 },
-      maxPeople: 3,
-      phoneNumber: "010-2222-3333",
-      price: 35000,
-    },
+      maxPeople: 3, phoneNumber: "010-2222-3333", price: 35000 },
   ];
 
   const applyData = (list) => {
     setRecommendList(list);
-    const newMarkers = (list || []).map((item) => ({
-      position: {
-        lat: Number(item.address?.latitude),
-        lng: Number(item.address?.longitude),
-      },
+    setMarkers((list || []).map((item) => ({
+      position: { lat: Number(item.address?.latitude), lng: Number(item.address?.longitude) },
       title: `장소 ${item.roomId}`,
       id: item.roomId,
       price: Number(item.price).toLocaleString(),
-    }));
-    setMarkers(newMarkers);
+    })));
   };
 
   const fetchRecommend = async () => {
     try {
-      const params =
-        currentLocation
-          ? { latitude: currentLocation.lat, longitude: currentLocation.lng }
-          : undefined;
+      // 위치가 없으면 서울시청 기준 좌표 사용
+      const lat = Number(currentLocation?.lat ?? 37.5665);
+      const lng = Number(currentLocation?.lng ?? 126.9780);
 
-      // 프록시(vite)에서 /spaceon -> http(s)://janghong.asia/spaceon 으로 전달된다고 가정
-      const { data } = await axios.get("/spaceon/main", { params });
+      const body = { latitude: lat, longitude: lng };
+      console.log("[/spaceon/main] req:", body);
 
-      // 응답 스키마: { recommendList: [...] }
+      const { data } = await axios.post("/spaceon/main", body, {
+        headers: { "Content-Type": "application/json" },
+      });
+
       const list = Array.isArray(data?.recommendList) ? data.recommendList : [];
-      if (list.length === 0) {
-        console.warn("recommendList가 비어 있어 더미 데이터로 대체합니다.");
-        applyData(fallback);
-      } else {
-        applyData(list);
-      }
+      applyData(list.length ? list : fallback);
+      console.log("호출성공: ", list);
     } catch (err) {
-      console.error("추천 목록 호출 실패, 더미 데이터 사용:", err);
+      console.error("추천 목록 호출 실패(서버 500 등) → 더미 적용:", err);
       applyData(fallback);
     }
   };

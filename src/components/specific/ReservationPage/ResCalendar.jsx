@@ -25,13 +25,20 @@ const colors = {
   selectedHover: "#00C66A",
 };
 
-export default function Calendar({ today, selectedDates, toggleDate }) {
-  const [currentDate, setCurrentDate] = useState(today);
+export default function Calendar({ today, selectedDates, toggleDate, availableDays, setCurrentMonth }) {
+  const [currentDate, setCurrentDateState] = useState(today);
+
+  const handleSetCurrentDate = (date) => {
+    setCurrentDateState(date);
+    setCurrentMonth(date);
+  }
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+
+  const availableDaysSet = useMemo(() => new Set(availableDays), [availableDays]);
 
   const calendarCells = useMemo(() => {
     const cells = [];
@@ -50,24 +57,28 @@ export default function Calendar({ today, selectedDates, toggleDate }) {
       <ContentsContainer>
         <CalendarWrap>
           <CalendarHeader>
-            <ArrowButton src={ArrowLeft} onClick={() => setCurrentDate(subMonths(currentDate, 1))}/>
+            <ArrowButton src={ArrowLeft} onClick={() => handleSetCurrentDate(subMonths(currentDate, 1))}/>
             <MonthText>{format(currentDate, "yyyy년 M월")}</MonthText>
-            <ArrowButton src={ArrowRight} onClick={() => setCurrentDate(addMonths(currentDate, 1))}/>
+            <ArrowButton src={ArrowRight} onClick={() => handleSetCurrentDate(addMonths(currentDate, 1))}/>
           </CalendarHeader>
 
           <CalendarGrid>
             {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w, i) => (
-              <DayCell>{w}</DayCell>
+              <DayCell key={i}>{w}</DayCell>
             ))}
             {calendarCells.map((d, idx) => {
               const key = format(d, "yyyy-MM-dd");
               const selected = selectedDates.has(key);
-              const disabled = isBefore(d, startOfToday());
+              const isPast = isBefore(d, startOfToday());
+              const isCurrentMonth = isSameMonth(d, monthStart);
+              const isAvailable = availableDaysSet.has(key);
+              const disabled = isPast || (isCurrentMonth && !isAvailable);
+
               return (
                 <DateCell
                   key={idx}
                   onClick={() => {
-                    if (disabled) return;
+                    if (disabled || !isCurrentMonth) return;
                     if (!selected && selectedDates.size >= 5) {
                       alert("최대 5일까지 선택 가능합니다.");
                       return;
@@ -75,7 +86,7 @@ export default function Calendar({ today, selectedDates, toggleDate }) {
                     toggleDate(d);
                   }}
                   selected={selected}
-                  $dim={!isSameMonth(d, monthStart)}
+                  $dim={!isCurrentMonth}
                   $disabled={disabled}
                   $isToday={isSameDay(d, startOfToday())}
                 >
