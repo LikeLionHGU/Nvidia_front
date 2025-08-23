@@ -149,7 +149,7 @@ const InputField = styled.div`
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
-  margin-top: 1.5vw;
+  margin-top: 0.8vw;
   font-family: "Pretendard";
 `;
 
@@ -329,8 +329,8 @@ const CheckboxLabel = styled.label`
 
 const Checkbox = styled.input`
   margin-top: 3px;
-  accent-color: ${colors.brand};
   cursor: pointer;
+  accent-color: #00A453;
 `;
 
 const SummaryWrapper = styled.div`
