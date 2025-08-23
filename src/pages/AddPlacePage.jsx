@@ -194,11 +194,9 @@ export default function AddPlacePage() {
     const requestPayload = {
       enName: name,
       enPhoneNumber: phoneNumber,
-      address: {
-        roadName: geoData.roadName,
-        latitude: geoData.latitude,
-        longitude: geoData.longitude,
-      },
+      roadName: geoData.roadName,
+      latitude: geoData.latitude,
+      longitude: geoData.longitude,
       account,
       maxPeople: parseInt(maxPeople || "0", 10),
       price: parseInt(price || "0", 10),

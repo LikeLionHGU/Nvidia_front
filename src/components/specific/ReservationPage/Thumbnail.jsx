@@ -31,8 +31,6 @@ export default function Thumbnail({ placeData }) {
     firstPhoto = photoList;
   }
 
-  firstPhoto = "https://lh4.googleusercontent.com/proxy/IxfEQaVLXrFtZHSqW58ebhAWo481F-FSlTk2iJuMhKdloOpS6l8p9xNCfuGModgdcd0-ygTSVKtTEhH_lFO4yn1vld3JwU0h4j94hFA7jpFV0A";
-
   const safeChips = Array.isArray(chipList) ? chipList : [];
   const safeOptions = Array.isArray(optionList) ? optionList : [];
 

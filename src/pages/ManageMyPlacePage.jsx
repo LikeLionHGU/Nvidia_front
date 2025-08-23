@@ -1,8 +1,69 @@
-// ManageMyPlacePage.jsx
 import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
+import AdImg from "../assets/images/AdImg.svg";
 
-/* ================= API: 스펙에 맞춰 POST + JSON 바디 ================= */
+/* ================= API: POST + JSON + 정규화 ================= */
+function pickFirstPhoto(x) {
+  if (typeof x?.photo === 'string') return x.photo;
+  if (Array.isArray(x?.photoList) && x.photoList.length) {
+    const first = x.photoList[0];
+    return typeof first === 'string' ? first : first?.url;
+  }
+  if (typeof x?.thumbnailUrl === 'string') return x.thumbnailUrl;
+  if (Array.isArray(x?.photos) && x.photos.length) {
+    const first = x.photos[0];
+    return typeof first === 'string' ? first : first?.url;
+  }
+  return undefined;
+}
+
+function normalizeAddress(x) {
+  if (x?.address && typeof x.address === 'object') return x.address;
+  return {
+    roadName: x?.roadName ?? x?.addressRoad ?? '',
+    latitude: x?.latitude ?? null,
+    longitude: x?.longitude ?? null,
+  };
+}
+
+function normalizeEnroll(item) {
+  return {
+    roomId: item.roomId ?? item.id ?? item.spaceId,
+    title: item.title ?? item.placeName ?? item.roomName ?? '등록한 공간',
+    photo: pickFirstPhoto(item),
+    address: normalizeAddress(item),
+    maxPeople: item.maxPeople ?? item.capacity ?? '-',
+    phoneNumber: item.phoneNumber ?? item.ownerPhone ?? item.contact ?? '-',
+    account: item.account ?? item.bankAccount ?? '-',
+    price: item.price ?? item.unitPrice ?? 0,
+    enrolledDate: item.enrolledDate ?? item.date ?? '',
+    enrolledTime: Array.isArray(item?.enrolledTime)
+      ? item.enrolledTime
+      : Array.from(item?.enrolledTime ?? []),
+  };
+}
+
+function normalizeReserve(item) {
+  const reservedTimeArr = Array.isArray(item?.reservedTime)
+    ? item.reservedTime
+    : Array.from(item?.reservedTime ?? []);
+  const selectedHour = item?.selectedHour ?? reservedTimeArr.length ?? 0;
+
+  return {
+    roomId: item.roomId ?? item.id ?? item.spaceId,
+    title: item.title ?? item.placeName ?? item.roomName ?? '예약한 공간',
+    photo: pickFirstPhoto(item),
+    address: normalizeAddress(item),
+    maxPeople: item.maxPeople ?? item.capacity ?? '-',
+    phoneNumber: item.phoneNumber ?? item.ownerPhone ?? item.contact ?? '-',
+    account: item.account ?? item.bankAccount ?? '-',
+    totalPrice: item.totalPrice ?? item.price ?? 0,
+    selectedHour,
+    reservedDate: item.reservedDate ?? item.date ?? '',
+    reservedTime: reservedTimeArr,
+  };
+}
+
 async function fetchEnrollments(phoneNumber) {
   const res = await fetch('/spaceon/enrollment/confirmation', {
     method: 'POST',
@@ -11,10 +72,8 @@ async function fetchEnrollments(phoneNumber) {
   });
   if (!res.ok) throw new Error('Network error');
   const data = await res.json();
-  return (data?.enrollmentList ?? []).map((x) => ({
-    ...x,
-    enrolledTime: Array.isArray(x?.enrolledTime) ? x.enrolledTime : Array.from(x?.enrolledTime ?? []),
-  }));
+  const list = data?.enrollmentList ?? [];
+  return list.map(normalizeEnroll);
 }
 
 async function fetchReservations(phoneNumber) {
@@ -25,37 +84,9 @@ async function fetchReservations(phoneNumber) {
   });
   if (!res.ok) throw new Error('Network error');
   const data = await res.json();
-  return (data?.reservationList ?? []).map((x) => ({
-    ...x,
-    reservedTime: Array.isArray(x?.reservedTime) ? x.reservedTime : Array.from(x?.reservedTime ?? []),
-  }));
+  const list = data?.reservationList ?? [];
+  return list.map(normalizeReserve);
 }
-
-/* ================= 데모용 더미(등록 탭에서만 사용) ================= */
-const dummyEnrollmentList = [
-  {
-    roomId: 1,
-    photo: 'https://pbs.twimg.com/media/GUyPp8eaYAAhzbz.jpg',
-    address: { roadName: '경북 포항시 북구 천마로 85', latitude: 36.04, longitude: 129.37 },
-    maxPeople: 4,
-    phoneNumber: '010-3245-6788',
-    account: '카뱅 3333-19-2818284',
-    price: 250000,
-    enrolledDate: '2025-08-17',
-    enrolledTime: [10, 11, 12],
-  },
-  {
-    roomId: 2,
-    photo: 'https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg',
-    address: { roadName: '서울특별시 강남구 개포로 623', latitude: 37.46, longitude: 127.13 },
-    maxPeople: 2,
-    phoneNumber: '010-8765-4321',
-    account: '카뱅 3333-19-2818284',
-    price: 180000,
-    enrolledDate: '2025-08-16',
-    enrolledTime: [15, 16],
-  },
-];
 
 /* ================= 페이지 ================= */
 const ManageMyPlacePage = () => {
@@ -77,17 +108,14 @@ const ManageMyPlacePage = () => {
 
     try {
       if (tab === 'enroll') {
-        // 실제 API 사용 시 아래 주석 해제
-        // const results = await fetchEnrollments(phone);
-        const results = dummyEnrollmentList; // 데모
-        if (results.length === 0) alert('등록된 장소가 없습니다.');
+        const results = await fetchEnrollments(phone);
         setItems(results);
       } else {
         const results = await fetchReservations(phone);
-        if (results.length === 0) alert('예약 내역이 없습니다.');
         setItems(results);
       }
     } catch (e) {
+      console.error(e);
       setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       setItems([]);
     } finally {
@@ -102,52 +130,67 @@ const ManageMyPlacePage = () => {
   };
 
   const formatMoney = (n) => (n ?? 0).toLocaleString('ko-KR') + '원';
-  const subPriceText = '(30min당 5,000원)'; // 필요 시 props/필드로 교체
+  const subPriceText = '(30min당 5,000원)';
 
   const renderItemCard = (item) => {
-    const isEnroll = activeTab === 'enroll';
+    const isEnroll = activeTab === 'enroll'; // 등록=파랑, 예약=초록
+    const imgSrc = item.photo || 'https://placehold.co/600x600?text=No+Image';
+
     return (
       <ListCard key={`${activeTab}-${item.roomId}`}>
         <ThumbLarge>
-          <img src={item.photo} alt="" />
+          <img
+            src={imgSrc}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = 'https://placehold.co/600x600?text=Image+Error';
+            }}
+          />
         </ThumbLarge>
 
         <CardRight>
-          <HeaderRow>
-            <PlaceTitle>포항시 양덕동 다이소 00빌라</PlaceTitle>
-            <GhostGap />
-            <PillButton kind="primary">{isEnroll ? '등록' : '예약'}</PillButton>
-          </HeaderRow>
+          <CardRightContainer>
+            <HeaderRow>
+              <PlaceTitle isEnroll={isEnroll}>{item.title}</PlaceTitle>
+              <GhostGap />
+              <PillButton isEnroll={isEnroll}>{isEnroll ? '등록' : '예약'}</PillButton>
+            </HeaderRow>
 
-          <SubAddress>{item?.address?.roadName ?? '-'}</SubAddress>
+            <SubAddress>{item?.address?.roadName ?? '-'}</SubAddress>
 
-          <Divider />
+            <Divider />
 
-          <InfoRow>
-            <InfoItem>
-              <Icon>💲</Icon>
-              <strong>{formatMoney(isEnroll ? item.price : item.totalPrice)}</strong>
-              <SubSmall>{' '}{subPriceText}</SubSmall>
-            </InfoItem>
-            <InfoItem>
-              <Icon>📞</Icon>
-              <span>{item.phoneNumber ?? '-'}</span>
-            </InfoItem>
-          </InfoRow>
+            <InfoRow>
+              <InfoItem>
+                <Icon>💲</Icon>
+                <strong>{formatMoney(isEnroll ? item.price : item.totalPrice)}</strong>
+                {isEnroll && <SubSmall>{' '}{subPriceText}</SubSmall>}
+              </InfoItem>
+              <InfoItem>
+                <Icon>📞</Icon>
+                <span>{item.phoneNumber ?? '-'}</span>
+              </InfoItem>
+            </InfoRow>
 
-          <Divider />
+            <Divider />
 
-          <InfoRow>
-            <InfoItem>
-              <Icon>💳</Icon>
-              <span>{item.account ?? '-'}</span>
-            </InfoItem>
-            <InfoItem>
-              <Icon>👥</Icon>
-              <span>{isEnroll ? `신청 인원 ${item.maxPeople}명` : `인원수 ${item.maxPeople}명`}</span>
-            </InfoItem>
-          </InfoRow>
-          <Divider />
+            <InfoRow>
+              <InfoItem>
+                <Icon>💳</Icon>
+                <span>{item.account ?? '-'}</span>
+              </InfoItem>
+              <InfoItem>
+                <Icon>👥</Icon>
+                <span>
+                  {isEnroll
+                    ? `신청 인원 ${item.maxPeople}명`
+                    : `인원수 ${item.maxPeople}명 / ${(item.selectedHour ?? item.reservedTime?.length ?? 0)}시간`}
+                </span>
+              </InfoItem>
+            </InfoRow>
+            <Divider />
+          </CardRightContainer>
         </CardRight>
       </ListCard>
     );
@@ -156,38 +199,43 @@ const ManageMyPlacePage = () => {
   return (
     <PageContainer>
       <LeftPanel>
-        <LP_Header>
-          <LP_Title>등록 및 예약 쉽게 관리해요!</LP_Title>
-          <LP_Sub>전화번호만 치면 바로 나의 내역이 조회됩니다</LP_Sub>
-          <LP_Divider />
-        </LP_Header>
+      <LP_Header>
+        <LP_Title>등록 및 예약 쉽게 관리해요!</LP_Title>
+        <LP_Sub>전화번호만 치면 바로 나의 내역이 조회됩니다</LP_Sub>
+        <LP_Divider />
+      </LP_Header>
 
-        <LP_Section>
-          <LP_SectionTop>
-            <LP_Icon role="img" aria-label="user">👤</LP_Icon>
-            <LP_SectionTitle>예약자 정보 확인</LP_SectionTitle>
-            <LP_Help title="도움말">❔</LP_Help>
-          </LP_SectionTop>
-          <LP_SectionDesc>전화번호로 등록 및 예약관리를 확인해보세요</LP_SectionDesc>
+      <LP_Section>
+        <LP_SectionTop>
+          <LP_Icon role="img" aria-label="user">👤</LP_Icon>
+          <LP_SectionTitle>예약자 정보 확인</LP_SectionTitle>
+          <LP_Help title="도움말">❔</LP_Help>
+        </LP_SectionTop>
+        <LP_SectionDesc>전화번호로 등록 및 예약관리를 확인해보세요</LP_SectionDesc>
 
-          <LP_Field>
-            <LP_FieldIcon role="img" aria-label="phone">📞</LP_FieldIcon>
-            <LP_PhoneInput
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="01000000000  (’하이픈 제외’)"
-            />
-          </LP_Field>
-        </LP_Section>
+        <LP_Field>
+          <LP_FieldIcon role="img" aria-label="phone">📞</LP_FieldIcon>
+          <LP_PhoneInput
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="01000000000  (’하이픈 제외’)"
+          />
+        </LP_Field>
+      </LP_Section>
 
-        <LP_FlexSpacer />
+      <LP_FlexSpacer />
 
-        <LP_BtnRow>
-          <LP_Cancel disabled>취소</LP_Cancel>
-          <LP_Search onClick={handleSearch}>조회하기</LP_Search>
-        </LP_BtnRow>
-      </LeftPanel>
+      {/* 👇 광고 이미지 추가 */}
+      <AdImageWrapper>
+        <img src={AdImg} alt="광고" />
+      </AdImageWrapper>
+
+      <LP_BtnRow>
+        <LP_Cancel disabled>취소</LP_Cancel>
+        <LP_Search onClick={handleSearch}>조회하기</LP_Search>
+      </LP_BtnRow>
+    </LeftPanel>
 
       <RightPanel>
         {error && <ErrorBanner>{error}</ErrorBanner>}
@@ -220,13 +268,12 @@ const ManageMyPlacePage = () => {
 export default ManageMyPlacePage;
 
 /* ================= Styled Components ================= */
-/* ▼▼▼ 요청하신 세 블록은 건드리지 않았습니다 ▼▼▼ */
 const PageContainer = styled.div`
   display: flex;
   gap: 20px;
   margin: 0 auto;
   font-family: 'Pretendard', sans-serif;
-  padding: 20px
+  padding: 20px;
 `;
 
 const LeftPanel = styled.div`
@@ -249,33 +296,7 @@ const RightPanel = styled.div`
   border-radius: 8px;
   background: #FDFDFD;
   box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
-  padding: 20px;
-`;
-/* ▲▲▲ 여기까지 그대로 유지 ▲▲▲ */
-
-const InputLabel = styled.label`
-  font-weight: 600;
-  font-size: 16px;
-`;
-
-const Input = styled.input`
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-`;
-
-const ActionButton = styled.button`
-  padding: 14px;
-  background-color: #22c55e;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  &:hover { background-color: #18b651; }
+  padding: 50px;
 `;
 
 const TabContainer = styled.div`
@@ -294,7 +315,7 @@ const TabButton = styled.button`
   border-radius: 8px;
   cursor: pointer;
   color: ${p => (p.active ? '#fff' : '#666')};
-  background-color: ${p => (p.active ? '#22c55e' : 'transparent')};
+  background-color: ${p => (p.active ? '#2FB975' : 'transparent')};
 `;
 
 const ContentArea = styled.div`
@@ -307,8 +328,7 @@ const ContentArea = styled.div`
 /* ====== 카드 레이아웃 (왼쪽 큰 썸네일 + 오른쪽 정보) ====== */
 const ListCard = styled.div`
   display: grid;
-  grid-template-columns: 1fr 2fr;   /* 왼쪽 썸네일 넓게 */
-  gap: 16px;
+  grid-template-columns: 1fr 2fr;
   background: #fff;
   border: 1px solid #e9ecef;
   border-radius: 12px;
@@ -317,15 +337,16 @@ const ListCard = styled.div`
 `;
 
 const ThumbLarge = styled.div`
-  height: 100%;               /* 카드 비율에 맞춘 높이 */
-  aspect-ratio: 1 / 1;
+  height: 100%;
+  aspect-ratio: 1.1 / 1;
   border-radius: 10px 0 0 10px;
   overflow: hidden;
   background: #f3f4f6;
+
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;           /* 꽉 채우기 */
+    object-fit: cover;
     display: block;
   }
 `;
@@ -333,8 +354,15 @@ const ThumbLarge = styled.div`
 const CardRight = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0px;
+  justify-content: center;   /* 세로 중앙 */
+  align-items: stretch;      /* 가로 전체 */
+  height: 100%;
+  margin-right: 50px;
+`;
+
+const CardRightContainer = styled.div`
+  width: 100%;
+  padding: 20px;
 `;
 
 const HeaderRow = styled.div`
@@ -344,21 +372,23 @@ const HeaderRow = styled.div`
   gap: 12px;
 `;
 
+/* 등록 탭: 파랑 / 예약 탭: 초록 */
 const PlaceTitle = styled.h3`
   margin: 0;
-  color: #16a34a;               /* 브랜드 그린 */
   font-size: 20px;
   font-weight: 800;
+  color: ${(p) => (p.isEnroll ? '#0089FC' : '#16a34a')};
 `;
 
 const GhostGap = styled.div``;
 
+/* 등록 탭 뱃지(파랑) / 예약 탭 뱃지(초록) */
 const PillButton = styled.button`
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 1px solid ${p => (p.kind === 'primary' ? '#16a34a' : '#d1d5db')};
-  background: ${p => (p.kind === 'primary' ? '#eafff2' : '#fff')};
-  color: ${p => (p.kind === 'primary' ? '#16a34a' : '#111827')};
+  padding: 8px 20px;
+  border-radius: 17px;
+  border: ${(p) => (p.isEnroll ? '1px solid #008AFE' : '1px solid #16a34a')};
+  background: ${(p) => (p.isEnroll ? 'rgba(0, 138, 254, 0.22)' : '#eafff2')};
+  color: ${(p) => (p.isEnroll ? '#0089FC' : '#16a34a')};
   font-weight: 800;
   cursor: pointer;
 `;
@@ -401,6 +431,7 @@ const Icon = styled.span`
 const SubSmall = styled.span`
   color: #9ca3af;
   font-weight: 600;
+  font-size: 12px;
 `;
 
 const InfoText = styled.p`
@@ -475,7 +506,7 @@ const LP_Help = styled.span`
 `;
 
 const LP_SectionDesc = styled.div`
-  margin-left: 26px; /* 아이콘 라인 정렬 */
+  margin-left: 26px;
   color: #8f8f8f;
   font-size: 13px;
   font-weight: 600;
@@ -515,7 +546,6 @@ const LP_PhoneInput = styled.input`
   width: 100%;
   font-size: 15px;
   color: #111827;
-
   ::placeholder { color: #cfd4da; }
 `;
 
@@ -552,4 +582,17 @@ const LP_Search = styled.button`
   transition: background-color .15s ease, transform .05s ease;
   &:hover { background: #1fb257; }
   &:active { transform: translateY(1px); }
+`;
+
+const AdImageWrapper = styled.div`
+  width: 100%;
+  margin-bottom: 14px;
+
+  img {
+    width: 100%;
+    min-height: 80px;       /* 최소 높이 */
+    object-fit: contain;    /* 원본 비율 유지 */
+    display: block;
+    border-radius: 8px;
+  }
 `;

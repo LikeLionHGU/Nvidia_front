@@ -142,75 +142,72 @@ export default function ReservationPage() {
   };
 
   /* ========== 1) 장소 기본 정보 (POST) ========== */
-  useEffect(() => {
-    const fetchPlace = async () => {
-      try {
-        setLoading((p) => ({ ...p, page: true }));
-        const { data } = await axios.post(`/spaceon/reservation/${roomId}`);
-        
-        // ==================================================================
-        // ============== 더미 데이터 삽입 (디자인 확인용) =================
-        // ============== 나중에 이 부분만 지우면 됩니다 ===================
-        const modifiedData = {
-            ...data,
-            optionList: ["WiFi", "주차", "에어컨", "냉장고"],
-            chipList: ["컬러풀한🎨", "포근하안🕊️", "활기이찬💪"],
-        };
-        setPlaceData(modifiedData);
+  // ReservationPage.jsx (일부발췌)
+useEffect(() => {
+  const fetchPlace = async () => {
+    try {
+      setLoading((p) => ({ ...p, page: true }));
+      const { data } = await axios.post(`/spaceon/reservation/${roomId}`);
 
-        const dummyEnrollmentData = [
-            {
-                "date": "2025-08-24",
-                "selectedTimeSlotIndex": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
-                  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
-                  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 
-                  31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 
-                  41, 42, 43, 44, 45, 46, 47, 48]
-            },
-            {
-                "date": "2025-08-27",
-                "selectedTimeSlotIndex": [3,4,21,22,23,24,25]
-            }
-        ];
+      // --- 응답 정규화: Thumbnail이 기대하는 형태로 맞추기 ---
+      const normalize = (d) => {
+        // d.photoList가 문자열, 배열(문자열/객체), 혹은 다른 키로 올 수 있으니 안전 처리
+        let photos = [];
+        if (Array.isArray(d?.photoList)) {
+          photos = d.photoList.map((p) => (typeof p === 'string' ? p : p?.url)).filter(Boolean);
+        } else if (typeof d?.photoList === 'string') {
+          photos = [d.photoList];
+        } else if (Array.isArray(d?.photos)) {           // 혹시 photos라는 키로 올 때
+          photos = d.photos.map((p) => (typeof p === 'string' ? p : p?.url)).filter(Boolean);
+        } else if (typeof d?.thumbnailUrl === 'string') { // 썸네일만 단일 키로 올 때
+          photos = [d.thumbnailUrl];
+        }
 
-        const dummyAvailableDays = dummyEnrollmentData.map(item => item.date);
-        setAvailableDays(dummyAvailableDays);
-
-        const dummySlotsByDate = new Map();
-        dummyEnrollmentData.forEach(item => {
-            dummySlotsByDate.set(item.date, item.selectedTimeSlotIndex);
-        });
-        setAvailableSlotsByDate(dummySlotsByDate);
-        // ==================================================================
-
-      } catch (err) {
-        console.error("Failed to fetch place data:", err);
-        setError(err);
-        // 더미 폴백
-        const dummy = {
-          roomId: Number(roomId),
-          photoList: [
-            "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1200&auto=format&fit=crop",
-          ],
-          address: {
-            roadName: "서울특별시 강남구 테헤란로 521",
-            latitude: 37.5061,
-            longitude: 127.0537,
+        return {
+          ...d,
+          photoList: photos,
+          // 주소 키도 안전 처리
+          address: d.address ?? {
+            roadName: d.roadName ?? d.addressRoad ?? '',
+            latitude: d.latitude ?? null,
+            longitude: d.longitude ?? null,
           },
-          maxPeople: 6,
-          phoneNumber: "010-1234-5678",
-          price: 40000,
-          account: "신한 110-123-456789",
-          chipList: ["WIFI", "주차 가능"],
-          optionList: ["TV", "화이트보드"],
+          chipList: Array.isArray(d.chipList) ? d.chipList : [],
+          optionList: Array.isArray(d.optionList) ? d.optionList : [],
         };
-        setPlaceData(dummy);
-      } finally {
-        setLoading((p) => ({ ...p, page: false }));
-      }
-    };
-    if (roomId) fetchPlace();
-  }, [roomId]);
+      };
+
+      const normalized = normalize(data);
+      setPlaceData(normalized); // ✅ 이 줄이 핵심!
+
+    } catch (err) {
+      console.error("Failed to fetch place data:", err);
+      setError(err);
+      // ✅ 폴백 더미
+      const dummy = {
+        roomId: Number(roomId),
+        photoList: [
+          "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1200&auto=format&fit=crop",
+        ],
+        address: {
+          roadName: "서울특별시 강남구 테헤란로 521",
+          latitude: 37.5061,
+          longitude: 127.0537,
+        },
+        maxPeople: 6,
+        phoneNumber: "010-1234-5678",
+        price: 40000,
+        account: "신한 110-123-456789",
+        chipList: ["WIFI", "주차 가능"],
+        optionList: ["TV", "화이트보드"],
+      };
+      setPlaceData(dummy);
+    } finally {
+      setLoading((p) => ({ ...p, page: false }));
+    }
+  };
+  if (roomId) fetchPlace();
+}, [roomId]);
 
   /* ========== 2) 월 변경 시 가능 날짜 (POST body:{month}) ========== */
   useEffect(() => {
