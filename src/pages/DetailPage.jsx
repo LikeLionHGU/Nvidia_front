@@ -1,130 +1,150 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import styled from "styled-components";
 import "./../styles/global.css";
 import { useNavigate } from "react-router-dom";
+import { getRecommendDetail } from "../apis/recommend";
 
 function DetailPage({ onClose, roomId }) {
   const [roomData, setRoomData] = useState(null);
-
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 임시 데이터
-  const dummyData = [
-    {
-      roomId: 1,
-      photo: "https://pbs.twimg.com/media/GUyPp8eaYAAhzbz.jpg",
-      address: { latitude: "37.4782", longitude: "127.0282" },
-      maxPeople: 4,
-      phoneNumber: "010-1234-5678",
-      price: 50000,
-      roadName: "서울특별시 서초구 서초중앙로 188",
-    },
-    {
-      roomId: 2,
-      photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-      address: { latitude: "37.4592", longitude: "127.1292" },
-      maxPeople: 2,
-      phoneNumber: "010-8765-4321",
-      price: 30000,
-      roadName: "서울특별시 강남구 개포로 623",
-    },
-    {
-      roomId: 3,
-      photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
-      address: { latitude: "37.3947611", longitude: "127.1111361" },
-      maxPeople: 10,
-      phoneNumber: "010-8765-2321",
-      price: 35000,
-      roadName: "경기도 성남시 분당구 판교역로 160 ",
-    },
-  ];
-
   useEffect(() => {
-    const fetchData = async () => {
+    let mounted = true;
+    async function fetchData() {
       try {
-        // 실제 API 호출 (현재는 주석 처리)
-        /*
-        const res = await axios.get(`/reservation/${roomId}`);
-        setRoomData(res.data);
-        */
-
-        // 더미 데이터에서 찾기
-        const found = dummyData.find((item) => item.roomId === Number(roomId));
-        setRoomData(found || null);
-      } catch (error) {
-        console.error("방 정보를 불러오지 못했습니다.", error);
+        setLoading(true);
+        const res = await getRecommendDetail(roomId);
+        if (mounted) setRoomData(res || null);
+      } catch (err) {
+        console.error("상세 정보를 불러오지 못했습니다.", err);
+        if (mounted) setRoomData(null);
+      } finally {
+        if (mounted) setLoading(false);
       }
-    };
-
+    }
     if (roomId) fetchData();
+    return () => {
+      mounted = false;
+    };
   }, [roomId]);
 
-  if (!roomData) {
+  if (loading) {
     return (
-        <ModalBackground>
-            <Wrapper>
-                <div>로딩중...</div>
-            </Wrapper>
-        </ModalBackground>
+      <ModalBackground>
+        <Wrapper>
+          <div>로딩중...</div>
+        </Wrapper>
+      </ModalBackground>
     );
   }
 
-  const handleReserve = (roomId) => {
-    navigate(`/reservation-page/${roomId}`);
-    // TODO: 예약 API 호출 로직 추가
+  if (!roomData) {
+    return (
+      <ModalBackground>
+        <Wrapper>
+          <div>정보를 불러오지 못했습니다.</div>
+        </Wrapper>
+      </ModalBackground>
+    );
+  }
+
+  const { photoList = [], address, maxPeople, phoneNumber, memo, chipList = [], optionList = [], price } = roomData;
+
+  const handleReserve = (id) => {
+    navigate(`/reservation-page/${id}`);
   };
 
   return (
     <ModalBackground>
-        <Overlay onClick={onClose} />
-        <Wrapper>
-            <div className="title">장소 상세정보 페이지</div>
-            <div className="save-content">
-                <img
-                    src={roomData.photo}
-                    alt="장소 사진"
-                    style={{ width: "300px", borderRadius: "8px" }}
-                />
-                <h3>방번호: {roomData.roomId}</h3>
-                <p>주소: {roomData.roadName}</p>
-                <p>최대 인원: {roomData.maxPeople}명</p>
-                <p>연락처: {roomData.phoneNumber}</p>
-                <p>가격: {roomData.price.toLocaleString()}원</p>
-            </div>
-            <BtnContainer>
-              <CancelBtn className="cancel" onClick={onClose}>취소</CancelBtn>
-              <ReserveBtn className="reserve" onClick={() => handleReserve(roomId)}>예약하기</ReserveBtn>
-            </BtnContainer>
-        </Wrapper>
+      <Overlay onClick={onClose} />
+      <Wrapper>
+        <div className="title">장소 상세정보 페이지</div>
+
+        <div className="save-content">
+          {/* 메인 사진 */}
+          {photoList?.[0] && (
+            <img
+              src={photoList[0]}
+              alt="장소 대표 사진"
+              style={{ width: "320px", height: "auto", borderRadius: "8px", objectFit: "cover" }}
+            />
+          )}
+
+          {/* 서브 사진 슬림 갤러리 */}
+          {photoList.length > 1 && (
+            <Thumbs>
+              {photoList.slice(1).map((p, i) => (
+                <img key={i} src={p} alt={`photo-${i + 1}`} />
+              ))}
+            </Thumbs>
+          )}
+
+          <h3>방번호: {roomData.roomId}</h3>
+          <p>주소: {address?.roadName}</p>
+          <p>
+            좌표: {address?.latitude}, {address?.longitude}
+          </p>
+          <p>최대 인원: {maxPeople}명</p>
+          <p>연락처: {phoneNumber}</p>
+          <p>가격: {Number(price).toLocaleString()}원</p>
+
+          {chipList.length > 0 && (
+            <>
+              <SectionTitle>특징</SectionTitle>
+              <ChipRow>
+                {chipList.map((chip, i) => (
+                  <Chip key={i}>{chip}</Chip>
+                ))}
+              </ChipRow>
+            </>
+          )}
+
+          {optionList.length > 0 && (
+            <>
+              <SectionTitle>옵션</SectionTitle>
+              <OptionList>
+                {optionList.map((opt, i) => (
+                  <li key={i}>{opt}</li>
+                ))}
+              </OptionList>
+            </>
+          )}
+
+          {memo && (
+            <>
+              <SectionTitle>메모</SectionTitle>
+              <MemoBox>{memo}</MemoBox>
+            </>
+          )}
+        </div>
+
+        <BtnContainer>
+          <CancelBtn onClick={onClose}>취소</CancelBtn>
+          <ReserveBtn onClick={() => handleReserve(roomData.roomId)}>예약하기</ReserveBtn>
+        </BtnContainer>
+      </Wrapper>
     </ModalBackground>
   );
 }
 
 export default DetailPage;
 
+/* ===== styles ===== */
 const modalBase = `
   width: 100vw;
   height: 100vh;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   position: fixed;
 `;
-
 const ModalBackground = styled.div`
   ${modalBase}
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0,0,0,0.2);
   z-index: 4;
-  cursor: default;
 `;
-
 const Overlay = styled.div`
   ${modalBase}
-  cursor: default;
 `;
-
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -133,44 +153,37 @@ const Wrapper = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #ffffff;
+  background: #fff;
   width: 80vw;
   max-width: 800px;
   min-height: 500px;
   max-height: 90vh;
   border-radius: 12px;
   overflow-y: auto;
+  padding-bottom: 16px;
 
   .title {
     font-size: 18px;
-    font-weight: bold;
-    margin-top: 18px;
-    margin-bottom: 8px;
+    font-weight: 700;
+    margin: 18px 0 8px;
     line-height: 150%;
   }
-
   .save-content {
     width: 90%;
     font-size: 14px;
-    text-align: center;
+    text-align: left;
     line-height: 150%;
-    flex: 1;
-    overflow-y: auto;
   }
 `;
-
 const BtnContainer = styled.div`
   display: flex;
   width: 100%;
-  height: auto;
   justify-content: center;
   align-items: center;
-  margin-top: 16px;
-  margin-bottom: 16px;
   gap: 10px;
+  margin: 16px 0;
 `;
-
-const CancelBtn = styled.button`
+const ButtonBase = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -180,40 +193,73 @@ const CancelBtn = styled.button`
   width: 201px;
   height: 37px;
   font-size: 14px;
-  font-weight: bold;
-  color: #B3B3B3;
-  background-color: #F7F7F7;
+  font-weight: 700;
   cursor: pointer;
-
-  &:active {
-    background-color: #26945E;
-  }
-
+`;
+const CancelBtn = styled(ButtonBase)`
+  color: #b3b3b3;
+  background: #f7f7f7;
   &:hover {
     filter: brightness(0.95);
   }
-`;
-
-const ReserveBtn = styled.button`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  outline: none;
-  border: none;
-  border-radius: 8px;
-  width: 201px;
-  height: 37px;
-  font-size: 14px;
-  font-weight: bold;
-  color: white;
-  background-color: #2FB975;
-  cursor: pointer;
-
   &:active {
-    background-color: #26945E;
+    background: #26945e;
+    color: #fff;
   }
-
+`;
+const ReserveBtn = styled(ButtonBase)`
+  color: #fff;
+  background: #2fb975;
   &:hover {
     filter: brightness(1.1);
   }
+  &:active {
+    background: #26945e;
+  }
+`;
+
+const Thumbs = styled.div`
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 4px;
+  img {
+    width: 90px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+`;
+const SectionTitle = styled.h4`
+  margin: 12px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+`;
+const ChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+const Chip = styled.span`
+  padding: 6px 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #334155;
+`;
+const OptionList = styled.ul`
+  margin: 0;
+  padding-left: 18px;
+  li {
+    margin: 2px 0;
+  }
+`;
+const MemoBox = styled.div`
+  white-space: pre-wrap;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  color: #444;
 `;

@@ -5,8 +5,14 @@ import Question from "../../assets/icons/questionIcon.svg";
 function FormComponent({
   addressInputs,
   handleAddressInputChange,
-  handleRecommendClick,
-  setIsSearchLocationModalOpen,
+  onOpenSearchLocationModal,
+  prompt,
+  setPrompt,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  onSubmitRecommend,
 }) {
   // 각 스텝의 완료 상태 관리
   const [stepCompleted, setStepCompleted] = useState({
@@ -22,12 +28,12 @@ function FormComponent({
     step3: false,
   });
 
-  // Step 2 텍스트 입력 상태
-  const [step2Text, setStep2Text] = useState("");
+  const [step2Text, setStep2Text] = useState(prompt || "");
+  const [minBudget, setMinBudget] = useState(minPrice || "");
+  const [maxBudget, setMaxBudget] = useState(maxPrice || "");
 
-  // Step 3 예산 입력 상태
-  const [minBudget, setMinBudget] = useState("");
-  const [maxBudget, setMaxBudget] = useState("");
+  const [minFocused, setMinFocused] = useState(false);
+  const [maxFocused, setMaxFocused] = useState(false);
 
   // Step 1 완료 여부 체크
   useEffect(() => {
@@ -53,7 +59,7 @@ function FormComponent({
       ...prev,
       step2: isCompleted,
     }));
-
+    setPrompt?.(step2Text);
     // Step 2가 완료되면 Step 3 활성화
     if (isCompleted) {
       setStepEnabled((prev) => ({
@@ -70,6 +76,8 @@ function FormComponent({
       ...prev,
       step3: isCompleted,
     }));
+    setMinPrice?.(minBudget);
+    setMaxPrice?.(maxBudget);
   }, [minBudget, maxBudget]);
 
   // Skip 버튼 핸들러
@@ -79,17 +87,26 @@ function FormComponent({
         ...prev,
         step2: true,
       }));
+      setStepCompleted((prev) => ({
+        ...prev,
+        step1: true,
+      }));
     } else if (stepNumber === 2) {
       setStepEnabled((prev) => ({
         ...prev,
         step3: true,
       }));
+      setStepCompleted((prev) => ({
+        ...prev,
+        step2: true,
+      }));
+    } else if (stepNumber === 3) {
+      setStepCompleted((prev) => ({
+        ...prev,
+        step3: true,
+      }));
     }
   };
-
-  const openSearchLocationModal = () =>{
-    setIsSearchLocationModalOpen(true);
-  }
 
   // 초기화 함수
   const handleReset = () => {
@@ -114,6 +131,18 @@ function FormComponent({
     });
   };
 
+  const onlyDigits = (s) => (s || "").replace(/\D/g, "");
+
+  const formatCurrency = (digits) => {
+    if (!digits) return "";
+    const n = Number(digits);
+    if (Number.isNaN(n)) return "";
+    return n.toLocaleString("ko-KR") + "원";
+  };
+
+  // 에러 여부: 둘 다 값이 있고, min > max
+  const hasBudgetError = !!minBudget && !!maxBudget && Number(minBudget) > Number(maxBudget);
+
   return (
     <FormContainer>
       {/* 헤더 정보 */}
@@ -131,7 +160,7 @@ function FormComponent({
       <StepContainer>
         <LeftContainer>
           <StepBadge completed={stepCompleted.step1}>Step 1</StepBadge>
-          <ProcessBar />
+          <ProcessBar completed={stepCompleted.step1} />
         </LeftContainer>
         <RightContainer>
           <StepHeader>
@@ -151,7 +180,7 @@ function FormComponent({
                     value={input}
                     onChange={(e) => handleAddressInputChange(index, e.target.value)}
                     readOnly
-                    onClick={openSearchLocationModal}
+                    onClick={() => onOpenSearchLocationModal(index)}
                   />
                 </AddressInputContainer>
               ))}
@@ -166,7 +195,7 @@ function FormComponent({
           <StepBadge completed={stepCompleted.step2} disabled={!stepEnabled.step2}>
             Step 2
           </StepBadge>
-          <ProcessBar />
+          <ProcessBar completed={stepCompleted.step2} />
         </LeftContainer>
         <RightContainer>
           <StepHeader>
@@ -224,22 +253,33 @@ function FormComponent({
             <BudgetInputContainer>
               <BudgetInputWrapper>
                 <BudgetInput
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="직접 입력"
-                  value={minBudget}
-                  onChange={(e) => setMinBudget(e.target.value)}
+                  value={minFocused ? minBudget : formatCurrency(minBudget)}
+                  onFocus={() => setMinFocused(true)}
+                  onBlur={() => setMinFocused(false)}
+                  onChange={(e) => setMinBudget(onlyDigits(e.target.value))}
                   disabled={!stepEnabled.step3}
+                  $error={hasBudgetError}
                 />
+
                 <BudgetSeparator>~</BudgetSeparator>
+
                 <BudgetInput
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="직접 입력"
-                  value={maxBudget}
-                  onChange={(e) => setMaxBudget(e.target.value)}
+                  value={maxFocused ? maxBudget : formatCurrency(maxBudget)}
+                  onFocus={() => setMaxFocused(true)}
+                  onBlur={() => setMaxFocused(false)}
+                  onChange={(e) => setMaxBudget(onlyDigits(e.target.value))}
                   disabled={!stepEnabled.step3}
+                  $error={hasBudgetError}
                 />
               </BudgetInputWrapper>
             </BudgetInputContainer>
+            {hasBudgetError && <ErrorMsg>알맞은 범위를 작성해주세요</ErrorMsg>}
           </StepContent>
         </RightContainer>
       </StepContainer>
@@ -248,7 +288,7 @@ function FormComponent({
       {/* 버튼 컨테이너 */}
       <ButtonContainer>
         <ResetButton onClick={handleReset}>초기화</ResetButton>
-        <RecommendButton onClick={handleRecommendClick}>딱 맞는 공실 추천 받기</RecommendButton>
+        <RecommendButton onClick={onSubmitRecommend}>딱 맞는 공실 추천 받기</RecommendButton>
       </ButtonContainer>
     </FormContainer>
   );
@@ -277,7 +317,7 @@ const TopWrapper = styled.div`
 `;
 
 const Title = styled.div`
-  font-family: 'Pretendard';
+  font-family: "Pretendard";
   font-weight: 700;
   font-size: 1.5vw;
 `;
@@ -308,7 +348,10 @@ const LeftContainer = styled.div`
 `;
 
 const ProcessBar = styled.div`
-  border-right: 1.5px solid #2fb975;
+  border-right: ${(props) =>
+    props.completed
+      ? "1.5px solid #2FB975" // 완료 시 초록 실선
+      : "1.5px dashed #bebebe"}; // 기본 회색 점선
   height: 100%;
 `;
 
@@ -365,6 +408,9 @@ const StepDescription = styled.p`
 const StepContent = styled.div`
   opacity: ${(props) => (props.enabled ? 1 : 0.5)};
   pointer-events: ${(props) => (props.enabled ? "auto" : "none")};
+  display: flex;
+  flex-direction: column;
+  justify-content
 `;
 
 const AddressListContainer = styled.div`
@@ -461,20 +507,37 @@ const BudgetInputWrapper = styled.div`
 const BudgetInput = styled.input`
   width: 10.83vw;
   height: 3.15vh;
-  border: 1px solid #ccc;
+  border: 1px solid ${(p) => (p.$error ? "#FF3C3C" : "#ccc")};
   border-radius: 8px;
   font-size: 14px;
   text-align: center;
+  color: ${(p) => (p.$error ? "#FF3C3C" : "inherit")};
 
   &:focus {
     outline: none;
-    border-color: #2fb975;
+    border-color: ${(p) => (p.$error ? "#FF3C3C" : "#2fb975")};
   }
-
   &:disabled {
     background-color: #f5f5f5;
     cursor: not-allowed;
   }
+
+  /* 혹시 type="number"를 쓸 때를 대비한 스핀버튼 제거(브라우저 가드) */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  &[type="number"] {
+    -moz-appearance: textfield;
+  }
+`;
+
+const ErrorMsg = styled.div`
+  margin-top: 8px;
+  color: #ff3c3c;
+  font-size: 12px;
+  text-align: center;
 `;
 
 const BudgetSeparator = styled.span`
