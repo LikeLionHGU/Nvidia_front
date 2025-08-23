@@ -1,133 +1,263 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
-import Logo from '../../../assets/icons/LogoWhite.svg';
+import LogoWhite from '../../../assets/icons/LogoWhite.svg';
+import ResSelectionSummary from './ResSelectionSummary';
 
+const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : 'auto';
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [isOpen]);
 
-const colors = {
-  brand: "#2FB975",
-  text: "#374151",
-  line: "#E5E7EB",
-};
+  if (!isOpen) return null;
 
-const SuccessModal = ({ show, onClose, previewUrl, name }) => {
-  if (!show) {
-    return null;
-  }
+  const {
+    name = '사용자',
+    phone = '010-0000-0000',
+    headcount = 1,
+    totalPrice = 0,
+    pricePer30min = 0,
+    hours = 0,
+    date,
+    time,
+  } = details || {};
+
+  const money = (n) => n.toLocaleString();
 
   return (
-    <Overlay onClick={onClose}>
-      <SuccessCard onClick={(e) => e.stopPropagation()}>
-        <SuccessHead>
-          <BrandLogo src={Logo} alt="SPACEON Logo" />
-          <HeadMsg>해당 공실이 예약되었습니다. 예약 내역을 조회해보세요.</HeadMsg>
-        </SuccessHead>
+    <ModalOverlay onClick={onClose}>
+      <ModalContent onClick={(e) => e.stopPropagation()}>
+        <GreenSection>
+          <Logo src={LogoWhite} alt="SPACEON" />
+          <ModalText>
+            해당 공실이 예약되었습니다. 예약 내역을 조회해보세요.
+          </ModalText>
+        </GreenSection>
 
-        <ThumbWrap>
-          {previewUrl ? (
-            <Thumb src={previewUrl} alt="uploaded preview" />
-          ) : (
-            <ThumbPlaceholder>이미지 없음</ThumbPlaceholder>
-          )}
-        </ThumbWrap>
+        <WhiteSection>
+          {/* --- 예약자 세부 정보 --- */}
+          <SectionRow>
+            <SectionTitle>예약자 세부 정보</SectionTitle>
 
-        <CenterText>
-          <HostName>{name || "호스트"} Host님!</HostName>
-          <BigMsg>공실이 등록되었어요!</BigMsg>
-        </CenterText>
+            <SectionBody>
+              <DetailsBox>
+                <InfoColumn>
+                  <InfoPair>
+                    <InfoLabel>예약자 성함</InfoLabel>
+                    <InputLike>{name}</InputLike>
+                  </InfoPair>
+                  <InfoPair>
+                    <InfoLabel>전화번호</InfoLabel>
+                    <InputLike>{phone}</InputLike>
+                  </InfoPair>
+                  <InfoPair>
+                    <InfoLabel>사용 인원</InfoLabel>
+                    <InputLikeHeadcount>{headcount}명</InputLikeHeadcount>
+                  </InfoPair>
+                </InfoColumn>
 
-        <Actions>
-          <GhostBtn onClick={onClose}>취소</GhostBtn>
-          <PrimaryBtn onClick={onClose}>확인</PrimaryBtn>
-        </Actions>
-      </SuccessCard>
-    </Overlay>
+                <SummaryColumn>
+                  <SummaryHeader>
+                    선택한 총 시간 <SummaryHour>{hours}H</SummaryHour>
+                  </SummaryHeader>
+
+                  {/* 우측 요약 리스트: 컴포넌트 있으면 사용, 없으면 플레이스홀더 */}
+                  <SummaryScroll>
+                    {details ? (
+                      <ResSelectionSummary
+                        slotsByDate={slotsByDate}
+                      />
+                    ) : (
+                      <SummaryEmpty>날짜와 시간을 선택하면 요약이 표시됩니다.</SummaryEmpty>
+                    )}
+                  </SummaryScroll>
+                </SummaryColumn>
+              </DetailsBox>
+            </SectionBody>
+          </SectionRow>
+
+          {/* --- 요금 세부 정보 --- */}
+          <SectionRow>
+            <SectionTitle>요금 세부 정보</SectionTitle>
+
+            <SectionBody>
+              <DetailsBox>
+                <FeeLeft>
+                  <TotalAmount>
+                    {money(totalPrice)} <Won>원</Won>
+                  </TotalAmount>
+                </FeeLeft>
+
+                <FeeRight>
+                  <FeeItem>30min당 {money(pricePer30min)}원</FeeItem>
+                  <FeeItem>{hours}h X {money(pricePer30min * 2)} W</FeeItem>
+                </FeeRight>
+              </DetailsBox>
+            </SectionBody>
+          </SectionRow>
+
+          {/* --- 버튼 --- */}
+          <ButtonContainer>
+            <CloseButton onClick={onClose}>취소</CloseButton>
+            <ConfirmButton onClick={onClose}>확인</ConfirmButton>
+          </ButtonContainer>
+        </WhiteSection>
+      </ModalContent>
+    </ModalOverlay>
   );
 };
 
-export default SuccessModal;
+export default ResSuccessModal;
 
-const Overlay = styled.div`
+/* ================= Styled ================= */
+const ModalOverlay = styled.div`
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0,0,0,.5);
   display: flex; align-items: center; justify-content: center;
-  z-index: 2000;
+  font-family: 'Pretendard';
+  z-index: 1000;
 `;
 
-const SuccessCard = styled.div`
-  width: 780px;
-  height: 610px;
+const ModalContent = styled.div`
+  height: 640px;
+  width: 800px;
+  background: #fff; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+`;
+
+const GreenSection = styled.div`
+  background: #34cd82;
+  padding: 28px 16px 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+`;
+
+const Logo = styled.img`
+  width: 240px; height: auto;
+`;
+
+const ModalText = styled.p`
+  margin: 14px 0 0;
+  color: #fff; font-weight: 700; font-size: 18px; text-align: center;
+`;
+
+const WhiteSection = styled.div`
+  padding: 26px 28px 24px;
+`;
+
+const SectionRow = styled.div`
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  align-items: start;
+  gap: 18px 22px;
+  margin-bottom: 22px;
+`;
+
+const SectionTitle = styled.h3`
+  margin: 8px 0 0;
+  font-size: 16px; font-weight: 600; color: #000;
+  white-space: nowrap;
+  margin-left: 30px;
+`;
+
+const SectionBody = styled.div``;
+
+const DetailsBox = styled.div`
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+`;
+
+const InfoColumn = styled.div`
+  display: grid; gap: 14px;
+`;
+
+const InfoPair = styled.div``;
+
+const InfoLabel = styled.div`
+  font-size: 13px; color: #666; margin: 0 0 6px;
+`;
+
+const InputLike = styled.div`
   background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 18px 48px rgba(0,0,0,0.18);
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 15px; color: #030303;
+  font-weight: 600;
 `;
 
-const SuccessHead = styled.div`
-  background: #0D87FF;
-  color: #fff;
-  padding: 22px 18px 170px; /* 아래로 파란 영역 */
-  text-align: center;
+const InputLikeHeadcount = styled.div`
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 16px; color: #030303;
+  font-weight: 700;
+  font-family: Inter;
 `;
 
-const BrandLogo = styled.img`
-  height: 48px;
-  object-fit: contain;
+const SummaryColumn = styled.div`
+  display: flex; flex-direction: column; gap: 10px;
 `;
 
-const HeadMsg = styled.div`
-  margin-top: 8px; font-weight: 700;
+const SummaryHeader = styled.div`
+  font-size: 14px; color: #666; font-weight: 600;
 `;
 
-const ThumbWrap = styled.div`
-  display: flex; justify-content: center;
-  margin-top: -140px; /* 파란 영역에서 겹쳐 보이게 */
+const SummaryHour = styled.span`
+  margin-left: 6px; font-size: 20px;
+  color: #2FB975; font-weight: 700;
 `;
 
-const Thumb = styled.img`
-  width: 280px; height: 280px; object-fit: cover;
-  border-radius: 5px;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+const SummaryScroll = styled.div`
+  background: #fff; border: none; border-radius: 8px;
+min-height: 150px; max-height: 210px; overflow: auto;
 `;
 
-const ThumbPlaceholder = styled.div`
-  width: 280px; height: 280px; border-radius: 12px;
-  border: 6px solid #fff; background: #F1F5F9;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; color: #94A3B8;
+const SummaryEmpty = styled.div`
+  color: #9aa3af; font-size: 14px; padding: 12px 6px;
 `;
 
-const CenterText = styled.div`
-  text-align: center; padding: 24px 18px 8px;
-  font-size: 20px;
+const FeeLeft = styled.div`
+  display: flex; align-items: center;
 `;
 
-const HostName = styled.div`
-  font-weight: 700; color: black; margin-bottom: 6px;
+const TotalAmount = styled.div`
+  font-size: 26px; font-weight: 600; color: #000;
+  letter-spacing: .5px;
 `;
 
-const BigMsg = styled.div`
-  font-size: 26px; font-weight: 700;
+const Won = styled.span`
+  font-size: 19px; font-weight: 600; margin-left: 1px;
 `;
 
-const Actions = styled.div`
-  display: flex; gap: 12px; padding: 18px;
-  justify-content: center;
+const FeeRight = styled.div`
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  margin-left: 20px;
 `;
 
-const BaseBtn = styled.button`
-  min-width: 140px; height: 44px;
-  border-radius: 8px; font-weight: 800; font-size: 16px;
-  cursor: pointer; transition: transform .06s ease, filter .15s ease;
-  &:active { transform: scale(0.98); }
+const FeeItem = styled.div`
+  font-size: 13px; color: #000; font-weight: 600;
+  line-height: 16px;
 `;
 
-const GhostBtn = styled(BaseBtn)`
-  background: #F2F4F5; color: ${colors.text}; border: 1px solid ${colors.line};
-  &:hover { filter: brightness(0.98); }
+const ButtonContainer = styled.div`
+  display: flex; justify-content: center; gap: 18px; margin-top: 8px;
 `;
 
-const PrimaryBtn = styled(BaseBtn)`
-  background: #27D580; color: #fff; border: none;
-  &:hover { filter: brightness(0.96); }
+const Button = styled.button`
+  padding: 13px 52px;
+  border-radius: 8px; border: none; cursor: pointer;
+  font-size: 16px; font-weight: 800;
+`;
+
+const CloseButton = styled(Button)`
+  background: #f0f0f0; color: #333;
+`;
+
+const ConfirmButton = styled(Button)`
+  background: #34cd82; color: #fff;
 `;

@@ -98,7 +98,7 @@ export default function BasicInfoForm({
           <Label htmlFor="phoneNumber">전화번호</Label>
           <Input
             id="phoneNumber"
-            placeholder="전화번호를 입력해주세요."
+            placeholder="01000000000  ( - 제외)"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
           />
