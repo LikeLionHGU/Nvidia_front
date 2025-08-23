@@ -31,6 +31,8 @@ export default function Thumbnail({ placeData }) {
     firstPhoto = photoList;
   }
 
+  firstPhoto = "https://lh4.googleusercontent.com/proxy/IxfEQaVLXrFtZHSqW58ebhAWo481F-FSlTk2iJuMhKdloOpS6l8p9xNCfuGModgdcd0-ygTSVKtTEhH_lFO4yn1vld3JwU0h4j94hFA7jpFV0A";
+
   const safeChips = Array.isArray(chipList) ? chipList : [];
   const safeOptions = Array.isArray(optionList) ? optionList : [];
 
@@ -93,13 +95,11 @@ export default function Thumbnail({ placeData }) {
 /* ===== styles ===== */
 const Wrapper = styled.div`
   width: 100%;
-  padding: 15px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
   background: #fff;
   display: flex;
-  gap: 20px;
+  gap: 0.8vw;
   box-sizing: border-box;
+
 `;
 
 const PhotoDisplayWrapper = styled.div`
@@ -108,6 +108,7 @@ const PhotoDisplayWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
 `;
 
 const RightCol = styled.div`
@@ -117,11 +118,12 @@ const RightCol = styled.div`
   flex-direction: column;
   justify-content: space-between;
   padding: 5px 0;
+  aspect-ratio: 1 / 1;
 `;
 
 const ImgWrapper = styled.img`
   width: 100%;
-  height: 150px;
+  aspect-ratio: 1 / 1;   /* 가로:세로 비율 1:1 */
   object-fit: cover;
   border-radius: 8px;
   display: block;
@@ -130,7 +132,7 @@ const ImgWrapper = styled.img`
 
 const EmptyThumb = styled.div`
   width: 100%;
-  height: 150px;
+  aspect-ratio: 1 / 1;
   border-radius: 8px;
   background: #f3f4f6;
   color: #9ca3af;
@@ -143,18 +145,27 @@ const EmptyThumb = styled.div`
 
 const ChipRow = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 5px;
+  position: absolute;
+  bottom: 30px;
+  left: 50%;              /* 가로 중앙 */
+  transform: translateX(-50%); /* 중앙 정렬 */
 `;
 
 const Chip = styled.span`
-  padding: 4px 10px;
-  border-radius: 12px;
-  background: #f3faf6;
-  border: 1px solid #e5f4ea;
-  color: #2fb975;
-  font-size: 12px;
+  display: inline-flex;   /*  칩이 가로로만 배치되게 */
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;    /*  텍스트 줄바꿈 방지 */
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #F3F3F3;
+  font-size: 0.85vw;
   font-weight: 700;
+  border: 1px solid #F2F2F2;
+  background: rgba(155, 155, 155, 0.7);
+  box-shadow: 0 1.22px 4.879px rgba(0, 0, 0, 0.05);
 `;
 
 const InfoList = styled.div`
@@ -166,7 +177,7 @@ const InfoList = styled.div`
 const IconTextRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   color: #374151;
   font-size: 0.85vw;
 
@@ -215,6 +226,6 @@ const Icon = styled.img`
 `;
 
 const CheckBox = styled.img`
-  width: 1vw;
-  height: 1vw;
+  width: 0.8vw;
+  height: 0.8vw;
 `

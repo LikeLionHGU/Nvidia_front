@@ -146,7 +146,42 @@ export default function ReservationPage() {
       try {
         setLoading((p) => ({ ...p, page: true }));
         const { data } = await axios.post(`/spaceon/reservation/${roomId}`);
-        setPlaceData(data);
+        
+        // ==================================================================
+        // ============== 더미 데이터 삽입 (디자인 확인용) =================
+        // ============== 나중에 이 부분만 지우면 됩니다 ===================
+        const modifiedData = {
+            ...data,
+            optionList: ["WiFi", "주차", "에어컨", "냉장고"],
+            chipList: ["컬러풀한🎨", "포근하안🕊️", "활기이찬💪"],
+        };
+        setPlaceData(modifiedData);
+
+        const dummyEnrollmentData = [
+            {
+                "date": "2025-08-24",
+                "selectedTimeSlotIndex": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
+                  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
+                  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 
+                  31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 
+                  41, 42, 43, 44, 45, 46, 47, 48]
+            },
+            {
+                "date": "2025-08-27",
+                "selectedTimeSlotIndex": [3,4,21,22,23,24,25]
+            }
+        ];
+
+        const dummyAvailableDays = dummyEnrollmentData.map(item => item.date);
+        setAvailableDays(dummyAvailableDays);
+
+        const dummySlotsByDate = new Map();
+        dummyEnrollmentData.forEach(item => {
+            dummySlotsByDate.set(item.date, item.selectedTimeSlotIndex);
+        });
+        setAvailableSlotsByDate(dummySlotsByDate);
+        // ==================================================================
+
       } catch (err) {
         console.error("Failed to fetch place data:", err);
         setError(err);
