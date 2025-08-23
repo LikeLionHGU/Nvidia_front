@@ -30,7 +30,7 @@ const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
         <GreenSection>
           <Logo src={LogoWhite} alt="SPACEON" />
           <ModalText>
-            해당 공실이 예약되었습니다. 예약 내역을 조회해보세요.
+            해당 공실이 예약되었습니다. <br/> 호스트의 전화번호는 예약조회에서 확인하실 수 있습니다!
           </ModalText>
         </GreenSection>
 
@@ -119,7 +119,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  height: 640px;
+  height: 655px;
   width: 800px;
   background: #fff; border-radius: 16px; overflow: hidden;
   box-shadow: 0 4px 20px rgba(0,0,0,.15);
@@ -245,7 +245,7 @@ const FeeItem = styled.div`
 `;
 
 const ButtonContainer = styled.div`
-  display: flex; justify-content: center; gap: 18px; margin-top: 8px;
+  display: flex; justify-content: center; gap: 18px; margin-top: 1px;
 `;
 
 const Button = styled.button`
