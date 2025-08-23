@@ -147,6 +147,7 @@ const ManageMyPlacePage = () => {
               <span>{isEnroll ? `신청 인원 ${item.maxPeople}명` : `인원수 ${item.maxPeople}명`}</span>
             </InfoItem>
           </InfoRow>
+          <Divider />
         </CardRight>
       </ListCard>
     );
@@ -306,19 +307,19 @@ const ContentArea = styled.div`
 /* ====== 카드 레이아웃 (왼쪽 큰 썸네일 + 오른쪽 정보) ====== */
 const ListCard = styled.div`
   display: grid;
-  grid-template-columns: 280px 1fr;   /* 왼쪽 썸네일 넓게 */
+  grid-template-columns: 1fr 2fr;   /* 왼쪽 썸네일 넓게 */
   gap: 16px;
   background: #fff;
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 4px 18px rgba(0,0,0,.06);
-  padding: 12px;
+  height: 200px;
 `;
 
 const ThumbLarge = styled.div`
-  width: 100%;
-  height: 180px;                 /* 카드 비율에 맞춘 높이 */
-  border-radius: 10px;
+  height: 100%;               /* 카드 비율에 맞춘 높이 */
+  aspect-ratio: 1 / 1;
+  border-radius: 10px 0 0 10px;
   overflow: hidden;
   background: #f3f4f6;
   img {
@@ -333,6 +334,7 @@ const CardRight = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 0px;
 `;
 
 const HeaderRow = styled.div`

@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const NAVER_BASE = "/api/v1/search";
-
+const NAVER_BASE =
+  import.meta.env.PROD
+    ? 'https://openapi.naver.com/v1/search'   // 배포에서는 직접 호출
+    : '/api/v1/search';                        // 로컬은 dev-proxy
+    
 const clientId = import.meta.env.VITE_SEARCH_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_SEARCH_CLIENT_SECRET;
 
