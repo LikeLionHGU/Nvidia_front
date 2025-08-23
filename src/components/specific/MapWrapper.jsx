@@ -14,25 +14,24 @@ function MapWrapper({
   isDetailModalOpen,
   isSearchLocationModalOpen,
 }) {
+  const center = currentLocation || { lat: 37.5665, lng: 126.978 };
   return (
     <MapContainer>
-      <NavermapsProvider ncpKeyId={mapClientId}>
-        {markers.length > 0 ? (
-          <MapComponent
-            markers={markers}
-            onMarkerClick={moveToDetailPage}
-            onMarkerHover={handleMarkerHover}
-            currentLocation={currentLocation}
-          />
-        ) : (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-            지도 로딩 중...
-          </div>
-        )}
+      <NavermapsProvider ncpClientId={mapClientId}>
+        <MapComponent
+          markers={markers} // 마커가 0개여도 OK
+          onMarkerClick={moveToDetailPage}
+          onMarkerHover={handleMarkerHover}
+          currentLocation={center} // 항상 중심 전달
+        />
+        +{" "}
       </NavermapsProvider>
-      <CurrentLocationButton onClick={handleGetCurrentLocation} isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen}>
-        <Icon src={MyLocationIcon} alt="Current Location" />
-        내 위치 불러오기
+      <CurrentLocationButton
+        onClick={handleGetCurrentLocation}
+        isDetailModalOpen={isDetailModalOpen}
+        isSearchLocationModalOpen={isSearchLocationModalOpen}
+      >
+        <Icon src={MyLocationIcon} alt="Current Location" />내 위치 불러오기
       </CurrentLocationButton>
     </MapContainer>
   );
@@ -42,7 +41,7 @@ export default MapWrapper;
 
 const MapContainer = styled.div`
   width: 60%;
-  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
   margin: 20px 20px 20px 10px;
@@ -56,7 +55,7 @@ const CurrentLocationButton = styled.button`
   left: 50%;
   transform: translateX(-50%);
   z-index: ${({ isDetailModalOpen, isSearchLocationModalOpen }) =>
-  (isDetailModalOpen || isSearchLocationModalOpen) ? 1 : 1000};
+    isDetailModalOpen || isSearchLocationModalOpen ? 1 : 1000};
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 20px;
@@ -70,7 +69,7 @@ const CurrentLocationButton = styled.button`
   color: #333;
   white-space: nowrap;
 
-  color: #2FB975;
+  color: #2fb975;
   font-family: Inter;
   font-size: 12.426px;
   font-style: normal;

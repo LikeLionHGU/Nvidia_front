@@ -13,6 +13,8 @@ import FormComponent from "../components/specific/FormComponent";
 import SearchResultContainer from "../components/specific/SearchResultContainer";
 import RecommendationBox from "../components/specific/RecommendationBox";
 
+import { postMain, postRecommend } from "../apis/recommend";
+
 function MainPage() {
   const [markers, setMarkers] = useState([]);
   const [recommendList, setRecommendList] = useState([]);
@@ -24,6 +26,7 @@ function MainPage() {
   const [budgetRange, setBudgetRange] = useState([0, 100000]);
   const [hoveredRoomId, setHoveredRoomId] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null); // { lat, lng }
+  const [centerAddress, setCenterAddress] = useState(null);
 
   const navigate = useNavigate();
 
@@ -85,89 +88,128 @@ function MainPage() {
     setIsDetailModalOpen(false);
     setSelectedRoomId(null);
   };
-  const closeSearchLocationModal = () => {
-    setIsSearchLocationModalOpen(false);
-  };
 
   const handleMarkerHover = (roomId, isHovering) => {
     setHoveredRoomId(isHovering ? roomId : null);
   };
 
+  const openSearchLocationModal = (index) => {
+    setIsSearchLocationModalOpen(true);
+  };
+
+  const closeSearchLocationModal = () => {
+    setIsSearchLocationModalOpen(false);
+  };
+
+  const handleLocationConfirm = (center) => {
+    // 인풋엔 도로명만 표시 (readOnly)
+    setAddressInputs((prev) => {
+      const n = prev.length ? [...prev] : [""];
+      n[0] = center?.roadName || "";
+      return n;
+    });
+    // 단일 중간값 보관
+    setCenterAddress(center); // { roadName, latitude, longitude }
+    setIsSearchLocationModalOpen(false);
+  };
+
+  const [prompt, setPrompt] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const requestRecommend = async () => {
+    if (!centerAddress) {
+      alert("위치를 먼저 선택해주세요.");
+      return;
+    }
+    try {
+      const data = await postRecommend({
+        center: centerAddress,
+        prompt,
+        minPrice,
+        maxPrice,
+      });
+
+      const list = Array.isArray(data?.recommendList) ? data.recommendList : Array.isArray(data) ? data : [];
+
+      setRecommendList(list);
+      setMarkers(
+        list.map((item) => ({
+          position: {
+            lat: Number(item.address?.latitude),
+            lng: Number(item.address?.longitude),
+          },
+          title: `장소 ${item.roomId}`,
+          id: item.roomId,
+          price: Number(item.price).toLocaleString(),
+        }))
+      );
+      setShowResults(true);
+    } catch (e) {
+      console.error("POST /recommend 실패:", e);
+      alert("추천을 불러오지 못했습니다.");
+    }
+  };
+
   // 1) 추천 API: 위치가 준비된 이후에만 호출. 응답 비거나 실패하면 더미로 대체.
   useEffect(() => {
-    if (!currentLocation) return; // 위치 없으면 호출 안 함
+    if (!currentLocation) return;
 
     const fallback = [
-      {
-        roomId: 1,
-        photo: "https://picsum.photos/seed/spaceon1/640/480",
-        address: { roadName: "서울 강남구 테헤란로 123", latitude: 37.498, longitude: 127.028 },
-        maxPeople: 4,
-        phoneNumber: "010-1234-5678",
-        price: 30000,
-      },
-      {
-        roomId: 2,
-        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-        address: { roadName: "서울 서초구 서초대로 77", latitude: 37.496, longitude: 127.024 },
-        maxPeople: 2,
-        phoneNumber: "010-8765-4321",
-        price: 45000,
-      },
-      {
-        roomId: 3,
-        photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
-        address: { roadName: "성남 분당구 판교역로 160", latitude: 37.3947611, longitude: 127.1111361 },
-        maxPeople: 3,
-        phoneNumber: "010-2222-3333",
-        price: 35000,
-      },
+      // {
+      //   roomId: 1,
+      //   photo: "https://picsum.photos/seed/spaceon1/640/480",
+      //   address: { roadName: "서울 강남구 테헤란로 123", latitude: 37.498, longitude: 127.028 },
+      //   maxPeople: 4,
+      //   phoneNumber: "010-1234-5678",
+      //   price: 30000,
+      // },
+      // {
+      //   roomId: 2,
+      //   photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
+      //   address: { roadName: "서울 서초구 서초대로 77", latitude: 37.496, longitude: 127.024 },
+      //   maxPeople: 2,
+      //   phoneNumber: "010-8765-4321",
+      //   price: 45000,
+      // },
+      // {
+      //   roomId: 3,
+      //   photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
+      //   address: { roadName: "성남 분당구 판교역로 160", latitude: 37.3947611, longitude: 127.1111361 },
+      //   maxPeople: 3,
+      //   phoneNumber: "010-2222-3333",
+      //   price: 35000,
+      // },
     ];
 
     const applyData = (list) => {
       setRecommendList(list);
-      const mks = (list || []).map((item) => ({
-        position: {
-          lat: Number(item.address?.latitude),
-          lng: Number(item.address?.longitude),
-        },
-        title: `장소 ${item.roomId}`,
-        id: item.roomId,
-        price: Number(item.price).toLocaleString(),
-      }));
-      setMarkers(mks);
+      setMarkers(
+        (list || []).map((item) => ({
+          position: {
+            lat: Number(item.address?.latitude),
+            lng: Number(item.address?.longitude),
+          },
+          title: `장소 ${item.roomId}`,
+          id: item.roomId,
+          price: Number(item.price).toLocaleString(),
+        }))
+      );
     };
 
-    const fetchRecommend = async () => {
+    (async () => {
       try {
-        const body = {
+        const data = await postMain({
           latitude: Number(currentLocation.lat),
           longitude: Number(currentLocation.lng),
-        };
-        console.log("[POST] /spaceon/main body:", body);
-
-        // vite 프록시가 /spaceon → 백엔드로 전달 (JSON body)
-        const { data } = await axios.post("/spaceon/main", body, {
-          headers: { "Content-Type": "application/json" },
-          timeout: 15000,
         });
-
-        console.log("[RES] /spaceon/main:", data);
-
-        const list = Array.isArray(data?.recommendList)
-          ? data.recommendList
-          : Array.isArray(data) // 혹시 바로 배열로 내려오는 경우 방어
-          ? data
-          : [];
-
+        const list = Array.isArray(data?.recommendList) ? data.recommendList : Array.isArray(data) ? data : [];
         applyData(list.length ? list : fallback);
       } catch (err) {
-        console.error("추천 목록 호출 실패 → 더미 적용:", err);
+        console.error("POST /main 실패 → fallback:", err);
         applyData(fallback);
       }
-    };
-
-    fetchRecommend();
+    })();
   }, [currentLocation]);
 
   const handleRecommendClick = () => setShowResults(true);
@@ -184,18 +226,22 @@ function MainPage() {
               handleBackClick={handleBackClick}
               recommendList={recommendList}
               moveToDetailPage={moveToDetailPage}
+              onCardClick={moveToDetailPage}
               hoveredRoomId={hoveredRoomId}
             />
           ) : (
             <FormComponent
               addressInputs={addressInputs}
               handleAddressInputChange={handleAddressInputChange}
-              removeAddressInput={removeAddressInput}
-              addAddressInput={addAddressInput}
-              budgetRange={budgetRange}
-              setBudgetRange={setBudgetRange}
-              handleRecommendClick={handleRecommendClick}
-              setIsSearchLocationModalOpen={setIsSearchLocationModalOpen}
+              // ▼ 기존 setIsSearchLocationModalOpen 대신, 인덱스를 받는 오픈함수 내려줌
+              onOpenSearchLocationModal={openSearchLocationModal}
+              prompt={prompt}
+              setPrompt={setPrompt}
+              minPrice={minPrice}
+              setMinPrice={setMinPrice}
+              maxPrice={maxPrice}
+              setMaxPrice={setMaxPrice}
+              onSubmitRecommend={requestRecommend}
             />
           )}
         </SearchResultsContainer>
@@ -205,7 +251,7 @@ function MainPage() {
           markers={markers}
           moveToDetailPage={moveToDetailPage}
           handleMarkerHover={handleMarkerHover}
-          currentLocation={currentLocation}
+          currentLocation={currentLocation || { lat: 37.5665, lng: 126.978 }} // 서울시청 근처 기본값
           handleGetCurrentLocation={handleGetCurrentLocation}
           isDetailModalOpen={isDetailModalOpen}
           isSearchLocationModalOpen={isSearchLocationModalOpen}
@@ -219,12 +265,10 @@ function MainPage() {
         onCardClick={moveToDetailPage}
       />
 
-      {isDetailModalOpen && (
-        <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />
-      )}
+      {isDetailModalOpen && <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />}
 
       {isSearchLocationModalOpen && (
-        <LocationSearchModal isModal={true} onClose={closeSearchLocationModal} />
+        <LocationSearchModal isModal={true} onClose={closeSearchLocationModal} onConfirm={handleLocationConfirm} />
       )}
     </PageContainer>
   );
@@ -256,7 +300,9 @@ const SearchResultsContainer = styled.div`
   background: #fff;
 
   /* 스크롤바 숨김 */
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE, Edge */
-  &::-webkit-scrollbar { display: none; } /* Chrome, Safari */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE, Edge */
+  &::-webkit-scrollbar {
+    display: none;
+  } /* Chrome, Safari */
 `;

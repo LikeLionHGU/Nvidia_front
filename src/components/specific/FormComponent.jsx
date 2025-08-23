@@ -5,8 +5,14 @@ import Question from "../../assets/icons/questionIcon.svg";
 function FormComponent({
   addressInputs,
   handleAddressInputChange,
-  handleRecommendClick,
-  setIsSearchLocationModalOpen,
+  onOpenSearchLocationModal,
+  prompt,
+  setPrompt,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  onSubmitRecommend,
 }) {
   // 각 스텝의 완료 상태 관리
   const [stepCompleted, setStepCompleted] = useState({
@@ -22,12 +28,9 @@ function FormComponent({
     step3: false,
   });
 
-  // Step 2 텍스트 입력 상태
-  const [step2Text, setStep2Text] = useState("");
-
-  // Step 3 예산 입력 상태
-  const [minBudget, setMinBudget] = useState("");
-  const [maxBudget, setMaxBudget] = useState("");
+  const [step2Text, setStep2Text] = useState(prompt || "");
+  const [minBudget, setMinBudget] = useState(minPrice || "");
+  const [maxBudget, setMaxBudget] = useState(maxPrice || "");
 
   const [minFocused, setMinFocused] = useState(false);
   const [maxFocused, setMaxFocused] = useState(false);
@@ -56,7 +59,7 @@ function FormComponent({
       ...prev,
       step2: isCompleted,
     }));
-
+    setPrompt?.(step2Text);
     // Step 2가 완료되면 Step 3 활성화
     if (isCompleted) {
       setStepEnabled((prev) => ({
@@ -73,6 +76,8 @@ function FormComponent({
       ...prev,
       step3: isCompleted,
     }));
+    setMinPrice?.(minBudget);
+    setMaxPrice?.(maxBudget);
   }, [minBudget, maxBudget]);
 
   // Skip 버튼 핸들러
@@ -101,10 +106,6 @@ function FormComponent({
         step3: true,
       }));
     }
-  };
-
-  const openSearchLocationModal = () => {
-    setIsSearchLocationModalOpen(true);
   };
 
   // 초기화 함수
@@ -179,7 +180,7 @@ function FormComponent({
                     value={input}
                     onChange={(e) => handleAddressInputChange(index, e.target.value)}
                     readOnly
-                    onClick={openSearchLocationModal}
+                    onClick={() => onOpenSearchLocationModal(index)}
                   />
                 </AddressInputContainer>
               ))}
@@ -287,7 +288,7 @@ function FormComponent({
       {/* 버튼 컨테이너 */}
       <ButtonContainer>
         <ResetButton onClick={handleReset}>초기화</ResetButton>
-        <RecommendButton onClick={handleRecommendClick}>딱 맞는 공실 추천 받기</RecommendButton>
+        <RecommendButton onClick={onSubmitRecommend}>딱 맞는 공실 추천 받기</RecommendButton>
       </ButtonContainer>
     </FormContainer>
   );

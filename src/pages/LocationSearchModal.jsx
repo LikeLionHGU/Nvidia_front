@@ -8,6 +8,7 @@ import AddLocationIcon from "../assets/icons/addLocation.svg";
 import MyLocationIcon from "../assets/images/my_location.svg";
 import EnterLocation from "../assets/icons/EnterLocation.svg";
 import EnterFinished from "../assets/icons/EnterFinished.svg";
+import { postAddressList } from "../apis/sendAddressList";
 
 function LocationSearchModal({ onClose, onConfirm }) {
   const [locations, setLocations] = useState([{ id: 1, value: "" }]);
@@ -186,16 +187,38 @@ function LocationSearchModal({ onClose, onConfirm }) {
     );
   };
 
-  const handleConfirm = () => {
-    const hasEmpty = locations.some((_, idx) => !addressList[idx] || !addressList[idx].roadName);
-    if (hasEmpty) {
-      alert("모든 위치를 선택해주세요.");
+  const handleConfirm = async () => {
+    const confirmed = addressList
+      .map((addr, idx) => ({ addr, ok: !!confirmedRows[idx] }))
+      .filter(({ addr, ok }) => ok && addr && typeof addr.latitude === "number" && typeof addr.longitude === "number")
+      .map(({ addr }) => ({
+        latitude: addr.latitude,
+        longitude: addr.longitude,
+      }));
+
+    if (confirmed.length === 0) {
+      alert("완료된 위치가 없습니다. 연관검색어 선택 또는 내 위치 불러오기를 사용해주세요.");
       return;
     }
-    const values = locations.map((l) => l.value.trim());
-    const payload = { locations: values, addressList };
-    console.log(addressList);
-    onConfirm ? onConfirm(payload) : onClose?.();
+
+    try {
+      const centerLL = await postAddressList(confirmed); // { latitude, longitude }
+      if (!centerLL || typeof centerLL.latitude !== "number" || typeof centerLL.longitude !== "number") {
+        alert("중간 좌표를 가져오지 못했습니다.");
+        return;
+      }
+      // 2) 여기서 reverseGeocode로 도로명 변환
+      const info = await reverseGeocode({ lat: centerLL.latitude, lng: centerLL.longitude });
+      const center = {
+        roadName: info?.roadName || "",
+        latitude: centerLL.latitude,
+        longitude: centerLL.longitude,
+      };
+      onConfirm ? onConfirm(center) : onClose?.();
+    } catch (e) {
+      console.error("API error:", e);
+      alert("서버 요청 중 오류가 발생했습니다.");
+    }
   };
 
   const handleClose = () => {
@@ -469,6 +492,7 @@ const IndexBadge = styled.div`
   display: grid;
   place-items: center;
   z-index: 1;
+  margin-top: 5px;
 `;
 const SearchArea = styled.div`
   display: flex;
