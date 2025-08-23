@@ -20,6 +20,7 @@ import BasicInfo from "../components/specific/ReservationPage/ResBasicInfo";
 import Calendar from "../components/specific/ReservationPage/ResCalendar";
 import TimeTable from "../components/specific/ReservationPage/ResTimeTable";
 import Thumbnail from "../components/specific/ReservationPage/Thumbnail";
+import ResSuccessModal from "../components/specific/ReservationPage/ResSuccessModal";
 
 const colors = {
   brand: "#2FB975",
@@ -50,6 +51,10 @@ export default function ReservationPage() {
   const [selectedDates, setSelectedDates] = useState(new Set());
   const [slotsByDate, setSlotsByDate] = useState(new Map());
   const [isAgreed, setIsAgreed] = useState(false);
+
+  // 모달 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [reservationDetails, setReservationDetails] = useState(null);
 
   const today = new Date();
 
@@ -297,8 +302,10 @@ useEffect(() => {
 
     // 서버가 받는 List<ReservationRequest> 형태로 배열 생성
     const requests = [];
+    let totalSlots = 0;
     for (const [date, slots] of slotsByDate.entries()) {
       if (slots.size > 0) {
+        totalSlots += slots.size;
         requests.push({
           // ReservationRequest 필드에 맞춰 명명
           name,
@@ -316,18 +323,39 @@ useEffect(() => {
 
     try {
       // 배열을 그대로 전송
-      const resp = await axios.post(
+      await axios.post(
         `/spaceon/reservation/done/${roomId}`,
         requests
       );
 
-      // 컨트롤러가 String을 반환하므로 resp.data는 문자열
-      alert(resp?.data || "예약이 완료되었습니다.");
-      navigate("/");
+      // 예약 성공 시 모달에 필요한 정보 구성
+      const pricePer30min = placeData?.price || 0;
+      const totalPrice = totalSlots * pricePer30min;
+      const hours = totalSlots * 0.5;
+
+      setReservationDetails({
+        name,
+        phone: phoneNumber,
+        headcount: numPeople,
+        totalPrice,
+        pricePer30min,
+        hours,
+        // ResSelectionSummary에 필요한 정보 추가 (대표 날짜와 시간으로 단순화)
+        date: requests.length > 0 ? new Date(requests[0].date) : new Date(),
+        time: requests.length > 0 ? { start: requests[0].schedule[0], end: requests[0].schedule[requests[0].schedule.length - 1] } : {start: 0, end: 0}
+      });
+      
+      setIsModalOpen(true);
+
     } catch (err) {
       console.error("Reservation failed:", err);
       alert(`예약에 실패했습니다: ${err.response?.data || err.message}`);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    navigate("/"); // 모달 닫으면 홈으로 이동
   };
 
   const selectedDateArr = useMemo(() => Array.from(selectedDates).sort(), [selectedDates]);
@@ -338,9 +366,9 @@ useEffect(() => {
         <FormWrap>
           <InfoContainer>
             <TopWrapper>
-              <Title>오늘의 공간을 찾아보세요</Title>
+              <Title>나의 맞춤 공간을 예약해보세요!</Title>
             </TopWrapper>
-            <Subtitle>간단한 조건 입력으로 맞춤 공실을 찾아보세요</Subtitle>
+            <Subtitle>간편하고 빠르게 예약할 수 있어요</Subtitle>
           </InfoContainer>
 
           <Divider />
@@ -388,6 +416,12 @@ useEffect(() => {
           />
         </RightCol>
       </Page>
+      <ResSuccessModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        details={reservationDetails}
+        slotsByDate={slotsByDate}
+      />
     </>
   );
 }

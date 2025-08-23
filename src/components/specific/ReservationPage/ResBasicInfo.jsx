@@ -53,7 +53,7 @@ export default function ResBasicInfo({
   const totalHours = totalSlots * 0.5;
 
   // 단가(시간당)과 총 금액
-  const unitPrice = Number(placeData?.price || 0);
+  const unitPrice = Number((placeData?.price * 2) || 0);
   const totalPrice = Math.max(0, totalHours * unitPrice);
 
   return (
@@ -77,7 +77,7 @@ export default function ResBasicInfo({
           <Label htmlFor="rsvPhone">전화번호</Label>
           <Input
             id="rsvPhone"
-            placeholder="전화번호를 입력해주세요. ( - 제외)"
+            placeholder="01000000000  ( - 제외)"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
           />

@@ -54,6 +54,17 @@ export default function AddPlacePage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  useEffect(() => {
+    if (showSuccess) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [showSuccess]);
+
   const openSuccess = (url) => {
     setPreviewUrl(url || null);
     setShowSuccess(true);
