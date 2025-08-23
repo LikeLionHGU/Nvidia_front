@@ -49,6 +49,7 @@ export default function ReservationPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState(new Set());
   const [slotsByDate, setSlotsByDate] = useState(new Map());
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const today = new Date();
 
@@ -285,42 +286,50 @@ export default function ReservationPage() {
     }
   }, [roomId, selectedDates]); // eslint-disable-line
 
-  /* ========== 4) 예약 완료 (POST body: reservedScheduleList[]) ========== */
+  /* ========== 4) 예약 완료 (POST body: List<ReservationRequest>) ========== */
   const handleReservation = async () => {
+    if (!isAgreed) {
+      alert("예약 서비스 이용 약관에 동의해주세요.");
+      return;
+    }
+
     if (!name || !phoneNumber) {
       alert("예약자 이름과 연락처를 입력해주세요.");
       return;
     }
 
-    // spec: reservedScheduleList : List[{ name, phoneNumber, reservation:{ date, schedule:int[] } }]
-    const reservedScheduleList = [];
+    // 서버가 받는 List<ReservationRequest> 형태로 배열 생성
+    const requests = [];
     for (const [date, slots] of slotsByDate.entries()) {
       if (slots.size > 0) {
-        reservedScheduleList.push({
+        requests.push({
+          // ReservationRequest 필드에 맞춰 명명
           name,
           phoneNumber,
-          reservation: {
-            date, // "yyyy-MM-dd"
-            schedule: Array.from(slots).sort((a, b) => a - b),
-          },
+          date, // "yyyy-MM-dd"
+          schedule: Array.from(slots).sort((a, b) => a - b), // number[]
         });
       }
     }
 
-    if (reservedScheduleList.length === 0) {
+    if (requests.length === 0) {
       alert("날짜와 시간을 선택해주세요.");
       return;
     }
 
     try {
-      await axios.post(`/spaceon/reservation/done/${roomId}`, {
-        reservedScheduleList,
-      });
-      alert("예약이 완료되었습니다!");
+      // 배열을 그대로 전송
+      const resp = await axios.post(
+        `/spaceon/reservation/done/${roomId}`,
+        requests
+      );
+
+      // 컨트롤러가 String을 반환하므로 resp.data는 문자열
+      alert(resp?.data || "예약이 완료되었습니다.");
       navigate("/");
     } catch (err) {
       console.error("Reservation failed:", err);
-      alert(`예약에 실패했습니다: ${err.response?.data?.message || err.message}`);
+      alert(`예약에 실패했습니다: ${err.response?.data || err.message}`);
     }
   };
 
@@ -348,6 +357,8 @@ export default function ReservationPage() {
             setNumPeople={setNumPeople}
             placeData={placeData}
             slotsByDate={slotsByDate}
+            isAgreed={isAgreed}
+            setIsAgreed={setIsAgreed}
           />
 
           <ButtonContainer>

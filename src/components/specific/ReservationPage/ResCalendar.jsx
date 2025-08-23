@@ -289,7 +289,7 @@ const DateCell = styled.button`
 
   ${({ $disabled }) => $disabled && css`
     cursor: not-allowed;
-    opacity: 0.5;
+    opacity: 0.25;
     &:hover {
       background: #F5F5F5;
     }
