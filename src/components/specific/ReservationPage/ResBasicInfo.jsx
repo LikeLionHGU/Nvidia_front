@@ -30,7 +30,9 @@ export default function ResBasicInfo({
   formWidth = "100%",
   columns = 2,
   slotsByDate,
-  placeData
+  placeData,
+  isAgreed,
+  setIsAgreed,
 }) {
   useEffect(() => {
     const n = Number(numPeople);
@@ -82,7 +84,7 @@ export default function ResBasicInfo({
         </Field>
 
         <Field style={{ gridArea: 'people' }}>
-          <Label>최대 가능 인원</Label>
+          <Label>사용 인원</Label>
           <StepperBox>
             <RoundBtn type="button" onClick={decPeople} aria-label="인원 감소">−</RoundBtn>
             <CountText><strong>{people}</strong>명</CountText>
@@ -108,7 +110,12 @@ export default function ResBasicInfo({
       <Grid $columns={columns}>
         <Field $span={columns}>
           <CheckboxLabel>
-            <Checkbox type="checkbox" id="agreement" required />
+            <Checkbox 
+              type="checkbox" 
+              id="agreement" 
+              checked={isAgreed}
+              onChange={(e) => setIsAgreed(e.target.checked)}
+            />
             <span>
               예약 서비스 이용을 위한 <strong>약관</strong>, 
               <strong> 개인정보 수집 및 제3자 제공 규정</strong>을 확인하였으며
@@ -220,7 +227,7 @@ const Label = styled.label`
   font-size: 1vw;
   font-weight: 600;
   color: ${colors.text};
-  margin: 15px 0;
+  margin: 15px 0 10px 0;
 `;
 
 const Input = styled.input`

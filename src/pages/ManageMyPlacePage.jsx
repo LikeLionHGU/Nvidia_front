@@ -2,81 +2,62 @@
 import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 
-// #region API Fetch Functions
-/*
- * 서버 구현에 따라 GET 요청에 body를 포함해야 할 경우,
- * 아래 fetch 함수들을 POST 방식으로 변경해야 합니다.
- * 
- * 예시:
- * const response = await fetch('/api/enrollment/confirmation', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({ phoneNumber })
- * });
- */
-
-/**
- * 등록된 장소 목록을 가져오는 API 호출 함수
- * @param {string} phoneNumber - 조회할 전화번호
- * @returns {Promise<Array>} - 등록된 장소 목록
- */
+/* ================= API: 스펙에 맞춰 POST + JSON 바디 ================= */
 async function fetchEnrollments(phoneNumber) {
-  const response = await fetch(`/api/enrollment/confirmation?phoneNumber=${phoneNumber}`);
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  const data = await response.json();
-  return data.enrollmentList || [];
+  const res = await fetch('/spaceon/enrollment/confirmation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phoneNumber }),
+  });
+  if (!res.ok) throw new Error('Network error');
+  const data = await res.json();
+  return (data?.enrollmentList ?? []).map((x) => ({
+    ...x,
+    enrolledTime: Array.isArray(x?.enrolledTime) ? x.enrolledTime : Array.from(x?.enrolledTime ?? []),
+  }));
 }
 
-/**
- * 예약된 내역 목록을 가져오는 API 호출 함수
- * @param {string} phoneNumber - 조회할 전화번호
- * @returns {Promise<Array>} - 예약 내역 목록
- */
 async function fetchReservations(phoneNumber) {
-  const response = await fetch(`/api/reservation/confirmation?phoneNumber=${phoneNumber}`);
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  const data = await response.json();
-  return data.reservationList || [];
+  const res = await fetch('/spaceon/reservation/confirmation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phoneNumber }),
+  });
+  if (!res.ok) throw new Error('Network error');
+  const data = await res.json();
+  return (data?.reservationList ?? []).map((x) => ({
+    ...x,
+    reservedTime: Array.isArray(x?.reservedTime) ? x.reservedTime : Array.from(x?.reservedTime ?? []),
+  }));
 }
-// #endregion
 
+/* ================= 데모용 더미(등록 탭에서만 사용) ================= */
 const dummyEnrollmentList = [
-      {
-        roomId: 1,
-        photo: "https://pbs.twimg.com/media/GUyPp8eaYAAhzbz.jpg",
-        address: { latitude: "37.4782", longitude: "127.0282", roadName: "서울특별시 서초구 서초중앙로 188" },
-        maxPeople: 4,
-        phoneNumber: "010-1234-5678",
-        price: 50000,
-        enrolledDate: '2025-08-17',
-        enrolledTime: '10:00',
-      },
-      {
-        roomId: 2,
-        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-        address: { latitude: "37.4592", longitude: "127.1292", roadName: "서울특별시 강남구 개포로 623" },
-        maxPeople: 2,
-        phoneNumber: "010-8765-4321",
-        price: 30000,
-        enrolledDate: '2025-08-16',
-        enrolledTime: '15:30',
-      },
-      {
-        roomId: 3,
-        photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-        address: { latitude: "37.3947611", longitude: "127.1111361", roadName: "경기도 성남시 분당구 판교역로 160 " },
-        maxPeople: 3,
-        phoneNumber: "010-8765-2321",
-        price: 35000,
-        enrolledDate: '2025-08-15',
-        enrolledTime: '18:00',
-      },
-    ];
+  {
+    roomId: 1,
+    photo: 'https://pbs.twimg.com/media/GUyPp8eaYAAhzbz.jpg',
+    address: { roadName: '경북 포항시 북구 천마로 85', latitude: 36.04, longitude: 129.37 },
+    maxPeople: 4,
+    phoneNumber: '010-3245-6788',
+    account: '카뱅 3333-19-2818284',
+    price: 250000,
+    enrolledDate: '2025-08-17',
+    enrolledTime: [10, 11, 12],
+  },
+  {
+    roomId: 2,
+    photo: 'https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg',
+    address: { roadName: '서울특별시 강남구 개포로 623', latitude: 37.46, longitude: 127.13 },
+    maxPeople: 2,
+    phoneNumber: '010-8765-4321',
+    account: '카뱅 3333-19-2818284',
+    price: 180000,
+    enrolledDate: '2025-08-16',
+    enrolledTime: [15, 16],
+  },
+];
 
+/* ================= 페이지 ================= */
 const ManageMyPlacePage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [activeTab, setActiveTab] = useState('enroll'); // 'enroll' | 'reserve'
@@ -90,28 +71,23 @@ const ManageMyPlacePage = () => {
       alert('전화번호를 입력해주세요.');
       return;
     }
-
     setLoading(true);
     setError(null);
     setHasSearched(true);
 
     try {
       if (tab === 'enroll') {
-        // 나중에 쓸거니까 삭제 금지
+        // 실제 API 사용 시 아래 주석 해제
         // const results = await fetchEnrollments(phone);
-        const results = dummyEnrollmentList;
-        if (results.length === 0) {
-          alert('등록된 장소가 없습니다.');
-        }
+        const results = dummyEnrollmentList; // 데모
+        if (results.length === 0) alert('등록된 장소가 없습니다.');
         setItems(results);
       } else {
         const results = await fetchReservations(phone);
-        if (results.length === 0) {
-          alert('예약 내역이 없습니다.');
-        }
+        if (results.length === 0) alert('예약 내역이 없습니다.');
         setItems(results);
       }
-    } catch (err) {
+    } catch (e) {
       setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       setItems([]);
     } finally {
@@ -119,90 +95,118 @@ const ManageMyPlacePage = () => {
     }
   }, []);
 
-  const handleSearch = () => {
-    fetchData(activeTab, phoneNumber);
-  };
-
+  const handleSearch = () => fetchData(activeTab, phoneNumber);
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (phoneNumber.trim()) {
-      fetchData(tab, phoneNumber);
-    }
+    if (phoneNumber.trim()) fetchData(tab, phoneNumber);
   };
 
-  const renderItemCard = (item) => {
-    const isEnrollTab = activeTab === 'enroll';
-    const details = isEnrollTab
-      ? [
-          { label: '최대 인원', value: `${item.maxPeople}명` },
-          { label: '가격', value: `${item.price.toLocaleString('ko-KR')}원` },
-          { label: '등록일', value: `${item.enrolledDate} ${item.enrolledTime}` },
-        ]
-      : [
-          { label: '선택 시간', value: `${item.slectedHour}시간` },
-          { label: '총 가격', value: `${item.totalPrice.toLocaleString('ko-KR')}원` },
-          { label: '예약일', value: `${item.reservatedDate} ${item.reservatedTime}` },
-        ];
+  const formatMoney = (n) => (n ?? 0).toLocaleString('ko-KR') + '원';
+  const subPriceText = '(30min당 5,000원)'; // 필요 시 props/필드로 교체
 
+  const renderItemCard = (item) => {
+    const isEnroll = activeTab === 'enroll';
     return (
-      <Card key={item.roomId}>
-        <CardRow>
-          <CardLabel>장소 ID</CardLabel>
-          <CardValue>{item.roomId}</CardValue>
-        </CardRow>
-        <CardRow>
-          <CardLabel>주소</CardLabel>
-          <CardValue>{item.address.roadName}</CardValue>
-        </CardRow>
-        {details.map(({ label, value }) => (
-          <CardRow key={label}>
-            <CardLabel>{label}</CardLabel>
-            <CardValue>{value}</CardValue>
-          </CardRow>
-        ))}
-        <CardRow style={{ marginTop: '20px' }}>
-          <DetailsButton onClick={() => console.log('View details for', item)}>
-            자세히보기
-          </DetailsButton>
-        </CardRow>
-      </Card>
+      <ListCard key={`${activeTab}-${item.roomId}`}>
+        <ThumbLarge>
+          <img src={item.photo} alt="" />
+        </ThumbLarge>
+
+        <CardRight>
+          <HeaderRow>
+            <PlaceTitle>포항시 양덕동 다이소 00빌라</PlaceTitle>
+            <GhostGap />
+            <PillButton kind="primary">{isEnroll ? '등록' : '예약'}</PillButton>
+          </HeaderRow>
+
+          <SubAddress>{item?.address?.roadName ?? '-'}</SubAddress>
+
+          <Divider />
+
+          <InfoRow>
+            <InfoItem>
+              <Icon>💲</Icon>
+              <strong>{formatMoney(isEnroll ? item.price : item.totalPrice)}</strong>
+              <SubSmall>{' '}{subPriceText}</SubSmall>
+            </InfoItem>
+            <InfoItem>
+              <Icon>📞</Icon>
+              <span>{item.phoneNumber ?? '-'}</span>
+            </InfoItem>
+          </InfoRow>
+
+          <Divider />
+
+          <InfoRow>
+            <InfoItem>
+              <Icon>💳</Icon>
+              <span>{item.account ?? '-'}</span>
+            </InfoItem>
+            <InfoItem>
+              <Icon>👥</Icon>
+              <span>{isEnroll ? `신청 인원 ${item.maxPeople}명` : `인원수 ${item.maxPeople}명`}</span>
+            </InfoItem>
+          </InfoRow>
+        </CardRight>
+      </ListCard>
     );
   };
 
   return (
     <PageContainer>
       <LeftPanel>
-        <InputLabel htmlFor="phone-input">전화번호</InputLabel>
-        <Input
-          id="phone-input"
-          type="tel"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          placeholder="01000000000"
-        />
-        <ActionButton onClick={handleSearch}>
-          내가 등록한 공실 관리하기
-        </ActionButton>
+        <LP_Header>
+          <LP_Title>등록 및 예약 쉽게 관리해요!</LP_Title>
+          <LP_Sub>전화번호만 치면 바로 나의 내역이 조회됩니다</LP_Sub>
+          <LP_Divider />
+        </LP_Header>
+
+        <LP_Section>
+          <LP_SectionTop>
+            <LP_Icon role="img" aria-label="user">👤</LP_Icon>
+            <LP_SectionTitle>예약자 정보 확인</LP_SectionTitle>
+            <LP_Help title="도움말">❔</LP_Help>
+          </LP_SectionTop>
+          <LP_SectionDesc>전화번호로 등록 및 예약관리를 확인해보세요</LP_SectionDesc>
+
+          <LP_Field>
+            <LP_FieldIcon role="img" aria-label="phone">📞</LP_FieldIcon>
+            <LP_PhoneInput
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="01000000000  (’하이픈 제외’)"
+            />
+          </LP_Field>
+        </LP_Section>
+
+        <LP_FlexSpacer />
+
+        <LP_BtnRow>
+          <LP_Cancel disabled>취소</LP_Cancel>
+          <LP_Search onClick={handleSearch}>조회하기</LP_Search>
+        </LP_BtnRow>
       </LeftPanel>
+
       <RightPanel>
         {error && <ErrorBanner>{error}</ErrorBanner>}
+
         <TabContainer>
-          <TabButton active={activeTab === 'enroll'} onClick={() => handleTabChange('enroll')}>
-            등록
-          </TabButton>
           <TabButton active={activeTab === 'reserve'} onClick={() => handleTabChange('reserve')}>
             예약
           </TabButton>
+          <TabButton active={activeTab === 'enroll'} onClick={() => handleTabChange('enroll')}>
+            등록
+          </TabButton>
         </TabContainer>
+
         <ContentArea>
           {loading ? (
             <InfoText>불러오는 중...</InfoText>
           ) : items.length > 0 ? (
             items.map(renderItemCard)
           ) : hasSearched ? (
-            <InfoText>
-              {activeTab === 'enroll' ? '등록된 장소가 없습니다.' : '예약 내역이 없습니다.'}
-            </InfoText>
+            <InfoText>{activeTab === 'enroll' ? '등록된 장소가 없습니다.' : '예약 내역이 없습니다.'}</InfoText>
           ) : (
             <InfoText>전화번호를 입력하고 관리 버튼을 눌러주세요.</InfoText>
           )}
@@ -214,29 +218,39 @@ const ManageMyPlacePage = () => {
 
 export default ManageMyPlacePage;
 
-
-// #region Styled Components
+/* ================= Styled Components ================= */
+/* ▼▼▼ 요청하신 세 블록은 건드리지 않았습니다 ▼▼▼ */
 const PageContainer = styled.div`
   display: flex;
-  padding: 40px;
-  gap: 40px;
-  max-width: 1200px;
+  gap: 20px;
   margin: 0 auto;
   font-family: 'Pretendard', sans-serif;
+  padding: 20px
 `;
 
 const LeftPanel = styled.div`
-  flex: 0 0 300px;
+  flex: 2;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 80vh;
+  border-radius: 8px;
+  background: #FDFDFD;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  padding: 20px;
 `;
 
 const RightPanel = styled.div`
-  flex: 1;
+  flex: 3;
   display: flex;
   flex-direction: column;
+  height: 80vh;
+  border-radius: 8px;
+  background: #FDFDFD;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
+  padding: 20px;
 `;
+/* ▲▲▲ 여기까지 그대로 유지 ▲▲▲ */
 
 const InputLabel = styled.label`
   font-weight: 600;
@@ -252,7 +266,7 @@ const Input = styled.input`
 
 const ActionButton = styled.button`
   padding: 14px;
-  background-color: #007bff;
+  background-color: #22c55e;
   color: white;
   border: none;
   border-radius: 8px;
@@ -260,88 +274,280 @@ const ActionButton = styled.button`
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #0056b3;
-  }
+  &:hover { background-color: #18b651; }
 `;
 
 const TabContainer = styled.div`
   display: flex;
-  border-bottom: 2px solid #eee;
-  margin-bottom: 24px;
+  margin-bottom: 36px;
+  border-radius: 8px;
+  background-color: #F2F4F5;
 `;
 
 const TabButton = styled.button`
-  padding: 12px 24px;
-  font-size: 18px;
-  font-weight: 600;
+  flex: 1;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 700;
   border: none;
-  background-color: transparent;
+  border-radius: 8px;
   cursor: pointer;
-  color: ${props => (props.active ? '#007bff' : '#666')};
-  border-bottom: ${props => (props.active ? '3px solid #007bff' : '3px solid transparent')};
-  margin-bottom: -2px; /* To align with the container's border */
+  color: ${p => (p.active ? '#fff' : '#666')};
+  background-color: ${p => (p.active ? '#22c55e' : 'transparent')};
 `;
 
 const ContentArea = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+  overflow: auto;
 `;
 
-const Card = styled.div`
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
+/* ====== 카드 레이아웃 (왼쪽 큰 썸네일 + 오른쪽 정보) ====== */
+const ListCard = styled.div`
+  display: grid;
+  grid-template-columns: 280px 1fr;   /* 왼쪽 썸네일 넓게 */
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 18px rgba(0,0,0,.06);
+  padding: 12px;
 `;
 
-const CardRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-
-  &:last-child {
-    margin-bottom: 0;
+const ThumbLarge = styled.div`
+  width: 100%;
+  height: 180px;                 /* 카드 비율에 맞춘 높이 */
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;           /* 꽉 채우기 */
+    display: block;
   }
 `;
 
-const CardLabel = styled.span`
-  font-weight: 500;
-  color: #555;
+const CardRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
-const CardValue = styled.span`
-  font-weight: 700;
-  color: #333;
+const HeaderRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
 `;
 
-const DetailsButton = styled.button`
-  background: none;
-  border: none;
-  color: #007bff;
-  text-decoration: underline;
+const PlaceTitle = styled.h3`
+  margin: 0;
+  color: #16a34a;               /* 브랜드 그린 */
+  font-size: 20px;
+  font-weight: 800;
+`;
+
+const GhostGap = styled.div``;
+
+const PillButton = styled.button`
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid ${p => (p.kind === 'primary' ? '#16a34a' : '#d1d5db')};
+  background: ${p => (p.kind === 'primary' ? '#eafff2' : '#fff')};
+  color: ${p => (p.kind === 'primary' ? '#16a34a' : '#111827')};
+  font-weight: 800;
   cursor: pointer;
+`;
+
+const SubAddress = styled.div`
+  color: #6b7280;
   font-size: 14px;
-  padding: 0;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+`;
+
+const InfoRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #374151;
+  font-size: 15px;
+`;
+
+const Icon = styled.span`
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SubSmall = styled.span`
+  color: #9ca3af;
+  font-weight: 600;
 `;
 
 const InfoText = styled.p`
   text-align: center;
   color: #888;
-  font-size: 18px;
-  margin-top: 40px;
+  font-size: 16px;
+  margin-top: 20px;
 `;
 
 const ErrorBanner = styled.div`
-  background-color: #ffdddd;
-  color: #d8000c;
+  background: #ffefef;
+  color: #b42318;
   padding: 12px;
   border-radius: 8px;
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 `;
-// #endregion
+
+/* ===== LeftPanel UI ===== */
+const LP_Header = styled.div`
+  padding: 8px 4px 0;
+`;
+
+const LP_Title = styled.h2`
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+`;
+
+const LP_Sub = styled.p`
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #9aa3af;
+  font-weight: 700;
+`;
+
+const LP_Divider = styled.div`
+  height: 1px;
+  background: #efefef;
+  margin: 8px 0 14px;
+`;
+
+const LP_Section = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const LP_SectionTop = styled.div`
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+`;
+
+const LP_Icon = styled.span`
+  font-size: 18px;
+  line-height: 1;
+`;
+
+const LP_SectionTitle = styled.div`
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+`;
+
+const LP_Help = styled.span`
+  color: #a3a3a3;
+  cursor: help;
+  user-select: none;
+`;
+
+const LP_SectionDesc = styled.div`
+  margin-left: 26px; /* 아이콘 라인 정렬 */
+  color: #8f8f8f;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const LP_Field = styled.div`
+  position: relative;
+  margin-left: 26px;
+  display: flex;
+  align-items: center;
+  background: #f6f7f8;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 12px 12px 12px 42px;
+`;
+
+const LP_FieldIcon = styled.span`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+  font-size: 13px;
+`;
+
+const LP_PhoneInput = styled.input`
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 15px;
+  color: #111827;
+
+  ::placeholder { color: #cfd4da; }
+`;
+
+const LP_FlexSpacer = styled.div`
+  flex: 1;
+`;
+
+const LP_BtnRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 6px;
+`;
+
+const LP_Cancel = styled.button`
+  height: 48px;
+  border-radius: 10px;
+  border: none;
+  background: #f6f7f8;
+  color: #cfcfcf;
+  font-weight: 800;
+  cursor: not-allowed;
+`;
+
+const LP_Search = styled.button`
+  height: 48px;
+  border-radius: 10px;
+  border: none;
+  background: #22c55e;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .05s ease;
+  &:hover { background: #1fb257; }
+  &:active { transform: translateY(1px); }
+`;
