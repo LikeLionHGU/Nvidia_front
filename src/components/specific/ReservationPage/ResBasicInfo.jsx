@@ -40,10 +40,11 @@ export default function ResBasicInfo({
   }, [numPeople, setNumPeople]);
 
   const decPeople = () => {
-    setNumPeople(prev => Math.max(0, Number(prev || 0) - 1));
+    setNumPeople(prev => Math.max(1, Number(prev || 0) - 1));
   };
   const incPeople = () => {
-    setNumPeople(prev => Math.min(99, Number(prev || 0) + 1));
+    const maxPeople = placeData?.maxPeople || 99;
+    setNumPeople(prev => Math.min(maxPeople, Number(prev || 0) + 1));
   };
 
   const people = Number(numPeople || 0);

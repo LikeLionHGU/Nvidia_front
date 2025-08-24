@@ -79,6 +79,23 @@ export default function AddPlacePage() {
     navigate('/');
   };
 
+  const handleReset = () => {
+    setName("");
+    setPhoneNumber("");
+    setRoadName("");
+    setLatitude(null);
+    setLongitude(null);
+    setAccount("");
+    setMaxPeople("");
+    setPrice("");
+    setMemo("");
+    setChipList([]);
+    setOptionList("");
+    setPhotoList([]);
+    setSelectedDates(new Set());
+    setSlotsByDate(new Map());
+  };
+
   const toggleDate = (d) => {
     const key = format(d, "yyyy-MM-dd");
     setSelectedDates((prev) => {
@@ -280,7 +297,7 @@ export default function AddPlacePage() {
           />
 
           <ButtonContainer>
-            <CancelButton type="button" onClick={handleCancel}>취소</CancelButton>
+            <CancelButton type="button" onClick={handleReset}>초기화</CancelButton>
             <SubmitButton type="submit" onClick={onSubmit}>등록</SubmitButton>
           </ButtonContainer>
         </FormWrap>

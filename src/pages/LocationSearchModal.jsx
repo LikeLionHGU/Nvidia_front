@@ -11,7 +11,7 @@ import EnterFinished from "../assets/icons/EnterFinished.svg";
 import { postAddressList } from "../apis/sendAddressList";
 
 function LocationSearchModal({ onClose, onConfirm }) {
-  const [locations, setLocations] = useState([{ id: 1, value: "" }]);
+  const [locations, setLocations] = useState([]);
   const [addressList, setAddressList] = useState([]); // {roadName, latitude, longitude}[]
   const [activeIndex, setActiveIndex] = useState(null); // 포커스된 줄 인덱스
   const [items, setItems] = useState([]); // 드롭다운 결과

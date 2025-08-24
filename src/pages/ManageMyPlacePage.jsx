@@ -7,6 +7,9 @@ import LoadingImg from "../assets/images/ManagePageLoadingImg.svg";
 import PhoneInputIcon from "../assets/icons/PhoneInputIcon.svg";
 import PhoneInputFocusIcon from "../assets/icons/PhoneInputFocusIcon.svg";
 import ContactInfoIcon from "../assets/icons/ContactInfoIcon.svg";
+import CreditCardIconSvg from "../assets/icons/CreditCardIcon.svg";
+import CallIconSvg from "../assets/icons/CallIcon.svg";
+import ContactIconSvg from "../assets/icons/ContactIcon.svg";
 
 /* ================= 공통 파서 & 정규화 ================= */
 async function readJson(res){const t=await res.text();try{return JSON.parse(t);}catch{throw new Error('Invalid JSON');}}
@@ -27,15 +30,15 @@ function normalizeAddress(x){if(x?.address&&typeof x.address==='object')return x
 function normalizeEnroll(item){return{
   roomId:item.roomId??item.id??item.spaceId,
   title:item.title??item.placeName??item.roomName??'등록한 공간',
-  name: item.guestName,
+  guestName: item.guestName,
   photo:pickFirstPhoto(item),
   address:normalizeAddress(item),
   maxPeople:item.maxPeople??item.capacity??'-',
-  phoneNumber:item.guestPhoneNum??'-',
+  guestPhoneNum:item.guestPhoneNum??'-',
   account:item.account??item.bankAccount??'-',
-  price:item.price??item.unitPrice??0,
+  price:item.price??item.unitPrice??0,             // 30분 단가
   enrolledDate:item.enrolledDate??item.date??'',
-  enrolledTime:Array.isArray(item?.enrolledTime)?item.enrolledTime:Array.from(item?.enrolledTime??[]),
+  enrolledTime:Array.isArray(item?.enrolledTime)?item.enrolledTime:Array.from(item?.enrolledTime??[]), // number[] 1~48
 };}
 function normalizeReserve(item){
   const reservedTimeArr=Array.isArray(item?.reservedTime)?item.reservedTime:Array.from(item?.reservedTime??[]);
@@ -43,31 +46,59 @@ function normalizeReserve(item){
   return{
     roomId:item.roomId??item.id??item.spaceId,
     title:item.title??item.placeName??item.roomName??'예약한 공간',
-    name: item.hostName,
+    hostName: item.hostName,
     photo:pickFirstPhoto(item),
     address:normalizeAddress(item),
     maxPeople:item.maxPeople??item.capacity??'-',
-    phoneNumber:item.hostPhoneNum??'-',
+    hostPhoneNum:item.hostPhoneNum??'-',
     account:item.account??item.bankAccount??'-',
     totalPrice:item.totalPrice??item.price??0,
     selectedHour,
     reservedDate:item.reservedDate??item.date??'',
-    reservedTime:reservedTimeArr,
+    reservedTime:reservedTimeArr, // number[] 1~48
   };
+}
+
+/* ========= 30분 슬롯 유틸 (1-based: 1..48) =========
+   1 => 00:00~00:30, 2 => 00:30~01:00 ... 48 => 23:30~24:00 */
+const pad2 = (n)=>String(n).padStart(2,'0');
+const minToHHMM = (mins)=>`${pad2(Math.floor(mins/60))}:${pad2(mins%60)}`;
+
+// (시작 경계) 슬롯 n의 시작 분: (n-1)*30, (끝 경계) 슬롯 n의 끝 분: n*30
+function slotsToOneRange(slots){
+  if(!slots?.length) return '';
+  const s=[...slots].sort((a,b)=>a-b);
+  const startMin = (s[0]-1)*30;      // inclusive start
+  const endMin   = (s[s.length-1])*30; // exclusive end
+  return `${minToHHMM(startMin)}~${minToHHMM(endMin)}`;
+}
+function slotsToRanges(input){
+  const arr = Array.isArray(input)? input : Array.from(input||[]);
+  if(arr.length===0) return [];
+  const s=[...arr].sort((a,b)=>a-b);
+  const ranges=[];
+  let run=[s[0]];
+  for(let i=1;i<s.length;i++){
+    const cur=s[i], prev=s[i-1];
+    if(cur===prev+1) run.push(cur);
+    else{ ranges.push(slotsToOneRange(run)); run=[cur]; }
+  }
+  ranges.push(slotsToOneRange(run));
+  return ranges;
+}
+function totalHoursFromSlots(input){
+  const len = Array.isArray(input)? input.length : (input? input.size : 0);
+  return len*0.5;
 }
 
 /* ================= API ================= */
 async function fetchEnrollments(phoneNumber){
   const res = await api.post('/enrollment/confirmation', {phoneNumber});
-  const payload = res.data;
-  console.log("등록확인: ", payload);
-  return extractList(payload,['enrollmentList']).map(normalizeEnroll);
+  return extractList(res.data,['enrollmentList']).map(normalizeEnroll);
 }
 async function fetchReservations(phoneNumber){
   const res = await api.post('/reservation/confirmation', {phoneNumber});
-  const payload = res.data;
-  console.log("예약확인: ", payload);
-  return extractList(payload,['reservationList']).map(normalizeReserve);
+  return extractList(res.data,['reservationList']).map(normalizeReserve);
 }
 
 /* ================= 페이지 ================= */
@@ -82,30 +113,45 @@ const ManageMyPlacePage = () => {
   const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
 
-  const fetchData=useCallback(async(tab,phone)=>{
-    if(!phone.trim()){alert('전화번호를 입력해주세요.');return;}
+  const fetchData = useCallback(async (tab, phone) => {
+    if (!phone.trim()) { alert('전화번호를 입력해주세요.'); return; }
     setLoading(true); setError(null); setHasSearched(true);
-    try{
+    try {
       const results = tab==='enroll' ? await fetchEnrollments(phone) : await fetchReservations(phone);
       setItems(results);
-    }catch(e){
+    } catch (e) {
       console.error(e);
       setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       setItems([]);
-    }finally{ setLoading(false); }
-  },[]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleSearch=()=>fetchData(activeTab,phoneNumber);
   const handleTabChange=(tab)=>{ setActiveTab(tab); if(phoneNumber.trim()) fetchData(tab,phoneNumber); };
-
   const formatMoney=(n)=>(n??0).toLocaleString('ko-KR')+'원';
+  const formatPhoneNumber = (phoneStr) => {
+    if (!phoneStr) return '-';
+    const cleaned = ('' + phoneStr).replace(/\D/g, '');
+    if (cleaned.length === 11) return cleaned.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (cleaned.length === 10) return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    return phoneStr;
+  };
 
   const renderItemCard=(item)=>{
     const isEnroll=activeTab==='enroll';
     const imgSrc=item.photo || 'https://placehold.co/600x600?text=No+Image';
+
+    // number[] (1~48)
+    const slots = isEnroll ? item.enrolledTime : item.reservedTime;
+    const ranges = slotsToRanges(slots);
+    const totalH = totalHoursFromSlots(slots);
+
     return(
       <ListCard key={`${activeTab}-${item.roomId}`}>
         <ThumbLarge>
+          <DateTag>{isEnroll ? item.enrolledDate : item.reservedDate}</DateTag>
           <img
             src={imgSrc}
             alt=""
@@ -120,29 +166,80 @@ const ManageMyPlacePage = () => {
           <Divider />
           <InfoGrid>
             <InfoBlock>
-              <Label>{isEnroll ? '예약자 이름' : '호스트 이름'}</Label>
-              <Value>{item.name}</Value>
+              <Icon src={ContactIconSvg} alt="contact" />
+              <TextContainer>
+                <Label>{isEnroll ? '게스트 이름' : '호스트 이름'}</Label>
+                <Value>{isEnroll ? item.guestName : item.hostName}</Value>
+              </TextContainer>
             </InfoBlock>
             <InfoBlock>
-              <Label>호스트 전화번호</Label>
-              <Value>{item.phoneNumber ?? '-'}</Value>
+              <Icon src={CallIconSvg} alt="call" />
+              <TextContainer>
+                <Label>{isEnroll ? '게스트 전화번호' : '호스트 전화번호'}</Label>
+                <Value>{isEnroll ? formatPhoneNumber(item.guestPhoneNum) : formatPhoneNumber(item.hostPhoneNum)}</Value>
+              </TextContainer>
             </InfoBlock>
           </InfoGrid>
           <Divider />
-          <InfoGrid>
-            <InfoBlock>
-              <Label>총 납부 금액</Label>
-              <Value>{formatMoney(isEnroll ? item.price : item.totalPrice)}</Value>
-            </InfoBlock>
-            <InfoBlock>
-              <Label>입금 계좌번호</Label>
-              <Value>{item.account ?? '-'}</Value>
-            </InfoBlock>
-          </InfoGrid>
+          {isEnroll ? (
+            <InfoGrid>
+              <InfoBlock>
+                <Icon src={CreditCardIconSvg} alt="credit card" />
+                <TextContainer>
+                  <Label>총 납부 금액</Label>
+                  <Value>{formatMoney(totalH * item.price * 2)}</Value>
+                </TextContainer>
+              </InfoBlock>
+              <InfoBlock>
+                <TextContainer>
+                  <Label>30min당 {formatMoney(item.price)}</Label>
+                  <Value>{`${totalH}h X ${formatMoney(item.price * 2)}`}</Value>
+                </TextContainer>
+              </InfoBlock>
+            </InfoGrid>
+          ) : (
+            <InfoGrid>
+              <InfoBlock>
+                <Icon src={CreditCardIconSvg} alt="credit card" />
+                <TextContainer>
+                  <Label>총 납부 금액</Label>
+                  <Value>{formatMoney(item.totalPrice)}</Value>
+                </TextContainer>
+              </InfoBlock>
+              <InfoBlock>
+                <TextContainer>
+                  <Label>입금 계좌번호</Label>
+                  <Value>{item.account ?? '-'}</Value>
+                </TextContainer>
+              </InfoBlock>
+            </InfoGrid>
+          )}
           <Divider />
         </MiddleColumn>
 
-        <RightEmptyColumn />
+        <RightColumn>
+          <TimeListContainer>
+            <TimeHeader>{totalH} H</TimeHeader>
+            <TimeList>
+              {ranges.length>0 ? (
+                ranges.map((r, idx) => {
+                  // "(nH)" 표기: 끝-시작 분차로 계산
+                  const [s,e] = r.split('~');
+                  const toMin = (t)=>{ const [hh,mm]=t.split(':').map(Number); return hh*60+(mm||0); };
+                  const h = Math.round(((toMin(e)-toMin(s))/60)*10)/10;
+                  return (
+                    <TimeChip key={idx}>
+                      <span>{r}</span>
+                      <small>({h}H)</small>
+                    </TimeChip>
+                  );
+                })
+              ) : (
+                <EmptyTimes>시간 정보 없음</EmptyTimes>
+              )}
+            </TimeList>
+          </TimeListContainer>
+        </RightColumn>
       </ListCard>
     );
   };
@@ -158,7 +255,7 @@ const ManageMyPlacePage = () => {
 
         <LP_Section>
           <LP_SectionTop>
-            <ContactIcon src={ContactInfoIcon} alt='contactinput'/>
+            <LP_ContactIcon src={ContactInfoIcon} alt='contactinput'/>
             <LP_SectionTopRight>
               <LP_SectionTitle>예약자 정보 확인</LP_SectionTitle>
               <LP_SectionDesc>전화번호로 등록 및 예약관리를 확인해보세요</LP_SectionDesc>
@@ -236,19 +333,19 @@ const RightPanel = styled.div`
   flex: 3.3;
   display: flex;
   flex-direction: column;
-  height: 85vh;                  /* 두 상태 동일한 높이 */
+  height: 85vh;
   border-radius: 8px;
   background: #FDFDFD;
   box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
-  padding: 0;                    /* 항상 0 */
-  overflow: hidden;              /* 모서리 라운드 깔끔하게 */
+  padding: 0;
+  overflow: hidden;
   box-sizing: border-box;
 `;
 
 const PanelInner = styled.div`
   width: 100%;
   height: 100%;
-  padding: 50px 50px 0px 50px;                 /* 검색 후 컨텐츠에만 패딩 */
+  padding: 50px 50px 0px 50px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -287,16 +384,17 @@ const LoadingWrap=styled.div`
 /* 카드 */
 const ListCard = styled.div`
   display: grid;
-  grid-template-columns: 1fr 2.5fr 0.5fr;
+  grid-template-columns: 1fr 2fr 1fr;
   background: #fff;
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 4px 18px rgba(0,0,0,.06);
-  height: 200px;
+  height: 25vh;
   overflow: hidden;
 `;
 
 const ThumbLarge = styled.div`
+  position: relative;
   height: 100%;
   background: #f3f4f6;
   aspect-ratio:1/1.1;
@@ -315,8 +413,6 @@ const MiddleColumn = styled.div`
   padding: 16px 24px;
   font-family: Inter;
 `;
-
-const RightEmptyColumn = styled.div``;
 
 const PlaceTitle = styled.h3`
   margin: 0 0 4px;
@@ -343,8 +439,9 @@ const InfoGrid = styled.div`
 
 const InfoBlock = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
 `;
 
 const Label = styled.span`
@@ -353,7 +450,7 @@ const Label = styled.span`
 `;
 
 const Value = styled.span`
-  font-size: 15px;
+  font-size: 12.5px;
   font-weight: 600;
   color: #333;
 `;
@@ -414,18 +511,15 @@ const LP_Search = styled.button`
   cursor: pointer;
   transition: background-color .15s ease, transform .05s ease;
 
-  /* 기본 상태 (활성화) */
   background: #27D580;
   color: #fff;
 
-  /* 비활성화 상태 */
   &:disabled {
     background: #EEE;
     color: #B3B3B3;
     cursor: not-allowed;
   }
 
-  /* hover/active는 비활성화 아닐 때만 */
   &:not(:disabled):hover {
     filter: brightness(0.95);
   }
@@ -444,8 +538,62 @@ const InputIcon = styled.img`
   object-fit: contain;
 `;
 
-const ContactIcon = styled.img`
+const LP_ContactIcon = styled.img`
   width: 2vw;
   object-fit: contain;
   margin-bottom: 10px;
+`;
+
+const Icon = styled.img`
+  width: 25px;
+  height: 25px;
+  margin-top: 5px;
+`;
+
+const RightColumn = styled.div`
+  width: 100%;
+  height: 100%;
+  display:flex; align-items:center; justify-content:center;
+`;
+
+const TextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+/* ===== 우측 시간 리스트 ===== */
+const TimeListContainer = styled.div`
+  width: 90%; height: 80%; background:#FAFAFA; border-radius: 3px;
+  display:flex; flex-direction:column; gap:10px; overflow: hidden;
+  margin-bottom: 10px;
+`;
+const TimeHeader = styled.div`
+  background:#16a34a; color:#fff; font-weight:700; text-align:center;
+  font-size: 14px; line-height:34px;
+`;
+const TimeList = styled.div`
+  overflow-y: auto;
+  padding: 5px;
+`;
+const TimeChip = styled.div`
+  font-family: 'Pretendard';
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  border:1px solid #16a34a; background:#fff; padding:7px 22px; border-radius:10px;
+  font-weight:700; font-size:12px; white-space:nowrap; margin-bottom: 5px;
+`;
+const EmptyTimes = styled.div`
+  color:#9ca3af; text-align:center; padding:10px 0; font-weight:700;
+`;
+
+const DateTag = styled.div`
+  position: absolute;
+  top: 20px;
+  left: 0;
+  background-color: #2FB975;
+  color: white;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 1;
 `;
