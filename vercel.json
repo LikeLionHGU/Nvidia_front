@@ -1,24 +1,9 @@
 {
+    "version": 2,
     "rewrites": [
       {
         "source": "/spaceon/:path*",
         "destination": "http://janghong.asia/:path*"
-      },
-      {
-        "source": "/api/naver-local",
-        "destination": "/api/naver-local.js"
-      },
-      {
-        "source": "/api/ncp-reverse",
-        "destination": "/api/ncp-reverse.js"
       }
-    ],
-    "functions": {
-      "api/naver-local.js": {
-        "runtime": "edge"
-      },
-      "api/ncp-reverse.js": {
-        "runtime": "edge"
-      }
-    }
+    ]
   }
