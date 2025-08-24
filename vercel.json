@@ -1,9 +1,5 @@
 {
-    "version": 2,
-    "rewrites": [
-      {
-        "source": "/spaceon/:path*",
-        "destination": "http://janghong.asia/:path*"
-      }
-    ]
-  }
+  "rewrites": [
+    { "source": "/api/spaceon/(.*)", "destination": "/api/spaceon/$1" }
+  ]
+}

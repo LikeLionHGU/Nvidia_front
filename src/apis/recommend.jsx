@@ -1,3 +1,4 @@
+// apis/recommend.js
 import api from "../apis/client";
 
 // 안전 숫자 변환 (NaN 방지)
@@ -16,10 +17,12 @@ export async function postMain(body) {
     return res.data;
   } catch (err) {
     // 호출부에서 잡을 수 있게 서버 메시지 우선 던지기
+
     throw err?.response?.data ?? err;
   }
 }
 
+/** 추천: POST /spaceon/recommend */
 export async function postRecommend({ center, prompt, minPrice, maxPrice }) {
   try {
     const normalizedCenter = {
@@ -50,11 +53,14 @@ export async function postRecommend({ center, prompt, minPrice, maxPrice }) {
 /** 상세 조회: /spaceon/recommend/detail/{roomId} */
 export async function getRecommendDetail(roomId) {
   if (roomId === undefined || roomId === null) {
+
     throw new Error("roomId가 필요합니다.");
   }
   try {
     const { data } = await api.get(`/recommend/detail/${roomId}`);
+
     return data;
+
   } catch (err) {
     throw err?.response?.data ?? err;
   }

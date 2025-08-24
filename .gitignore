@@ -24,3 +24,5 @@ GEMINI.md
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*.local
