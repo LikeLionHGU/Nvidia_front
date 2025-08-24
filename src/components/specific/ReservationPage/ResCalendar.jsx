@@ -31,7 +31,7 @@ export default function Calendar({ today, selectedDates, toggleDate, availableDa
   const handleSetCurrentDate = (date) => {
     setCurrentDateState(date);
     setCurrentMonth(date);
-  }
+  };
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -63,10 +63,10 @@ export default function Calendar({ today, selectedDates, toggleDate, availableDa
           </CalendarHeader>
 
           <CalendarGrid>
-            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w, i) => (
-              <DayCell key={i}>{w}</DayCell>
+            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w) => (
+              <DayCell key={w}>{w}</DayCell>
             ))}
-            {calendarCells.map((d, idx) => {
+            {calendarCells.map((d) => {
               const key = format(d, "yyyy-MM-dd");
               const selected = selectedDates.has(key);
               const isPast = isBefore(d, startOfToday());
@@ -76,7 +76,7 @@ export default function Calendar({ today, selectedDates, toggleDate, availableDa
 
               return (
                 <DateCell
-                  key={idx}
+                  key={key}
                   onClick={() => {
                     if (disabled || !isCurrentMonth) return;
                     if (!selected && selectedDates.size >= 5) {
@@ -104,7 +104,7 @@ export default function Calendar({ today, selectedDates, toggleDate, availableDa
           <SelectionSubtitle>최대 5일까지 선택 가능합니다.</SelectionSubtitle>
           <SelectedDatesList>
             {selectedDatesArray.map(dateStr => {
-              const d = parseISO(dateStr); // 'yyyy-MM-dd'
+              const d = parseISO(dateStr);
               const label = format(d, "yyyy/MM/dd/EEEE", { locale: ko });
               return (
                 <SelectedDateItem key={dateStr}>

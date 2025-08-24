@@ -155,33 +155,6 @@ function MainPage() {
   useEffect(() => {
     if (!currentLocation) return;
 
-    const fallback = [
-      // {
-      //   roomId: 1,
-      //   photo: "https://picsum.photos/seed/spaceon1/640/480",
-      //   address: { roadName: "서울 강남구 테헤란로 123", latitude: 37.498, longitude: 127.028 },
-      //   maxPeople: 4,
-      //   phoneNumber: "010-1234-5678",
-      //   price: 30000,
-      // },
-      // {
-      //   roomId: 2,
-      //   photo: "https://i.pinimg.com/736x/d5/43/5a/d5435a7ab5b8756ae76b048f9c7967a4.jpg",
-      //   address: { roadName: "서울 서초구 서초대로 77", latitude: 37.496, longitude: 127.024 },
-      //   maxPeople: 2,
-      //   phoneNumber: "010-8765-4321",
-      //   price: 45000,
-      // },
-      // {
-      //   roomId: 3,
-      //   photo: "https://snvision.seongnam.go.kr/imgdata/snvision/201911/2019112148082756.jpg",
-      //   address: { roadName: "성남 분당구 판교역로 160", latitude: 37.3947611, longitude: 127.1111361 },
-      //   maxPeople: 3,
-      //   phoneNumber: "010-2222-3333",
-      //   price: 35000,
-      // },
-    ];
-
     const applyData = (list) => {
       setRecommendList(list);
       setMarkers(

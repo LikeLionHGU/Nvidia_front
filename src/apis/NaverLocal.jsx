@@ -35,7 +35,6 @@ export async function searchLocal({
     const res = await NaverLocal.get("/naver-local", {
       params: { query, display, start, sort },
     });
-    console.log(res.data);
     return res.data; // { items: [...] }
   } catch (error) {
     console.error('Naver API Error:', error);
@@ -58,7 +57,6 @@ export async function searchLocalFetch({
     }
     
     const data = await response.json();
-    console.log(data);
     return data;
   } catch (error) {
     console.error('Naver API Fetch Error:', error);
