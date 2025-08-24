@@ -14,7 +14,7 @@ export async function searchLocal({
   start = 1,     // 1~1000
   sort = "random" // random | comment
 }) {
-  const res = await NaverLocal.get("/local.json", {
+  const res = await NaverLocal.get("", {
     params: { query, display, start, sort },
   });
   return res.data; // { items: [...] }

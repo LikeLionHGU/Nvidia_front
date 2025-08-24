@@ -24,6 +24,8 @@ export default async function handler(req) {
 
     const target = new URL('https://openapi.naver.com/v1/search/local.json');
     incoming.searchParams.forEach((v, k) => target.searchParams.set(k, v));
+    console.log('Naver API Query Parameter:', incoming.searchParams.get('query'));
+    console.log('Naver API Target URL:', target.toString());
 
     // 3) 인증 헤더 환경변수에서 주입 (절대 클라이언트로 노출 X)
     const id = process.env.NAVER_SEARCH_CLIENT_ID;

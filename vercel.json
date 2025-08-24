@@ -1,9 +1,14 @@
 {
     "version": 2,
+    "functions": {
+      "api/spaceon/[...path].js": {
+        "runtime": "node@18.x"
+      }
+    },
     "rewrites": [
       {
-        "source": "/spaceon/:path*",
-        "destination": "http://janghong.asia/:path*"
+        "source": "/api/spaceon/:path*",
+        "destination": "/api/spaceon/[...path]"
       }
     ]
   }

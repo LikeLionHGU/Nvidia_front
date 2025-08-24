@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? '/spaceon' : 'http://janghong.asia',
+  baseURL: "/api/spaceon", // 항상 Edge Function 경유
   headers: {
     "Content-Type": "application/json",
   },
