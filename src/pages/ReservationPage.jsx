@@ -1,7 +1,7 @@
 // src/pages/ReservationPage.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import styled from "styled-components";
-import axios from "axios";
+import api from "../apis/client";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   format,
@@ -152,7 +152,7 @@ useEffect(() => {
   const fetchPlace = async () => {
     try {
       setLoading((p) => ({ ...p, page: true }));
-      const { data } = await axios.post(`/spaceon/reservation/${roomId}`);
+      const { data } = await api.post(`/reservation/${roomId}`);
 
       // --- 응답 정규화: Thumbnail이 기대하는 형태로 맞추기 ---
       const normalize = (d) => {
@@ -222,8 +222,8 @@ useEffect(() => {
         const year = getYear(currentMonth);
         const month = getMonth(currentMonth) + 1;
 
-        const { data } = await axios.post(
-          `/spaceon/reservation/available/days/${roomId}`,
+        const { data } = await api.post(
+          `/reservation/available/days/${roomId}`,
           { month }
         );
 
@@ -264,8 +264,8 @@ useEffect(() => {
             const month = getMonth(dateObj) + 1;
             const day = getDate(dateObj);
 
-            const resp = await axios.post(
-              `/spaceon/reservation/available/timeslots/${roomId}`,
+            const resp = await api.post(
+              `/reservation/available/timeslots/${roomId}`,
               { month, day }
             );
             const schedule = Array.from(resp?.data?.schedule ?? []);
@@ -323,8 +323,8 @@ useEffect(() => {
 
     try {
       // 배열을 그대로 전송
-      await axios.post(
-        `/spaceon/reservation/done/${roomId}`,
+      await api.post(
+        `/reservation/done/${roomId}`,
         requests
       );
 

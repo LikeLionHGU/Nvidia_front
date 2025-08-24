@@ -1,7 +1,7 @@
 // ... 기존 import 그대로
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import axios from "axios";
+import api from "../apis/client";
 import {
   format,
   startOfMonth, isSameMonth, addDays,
@@ -237,7 +237,7 @@ export default function AddPlacePage() {
   
     // 6) 전송 (Content-Type 수동 지정 X)
     try {
-      const res = await axios.post("/spaceon/enrollment/done", fd);
+      const res = await api.post("/enrollment/done", fd);
       console.log("등록 성공:", res.data);
   
       const first = photoList[0];

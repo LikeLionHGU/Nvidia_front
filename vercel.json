@@ -1,9 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/spaceon/:path*", "destination": "http://janghong.asia/:path*" }
-  ],
-  "functions": {
-    "api/naverProxy.js": { "runtime": "edge" },
-    "api/ncpProxy.js": { "runtime": "edge" }
-  }
-}

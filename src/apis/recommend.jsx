@@ -1,7 +1,7 @@
 import api from "../apis/client";
 
 export async function postMain(body) {
-  const res = await api.post("/spaceon/main", body);
+  const res = await api.post("/main", body);
   return res.data; // ★ 여기!
 }
 
@@ -18,12 +18,12 @@ export async function postRecommend({ center, prompt, minPrice, maxPrice }) {
     minPrice: Number(minPrice) || 0,
     maxPrice: Number(maxPrice) || 0,
   };
-  const res = await api.post("/spaceon/recommend", req);
+  const res = await api.post("/recommend", req);
   return res.data; // ★ 여기!
 }
 
 /** 상세 조회: /recommend/detail/{roomId} */
 export async function getRecommendDetail(roomId) {
-  const { data } = await api.get(`/spaceon/recommend/detail/${roomId}`);
+  const { data } = await api.get(`/recommend/detail/${roomId}`);
   return data; // 상세 스펙 그대로
 }

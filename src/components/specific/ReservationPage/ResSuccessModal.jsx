@@ -5,6 +5,8 @@ import LogoWhite from '../../../assets/icons/LogoWhite.svg';
 import ResSelectionSummary from './ResSelectionSummary';
 
 const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
+  const navigate = useNavigate();
+  
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'auto';
     return () => { document.body.style.overflow = 'auto'; };
@@ -24,7 +26,6 @@ const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
   } = details || {};
 
   const money = (n) => n.toLocaleString();
-  const navigate = useNavigate();
 
   return (
     <ModalOverlay onClick={onClose}>
@@ -100,7 +101,7 @@ const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
 
           {/* --- 버튼 --- */}
           <ButtonContainer>
-            <ConfirmButton onClick={()=>navigate("/manage-page")}>확인</ConfirmButton>
+            <ConfirmButton onClick={() => navigate("/manage-page")}>확인</ConfirmButton>
           </ButtonContainer>
         </WhiteSection>
       </ModalContent>
