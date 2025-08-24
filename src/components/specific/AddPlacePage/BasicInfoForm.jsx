@@ -150,7 +150,7 @@ export default function BasicInfoForm({
 
         {/* 메모 */}
         <Field>
-          <Label htmlFor="memo">주의사항</Label>
+          <Label htmlFor="memo">호스트 안내사항</Label>
           <TextArea
             id="memo"
             placeholder="하실 말씀이 있으시다면 편하게 적어주세요."
