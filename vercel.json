@@ -1,8 +1,5 @@
 {
-    "rewrites": [
-      {
-        "source": "/spaceon/:path*",
-        "destination": "/api/spaceon/:path*"
-      }
-    ]
-  }
+  "rewrites": [
+    { "source": "/api/spaceon/(.*)", "destination": "/api/spaceon/$1" }
+  ]
+}
