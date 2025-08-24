@@ -2,7 +2,7 @@
     "version": 2,
     "functions": {
       "api/spaceon/[...path].js": {
-        "runtime": "edge"
+        "runtime": "node@18.x"
       }
     },
     "rewrites": [
