@@ -1,44 +1,54 @@
-// Vercel Edge Function
-export const config = {
-  runtime: 'edge',
-};
+export const config = { runtime: "edge" };
+
+const ORIGIN = "https://nvidia-front-dun.vercel.app/"; // 배포 도메인으로 제한
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": ORIGIN,
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+}
 
 export default async function handler(request) {
-  const rewrittenUrl = request.headers.get('x-vercel-rewritten-url');
-  // rewrittenUrl will be `/api/v1/search/local.json?query=...`
-  const pathAndQuery = rewrittenUrl.replace('/api', '');
+  const url = new URL(request.url);
 
-  const targetUrl = `https://openapi.naver.com${pathAndQuery}`;
-
-  // Create new headers for the target API
-  const headers = new Headers();
-  headers.set('X-Naver-Client-Id', process.env.VITE_SEARCH_CLIENT_ID);
-  headers.set('X-Naver-Client-Secret', process.env.VITE_SEARCH_CLIENT_SECRET);
-  
-  // Pass through relevant headers from the original request
-  if (request.headers.get('content-type')) {
-    headers.set('content-type', request.headers.get('content-type'));
-  }
-   if (request.headers.get('accept')) {
-    headers.set('accept', request.headers.get('accept'));
+  // Preflight
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders() });
   }
 
-  try {
-    const response = await fetch(targetUrl, {
-      method: request.method,
-      headers: headers,
-      body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null,
-      duplex: 'half' // Required for streaming body in Edge Functions
+  const query  = url.searchParams.get("query");
+  const display = url.searchParams.get("display") ?? "5";
+  const start   = url.searchParams.get("start") ?? "1";
+  const sort    = url.searchParams.get("sort") ?? "random";
+
+  if (!query) {
+    return new Response(JSON.stringify({ error: "query is required" }), {
+      status: 400,
+      headers: { "content-type": "application/json; charset=utf-8", ...corsHeaders() }
     });
-
-    // Return the response from the target API to the client
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-    });
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return new Response('Error proxying to Naver API', { status: 500 });
   }
+
+  const target = new URL("https://openapi.naver.com/v1/search/local.json");
+  target.searchParams.set("query", query);
+  target.searchParams.set("display", display);
+  target.searchParams.set("start", start);
+  target.searchParams.set("sort", sort);
+
+  const r = await fetch(target.toString(), {
+    headers: {
+      "X-Naver-Client-Id":   process.env.NAVER_SEARCH_CLIENT_ID,
+      "X-Naver-Client-Secret": process.env.NAVER_SEARCH_CLIENT_SECRET
+    }
+  });
+
+  const body = await r.text();
+  return new Response(body, {
+    status: r.status,
+    headers: {
+      "content-type": r.headers.get("content-type") ?? "application/json; charset=utf-8",
+      ...corsHeaders()
+    }
+  });
 }
