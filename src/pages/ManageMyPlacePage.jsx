@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import api from '../apis/client';
 import AdImg from "../assets/images/AdImg.svg";
 import LoadingImg from "../assets/images/ManagePageLoadingImg.svg";
 import PhoneInputIcon from "../assets/icons/PhoneInputIcon.svg";
@@ -26,10 +27,11 @@ function normalizeAddress(x){if(x?.address&&typeof x.address==='object')return x
 function normalizeEnroll(item){return{
   roomId:item.roomId??item.id??item.spaceId,
   title:item.title??item.placeName??item.roomName??'등록한 공간',
+  name: item.guestName,
   photo:pickFirstPhoto(item),
   address:normalizeAddress(item),
   maxPeople:item.maxPeople??item.capacity??'-',
-  phoneNumber:item.phoneNumber??item.ownerPhone??item.contact??'-',
+  phoneNumber:item.guestPhoneNum??'-',
   account:item.account??item.bankAccount??'-',
   price:item.price??item.unitPrice??0,
   enrolledDate:item.enrolledDate??item.date??'',
@@ -41,10 +43,11 @@ function normalizeReserve(item){
   return{
     roomId:item.roomId??item.id??item.spaceId,
     title:item.title??item.placeName??item.roomName??'예약한 공간',
+    name: item.hostName,
     photo:pickFirstPhoto(item),
     address:normalizeAddress(item),
     maxPeople:item.maxPeople??item.capacity??'-',
-    phoneNumber:item.phoneNumber??item.ownerPhone??item.contact??'-',
+    phoneNumber:item.hostPhoneNum??'-',
     account:item.account??item.bankAccount??'-',
     totalPrice:item.totalPrice??item.price??0,
     selectedHour,
@@ -54,17 +57,16 @@ function normalizeReserve(item){
 }
 
 /* ================= API ================= */
-const api = (p)=>`/spaceon${p}`;
 async function fetchEnrollments(phoneNumber){
-  const res=await fetch(api('/enrollment/confirmation'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phoneNumber})});
-  if(!res.ok) throw new Error(`Network error: ${res.status}`);
-  const payload=await readJson(res);
+  const res = await api.post('/enrollment/confirmation', {phoneNumber});
+  const payload = res.data;
+  console.log("등록확인: ", payload);
   return extractList(payload,['enrollmentList']).map(normalizeEnroll);
 }
 async function fetchReservations(phoneNumber){
-  const res=await fetch(api('/reservation/confirmation'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phoneNumber})});
-  if(!res.ok) throw new Error(`Network error: ${res.status}`);
-  const payload=await readJson(res);
+  const res = await api.post('/reservation/confirmation', {phoneNumber});
+  const payload = res.data;
+  console.log("예약확인: ", payload);
   return extractList(payload,['reservationList']).map(normalizeReserve);
 }
 
@@ -97,7 +99,6 @@ const ManageMyPlacePage = () => {
   const handleTabChange=(tab)=>{ setActiveTab(tab); if(phoneNumber.trim()) fetchData(tab,phoneNumber); };
 
   const formatMoney=(n)=>(n??0).toLocaleString('ko-KR')+'원';
-  const subPriceText='(30min당 5,000원)';
 
   const renderItemCard=(item)=>{
     const isEnroll=activeTab==='enroll';
@@ -113,41 +114,35 @@ const ManageMyPlacePage = () => {
           />
         </ThumbLarge>
 
-        <CardRight>
-          <CardRightContainer>
-            <HeaderRow>
-              <PlaceTitle isEnroll={isEnroll}>{item.title}</PlaceTitle>
-              <GhostGap/>
-              <PillButton isEnroll={isEnroll}>{isEnroll?'등록':'예약'}</PillButton>
-            </HeaderRow>
+        <MiddleColumn>
+          <PlaceTitle>{item?.address?.roadName ?? '-'}</PlaceTitle>
+          <SubAddress>공실 예약 정보</SubAddress>
+          <Divider />
+          <InfoGrid>
+            <InfoBlock>
+              <Label>{isEnroll ? '예약자 이름' : '호스트 이름'}</Label>
+              <Value>{item.name}</Value>
+            </InfoBlock>
+            <InfoBlock>
+              <Label>호스트 전화번호</Label>
+              <Value>{item.phoneNumber ?? '-'}</Value>
+            </InfoBlock>
+          </InfoGrid>
+          <Divider />
+          <InfoGrid>
+            <InfoBlock>
+              <Label>총 납부 금액</Label>
+              <Value>{formatMoney(isEnroll ? item.price : item.totalPrice)}</Value>
+            </InfoBlock>
+            <InfoBlock>
+              <Label>입금 계좌번호</Label>
+              <Value>{item.account ?? '-'}</Value>
+            </InfoBlock>
+          </InfoGrid>
+          <Divider />
+        </MiddleColumn>
 
-            <SubAddress>{item?.address?.roadName ?? '-'}</SubAddress>
-            <Divider/>
-
-            <InfoRow>
-              <InfoItem>
-                <Icon>💲</Icon>
-                <strong>{formatMoney(isEnroll?item.price:item.totalPrice)}</strong>
-                {isEnroll && <SubSmall>{' '}{subPriceText}</SubSmall>}
-              </InfoItem>
-              <InfoItem>
-                <Icon>📞</Icon>
-                <span>{item.phoneNumber ?? '-'}</span>
-              </InfoItem>
-            </InfoRow>
-
-            <Divider/>
-
-            <InfoRow>
-              <InfoItem><Icon>💳</Icon><span>{item.account ?? '-'}</span></InfoItem>
-              <InfoItem>
-                <Icon>👥</Icon>
-                <span>{isEnroll?`신청 인원 ${item.maxPeople}명`:`인원수 ${item.maxPeople}명 / ${(item.selectedHour ?? item.reservedTime?.length ?? 0)}시간`}</span>
-              </InfoItem>
-            </InfoRow>
-            <Divider/>
-          </CardRightContainer>
-        </CardRight>
+        <RightEmptyColumn />
       </ListCard>
     );
   };
@@ -290,36 +285,85 @@ const LoadingWrap=styled.div`
 `;
 
 /* 카드 */
-const ListCard=styled.div`
-  display:grid; grid-template-columns:1fr 2fr; background:#fff; border:1px solid #e9ecef;
-  border-radius:12px; box-shadow:0 4px 18px rgba(0,0,0,.06); height:200px;
+const ListCard = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 2.5fr 0.5fr;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.06);
+  height: 200px;
+  overflow: hidden;
 `;
-const ThumbLarge=styled.div`
-  height:100%; aspect-ratio:1.1/1; border-radius:10px 0 0 10px; overflow:hidden; background:#f3f4f6;
-  img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+const ThumbLarge = styled.div`
+  height: 100%;
+  background: #f3f4f6;
+  aspect-ratio:1/1.1;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 `;
-const CardRight=styled.div`
-  display:flex; flex-direction:column; justify-content:center; align-items:stretch; height:100%; margin-right:50px;
+
+const MiddleColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 24px;
+  font-family: Inter;
 `;
-const CardRightContainer=styled.div` width:100%; padding:20px; `;
-const HeaderRow=styled.div` display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:12px; `;
-const PlaceTitle=styled.h3`
-  margin:0; font-size:20px; font-weight:800; color:${p=>p.isEnroll?'#0089FC':'#16a34a'};
+
+const RightEmptyColumn = styled.div``;
+
+const PlaceTitle = styled.h3`
+  margin: 0 0 4px;
+  font-size: 1.25vw;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
-const GhostGap=styled.div``;
-const PillButton=styled.button`
-  padding:8px 20px; border-radius:17px;
-  border:${p=>p.isEnroll?'1px solid #008AFE':'1px solid #16a34a'};
-  background:${p=>p.isEnroll?'rgba(0, 138, 254, 0.22)':'#eafff2'};
-  color:${p=>p.isEnroll?'#0089FC':'#16a34a'};
-  font-weight:800;
+
+const SubAddress = styled.div`
+  color: #000;
+  font-size: 0.7vw;
+  text-align: left;
+  margin-top: 15px;
 `;
-const SubAddress=styled.div` color:#6b7280; font-size:14px; `;
-const Divider=styled.div` height:1px; background:#e5e7eb; margin:4px 0; `;
-const InfoRow=styled.div` display:grid; grid-template-columns:1fr 1fr; gap:8px; `;
-const InfoItem=styled.div` display:flex; align-items:center; gap:10px; color:#374151; font-size:15px; `;
-const Icon=styled.span` width:28px; height:28px; border-radius:6px; background:#f3f4f6; display:inline-flex; align-items:center; justify-content:center; `;
-const SubSmall=styled.span` color:#9ca3af; font-weight:600; font-size:12px; `;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+`;
+
+const InfoBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const Label = styled.span`
+  font-size: 0.7vw;
+  color: #5c5c5c;
+`;
+
+const Value = styled.span`
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+`;
+
 const InfoText=styled.p` text-align:center; color:#888; font-size:16px; margin-top:20px; `;
 const ErrorBanner=styled.div` background:#ffefef; color:#b42318; padding:12px; border-radius:8px; text-align:center; margin-bottom:12px; `;
 
