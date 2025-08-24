@@ -373,8 +373,33 @@ const TabButton=styled.button`
   flex:1; padding:10px 20px; font-size:16px; font-weight:700; border:none; border-radius:8px; cursor:pointer;
   color:${p=>p.active?'#fff':'#666'}; background-color:${p=>p.active?'#2FB975':'transparent'};
 `;
-const ContentArea=styled.div`
-  display:flex; flex-direction:column; gap:14px; overflow:auto;
+const ContentArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0; /* 플렉스 컨테이너에서 오버플로우가 제대로 작동하도록 */
+  padding-right: 8px; /* 스크롤바 공간 확보 */
+  
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 `;
 const LoadingWrap=styled.div`
   display:flex; justify-content:center; padding:30px 0;
@@ -389,7 +414,9 @@ const ListCard = styled.div`
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 4px 18px rgba(0,0,0,.06);
-  height: 25vh;
+  height: 25vh; /* 고정 높이 설정 */
+  min-height: 25vh; /* 최소 높이 보장 */
+  flex-shrink: 0; /* 플렉스 아이템이 줄어들지 않도록 */
   overflow: hidden;
 `;
 
@@ -409,8 +436,8 @@ const ThumbLarge = styled.div`
 const MiddleColumn = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 16px 24px;
+  justify-content: flex-start;
+  padding: 20px 24px 0 24px;
   font-family: Inter;
 `;
 
