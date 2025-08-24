@@ -1,43 +1,31 @@
-// api/naver-local.js
 export const config = { runtime: 'edge' };
 
-// 공통 CORS 헤더
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Always allow all origins
+const cors = {
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type,Authorization',
   'Vary': 'Origin',
 };
 
 export default async function handler(req) {
-  // const origin = req.headers.get('origin') || '*'; // No longer needed as we always allow '*'
-
-  // 1) OPTIONS 프리플라이트 응답
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 204, headers: cors });
   }
 
   try {
-    // 2) 쿼리 그대로 전달
     const incoming = new URL(req.url);
-    // /api/naver-local?query=...&display=...&start=...&sort=...
-
     const target = new URL('https://openapi.naver.com/v1/search/local.json');
     incoming.searchParams.forEach((v, k) => target.searchParams.set(k, v));
-    console.log('Naver API Query Parameter:', incoming.searchParams.get('query'));
-    console.log('Naver API Target URL:', target.toString());
 
-    // 3) 인증 헤더 환경변수에서 주입 (절대 클라이언트로 노출 X)
     const id = process.env.NAVER_SEARCH_CLIENT_ID;
     const secret = process.env.NAVER_SEARCH_CLIENT_SECRET;
     if (!id || !secret) {
       return new Response(
-        JSON.stringify({ message: 'Missing NAVER search env vars' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        JSON.stringify({ message: 'Missing NAVER_SEARCH_CLIENT_ID/SECRET' }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...cors } }
       );
     }
 
-    // 4) Naver API 호출
     const upstream = await fetch(target.toString(), {
       method: 'GET',
       headers: {
@@ -47,16 +35,14 @@ export default async function handler(req) {
       },
     });
 
-    // 5) 응답 전달 + CORS 덮어쓰기
-    const headers = new Headers(upstream.headers);
-    // headers.set('Access-Control-Allow-Origin', origin); // Replaced with '*'
-    headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-    headers.set('Vary', 'Origin');
-    headers.set('Content-Type', 'application/json'); // Ensure Content-Type is set for JSON responses
+    const bodyText = await upstream.text(); // ← 바디를 텍스트로 읽음
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      ...cors,
+    });
 
-    return new Response(upstream.body, {
+    // 성공/실패 상관없이 Naver 응답 바디 그대로 넘김
+    return new Response(bodyText, {
       status: upstream.status,
       statusText: upstream.statusText,
       headers,
@@ -64,7 +50,7 @@ export default async function handler(req) {
   } catch (err) {
     return new Response(
       JSON.stringify({ message: 'Proxy error (naver-local)', error: String(err) }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...cors } }
     );
   }
 }

@@ -1,8 +1,8 @@
 {
-    "rewrites": [
-      {
-        "source": "/spaceon/:path*",
-        "destination": "/api/spaceon/:path*"
-      }
-    ]
-  }
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/naver-local", "destination": "/api/naver-local.js" },
+    { "source": "/api/ncp-reverse", "destination": "/api/ncp-reverse.js" },
+    { "source": "/api/spaceon/:path*", "destination": "/api/spaceon/[...path].js" }
+  ]
+}
