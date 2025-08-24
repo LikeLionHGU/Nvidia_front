@@ -1,16 +1,9 @@
 {
   "rewrites": [
-    {
-      "source": "/spaceon/:path*",
-      "destination": "http://janghong.asia/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api/naverProxy"
-    },
-    {
-      "source": "/map-reversegeocode/:path*",
-      "destination": "/api/ncpProxy"
-    }
-  ]
+    { "source": "/spaceon/:path*", "destination": "http://janghong.asia/:path*" }
+  ],
+  "functions": {
+    "api/naverProxy.js": { "runtime": "edge" },
+    "api/ncpProxy.js": { "runtime": "edge" }
+  }
 }

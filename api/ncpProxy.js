@@ -1,36 +1,51 @@
-// Vercel Edge Function
-export const config = {
-  runtime: 'edge',
-};
+export const config = { runtime: "edge" };
+
+const ORIGIN = "https://nvidia-front-dun.vercel.app/";
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": ORIGIN,
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+}
 
 export default async function handler(request) {
-  const rewrittenUrl = request.headers.get('x-vercel-rewritten-url');
-  const targetUrl = `https://naveropenapi.apigw.ntruss.com${rewrittenUrl}`;
+  const url = new URL(request.url);
 
-  // Create new headers for the target API
-  const headers = new Headers();
-  headers.set('X-NCP-APIGW-API-KEY-ID', process.env.VITE_MAP_CLIENT_ID);
-  headers.set('X-NCP-APIGW-API-KEY', process.env.VITE_MAP_CLIENT_SECRET);
-
-  if (request.headers.get('accept')) {
-    headers.set('accept', request.headers.get('accept'));
+  // Preflight
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders() });
   }
 
-  try {
-    const response = await fetch(targetUrl, {
-      method: request.method,
-      headers: headers,
-      // This API uses GET, so no body
-    });
+  const coords = url.searchParams.get("coords");
+  const orders = url.searchParams.get("orders") ?? "roadaddr,admcode";
 
-    // Return the response from the target API to the client
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
+  if (!coords) {
+    return new Response(JSON.stringify({ error: "coords is required (e.g. 127.1054328,37.3595963)" }), {
+      status: 400,
+      headers: { "content-type": "application/json; charset=utf-8", ...corsHeaders() }
     });
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return new Response('Error proxying to NCP API', { status: 500 });
   }
+
+  const target = new URL("https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc");
+  target.searchParams.set("coords", coords);
+  target.searchParams.set("orders", orders);
+  target.searchParams.set("output", "json");
+
+  const r = await fetch(target.toString(), {
+    headers: {
+      "X-NCP-APIGW-API-KEY-ID": process.env.NAVER_MAP_CLIENT_ID,
+      "X-NCP-APIGW-API-KEY":    process.env.NAVER_MAP_CLIENT_SECRET
+    }
+  });
+
+  const body = await r.text();
+  return new Response(body, {
+    status: r.status,
+    headers: {
+      "content-type": r.headers.get("content-type") ?? "application/json; charset=utf-8",
+      ...corsHeaders()
+    }
+  });
 }
