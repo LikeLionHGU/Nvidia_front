@@ -1,7 +1,14 @@
 {
+    "version": 2,
     "functions": {
       "api/spaceon/[...path].js": {
         "runtime": "edge"
       }
-    }
+    },
+    "rewrites": [
+      {
+        "source": "/api/spaceon/:path*",
+        "destination": "/api/spaceon/[...path]"
+      }
+    ]
   }
