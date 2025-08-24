@@ -1,14 +1,8 @@
 {
-    "version": 2,
-    "functions": {
-      "api/spaceon/[...path].js": {
-        "runtime": "nodejs@18.x"
-      }
-    },
     "rewrites": [
       {
-        "source": "/api/spaceon/:path*",
-        "destination": "/api/spaceon/[...path]"
+        "source": "/spaceon/:path*",
+        "destination": "/api/spaceon/:path*"
       }
     ]
   }
