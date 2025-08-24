@@ -38,7 +38,7 @@ const mergeContinuousSlots = (slots = []) => {
 
   // 풀타임(1~48)인 경우 바로 리턴
   if (sorted.length === 48 && sorted[0] === 1 && sorted[47] === 48) {
-    return [{ full: true }];
+    return [];
   }
 
   const ranges = [];

@@ -60,6 +60,15 @@ export default function ReservationPage() {
 
   const handleCancel = () => navigate("/");
 
+  const handleReset = () => {
+    setName("");
+    setPhoneNumber("");
+    setNumPeople(undefined);
+    setSelectedDates(new Set());
+    setSlotsByDate(new Map());
+    setIsAgreed(false);
+  };
+
   const toggleDate = (d) => {
     const key = format(d, "yyyy-MM-dd");
     setSelectedDates((prev) => {
@@ -183,31 +192,12 @@ useEffect(() => {
       };
 
       const normalized = normalize(data);
-      setPlaceData(normalized); // ✅ 이 줄이 핵심!
+      setPlaceData(normalized); 
 
     } catch (err) {
       console.error("Failed to fetch place data:", err);
       setError(err);
-      // ✅ 폴백 더미
-      const dummy = {
-        roomId: Number(roomId),
-        photoList: [
-          "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1200&auto=format&fit=crop",
-        ],
-        address: {
-          roadName: "서울특별시 강남구 테헤란로 521",
-          latitude: 37.5061,
-          longitude: 127.0537,
-        },
-        maxPeople: 6,
-        phoneNumber: "010-1234-5678",
-        price: 40000,
-        account: "신한 110-123-456789",
-        chipList: ["WIFI", "주차 가능"],
-        optionList: ["TV", "화이트보드"],
-      };
-      setPlaceData(dummy);
-    } finally {
+      } finally {
       setLoading((p) => ({ ...p, page: false }));
     }
   };
@@ -387,8 +377,8 @@ useEffect(() => {
           />
 
           <ButtonContainer>
-            <CancelButton type="button" onClick={handleCancel}>
-              취소
+            <CancelButton type="button" onClick={handleReset}>
+              초기화
             </CancelButton>
             <SubmitButton type="button" onClick={handleReservation}>
               등록
