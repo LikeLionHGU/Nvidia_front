@@ -44,8 +44,7 @@ const SuccessModal = ({ show, onClose, previewUrl, name }) => {
         </CenterText>
 
         <Actions>
-          <GhostBtn onClick={onClose}>취소</GhostBtn>
-          <PrimaryBtn onClick={moveToMain}>확인</PrimaryBtn>
+          <PrimaryBtn onClick={()=>navigate("/manage-page")}>확인</PrimaryBtn>
         </Actions>
       </SuccessCard>
     </Overlay>
@@ -63,7 +62,7 @@ const Overlay = styled.div`
 
 const SuccessCard = styled.div`
   width: 780px;
-  height: 610px;
+  height: 590px;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
@@ -118,7 +117,7 @@ const BigMsg = styled.div`
 `;
 
 const Actions = styled.div`
-  display: flex; gap: 12px; padding: 18px;
+  display: flex; padding: 18px;
   justify-content: center;
 `;
 
@@ -129,12 +128,7 @@ const BaseBtn = styled.button`
   &:active { transform: scale(0.98); }
 `;
 
-const GhostBtn = styled(BaseBtn)`
-  background: #F2F4F5; color: ${colors.text}; border: 1px solid ${colors.line};
-  &:hover { filter: brightness(0.98); }
-`;
-
 const PrimaryBtn = styled(BaseBtn)`
-  background: #27D580; color: #fff; border: none;
-  &:hover { filter: brightness(0.96); }
+  background: #2FB975; color: #fff; border: none;
+  &:hover { filter: brightness(1.1); }
 `;

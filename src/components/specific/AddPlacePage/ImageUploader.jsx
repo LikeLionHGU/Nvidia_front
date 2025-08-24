@@ -217,7 +217,7 @@ const FileSize = styled.div`
 `;
 
 const DeleteBtn = styled.button`
-  width: 1px;
+  width: 15px;
   height: 15px;
   margin-right: 10px;
   border: none;
@@ -231,10 +231,10 @@ const DeleteBtn = styled.button`
   font-size: 16px;
   line-height: 1;
   flex-shrink: 0;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.1s ease-in-out;
 
   &:hover {
-    background: ${colors.warn};
+    background: #4E4E4E;
     color: #fff;
   }
 `;

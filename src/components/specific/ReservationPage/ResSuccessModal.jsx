@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import LogoWhite from '../../../assets/icons/LogoWhite.svg';
 import ResSelectionSummary from './ResSelectionSummary';
@@ -23,6 +24,7 @@ const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
   } = details || {};
 
   const money = (n) => n.toLocaleString();
+  const navigate = useNavigate();
 
   return (
     <ModalOverlay onClick={onClose}>
@@ -98,8 +100,7 @@ const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
 
           {/* --- 버튼 --- */}
           <ButtonContainer>
-            <CloseButton onClick={onClose}>취소</CloseButton>
-            <ConfirmButton onClick={onClose}>확인</ConfirmButton>
+            <ConfirmButton onClick={()=>navigate("/manage-page")}>확인</ConfirmButton>
           </ButtonContainer>
         </WhiteSection>
       </ModalContent>
@@ -245,19 +246,17 @@ const FeeItem = styled.div`
 `;
 
 const ButtonContainer = styled.div`
-  display: flex; justify-content: center; gap: 18px; margin-top: 1px;
+  display: flex; justify-content: center; margin-top: 1px;
 `;
 
 const Button = styled.button`
   padding: 13px 52px;
   border-radius: 8px; border: none; cursor: pointer;
   font-size: 16px; font-weight: 800;
-`;
-
-const CloseButton = styled(Button)`
-  background: #f0f0f0; color: #333;
+  transition: transform .06s ease;
 `;
 
 const ConfirmButton = styled(Button)`
   background: #34cd82; color: #fff;
+  &:hover { filter: brightness(1.1); }
 `;
