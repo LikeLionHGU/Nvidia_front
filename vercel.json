@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/spaceon/:path*",
+      "destination": "http://janghong.asia/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/naverProxy"
+    },
+    {
+      "source": "/map-reversegeocode/:path*",
+      "destination": "/api/ncpProxy"
+    }
+  ]
+}
