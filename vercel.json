@@ -1,9 +1,7 @@
 {
-    "version": 2,
-    "rewrites": [
-      {
-        "source": "/spaceon/:path*",
-        "destination": "http://janghong.asia/:path*"
+    "functions": {
+      "api/spaceon/[...path].js": {
+        "runtime": "edge"
       }
-    ]
+    }
   }
