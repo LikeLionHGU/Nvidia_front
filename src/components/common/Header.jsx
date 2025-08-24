@@ -4,7 +4,7 @@ import Logo from "../../assets/icons/Logo.svg";
 import SearchIcon from "../../assets/icons/Search.svg";
 import { useNavigate } from "react-router-dom";
 
-function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
+function Header() {
   const navigate = useNavigate();
 
   const moveToAddPlace = () => {
@@ -36,12 +36,13 @@ function Header({ searchQuery, setSearchQuery, SearchEnterHandle }) {
 export default Header;
 
 const Wrapper = styled.div`
-  width: 99vw;
+  width: 99.5vw;
   height: clamp(47px, 7.71vh, 119px);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 10px;
+  padding-top: 10px;
+  box-shadow: 0 -2px 23.9px 0 rgba(0, 0, 0, 0.10);
 `;
 const LogoImg = styled.img`
   cursor: pointer;
@@ -57,8 +58,7 @@ const BtnContainer = styled.div`
   width: 14.72vw;
   height: 3.5vh;
   font-size: 0.83vw;
-  margin-left: auto;
-  margin-right: 2.83vh;
+  margin: 0 3vh 2vh auto;
 `;
 
 const Leftbtn = styled.div`

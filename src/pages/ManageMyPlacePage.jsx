@@ -193,10 +193,7 @@ const ManageMyPlacePage = () => {
           </a>
         </AdImageWrapper>
 
-        <LP_BtnRow>
-          <LP_Cancel onClick={() => navigate('/')}>취소</LP_Cancel>
-          <LP_Search onClick={handleSearch}>조회하기</LP_Search>
-        </LP_BtnRow>
+        <LP_Search disabled={!phoneNumber.trim()} onClick={handleSearch}>조회하기</LP_Search>
       </LeftPanel>
 
       <RightPanel>
@@ -363,12 +360,36 @@ const Input = styled.input`
 `;
 
 const LP_FlexSpacer=styled.div` flex:1; `;
-const LP_BtnRow=styled.div` display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px; `;
-const LP_Cancel=styled.button` height:48px; border-radius:6px; border:none; background:#f6f7f8; color:#B3B3B3; font-weight:800; cursor:pointer; `;
-const LP_Search=styled.button`
-  height:48px; border-radius:6px; border:none; background:#22c55e; color:#fff; font-weight:900; letter-spacing:.2px; cursor:pointer;
-  transition:background-color .15s ease, transform .05s ease; &:hover{background:#1fb257;} &:active{transform:translateY(1px);}
+const LP_Search = styled.button`
+  height: 48px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1.2vw;
+  font-weight: 700;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .05s ease;
+
+  /* 기본 상태 (활성화) */
+  background: #27D580;
+  color: #fff;
+
+  /* 비활성화 상태 */
+  &:disabled {
+    background: #EEE;
+    color: #B3B3B3;
+    cursor: not-allowed;
+  }
+
+  /* hover/active는 비활성화 아닐 때만 */
+  &:not(:disabled):hover {
+    filter: brightness(0.95);
+  }
+  &:not(:disabled):active {
+    transform: translateY(1px);
+  }
 `;
+
 const AdImageWrapper=styled.div`
   width:100%; margin-bottom:14px;
   img{ width:100%; min-height:80px; object-fit:contain; display:block; border-radius:8px; }
