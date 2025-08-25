@@ -240,6 +240,7 @@ function MainPage() {
           handleGetCurrentLocation={handleGetCurrentLocation}
           isDetailModalOpen={isDetailModalOpen}
           isSearchLocationModalOpen={isSearchLocationModalOpen}
+          isSearchResultVisible={showResults}
         />
       </ContentsContainer>
       
