@@ -298,8 +298,8 @@ const ManageMyPlacePage = () => {
             {error && <ErrorBanner>{error}</ErrorBanner>}
 
             <TabContainer>
-              <TabButton active={activeTab==='reserve'} onClick={()=>handleTabChange('reserve')}>예약</TabButton>
-              <TabButton active={activeTab==='enroll'} onClick={()=>handleTabChange('enroll')}>등록</TabButton>
+              <TabButton active={activeTab==='reserve' ? true : undefined} onClick={()=>handleTabChange('reserve')}>예약</TabButton>
+              <TabButton active={activeTab==='enroll' ? true : undefined} onClick={()=>handleTabChange('enroll')}>등록</TabButton>
             </TabContainer>
 
             <ContentArea>
