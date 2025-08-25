@@ -298,8 +298,8 @@ const ManageMyPlacePage = () => {
             {error && <ErrorBanner>{error}</ErrorBanner>}
 
             <TabContainer>
-              <TabButton active={activeTab==='reserve' ? true : undefined} onClick={()=>handleTabChange('reserve')}>예약</TabButton>
-              <TabButton active={activeTab==='enroll' ? true : undefined} onClick={()=>handleTabChange('enroll')}>등록</TabButton>
+              <TabButton $active={activeTab === 'reserve'} onClick={()=>handleTabChange('reserve')}>예약</TabButton>
+              <TabButton $active={activeTab === 'enroll'} onClick={()=>handleTabChange('enroll')}>등록</TabButton>
             </TabContainer>
 
             <ContentArea>
@@ -371,7 +371,7 @@ const TabContainer=styled.div`
 `;
 const TabButton=styled.button`
   flex:1; padding:10px 20px; font-size:16px; font-weight:700; border:none; border-radius:8px; cursor:pointer;
-  color:${p=>p.active?'#fff':'#666'}; background-color:${p=>p.active?'#2FB975':'transparent'};
+  color:${p=>p.$active?'#fff':'#666'}; background-color:${p=>p.$active?'#2FB975':'transparent'};
 `;
 const ContentArea = styled.div`
   display: flex;

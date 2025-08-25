@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import SearchResultItem, { ResultPhoto, ResultInfo, InfoContent, ResultDetails, ResultPrice } from "./SearchResultItem";
 import Question from "../../assets/icons/questionIcon.svg";
 import UpdateIcon from "../../assets/icons/Update.svg";
@@ -7,7 +7,7 @@ import OverviewIcon from "../../assets/icons/Overview.svg";
 import MyMoodIcon from "../../assets/icons/MyMood.svg";
 import VectorIcon from "../../assets/icons/Vector.svg";
 
-function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPage, hoveredRoomId, prompt, centerAddress }) {
+function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPage, hoveredRoomId, prompt, centerAddress, isLoading }) {
   const [sortOrder, setSortOrder] = useState("낮은 가격"); // "낮은 가격" 또는 "높은 가격"
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -25,6 +25,15 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
     setIsDropdownOpen(false);
   };
 
+  if (isLoading) {
+    return (
+      <LoadingContainer>
+        <Spinner />
+        <LoadingText>AI가 최적의 장소를 찾고있습니다...</LoadingText>
+      </LoadingContainer>
+    );
+  }
+
   return (
     <>
       <FormContainer>
@@ -38,22 +47,22 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
         <Divider />
         <TopContainer>
           <TopContent>
-            <span style={{ fontWeight: "bold", fontSize: "17.21px" }}>Overview</span>
+            <OverviewTitle>Overview</OverviewTitle>
             <div>
-              <img src={UpdateIcon} alt="" style={{ width: "49px", height: "12px" }} onClick={handleBackClick} />
+              <UpdateIconImg src={UpdateIcon} alt="수정" onClick={handleBackClick} />
             </div>
           </TopContent>
           <BottomContent>
-            <img src={OverviewIcon} alt="" style={{ width: "26px", height: "121px" }} />
+            <OverviewIconImg src={OverviewIcon} alt="" />
             <RightContainer>
-              <span style={{ fontWeight: "bold", fontSize: "13px", color: "#0089FC" }}>
+              <LocationText>
                 {centerAddress?.roadName || "선택된 위치 없음"}
-              </span>
+              </LocationText>
               <PromptBox>
-                <img src={MyMoodIcon} alt="" style={{ width: "110px", height: "20px", marginBottom: "7px" }} />
-                <span style={{ fontWeight: "semi-bold", fontSize: "10px", color: "#030303", lineHeight: "1.7" }}>
+                <MyMoodIconImg src={MyMoodIcon} alt="" />
+                <PromptText>
                   {prompt || "입력된 프롬프트가 없습니다."}
-                </span>
+                </PromptText>
               </PromptBox>
             </RightContainer>
           </BottomContent>
@@ -61,27 +70,23 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
         <BottomContainer>
           <Title>공실 추천 List</Title>
           <DropboxContainer>
-            <Subtitle style={{ marginTop: "7px" }}>오늘의 공간, 조건에 맞게 준비했어요 !</Subtitle>
+            <ListSubtitle>오늘의 공간, 조건에 맞게 준비했어요 !</ListSubtitle>
             <DropdownWrapper>
               <Dropbox onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                <span style={{ fontWeight: "bold" }}>{sortOrder}</span>
-                <span style={{ color: "rgba(36, 41, 47, 0.75)", marginLeft: "2px", marginRight: "8px" }}> 순으로</span>
-                <img
+                <SortOrderText>{sortOrder}</SortOrderText>
+                <SortOrderUnitText> 순으로</SortOrderUnitText>
+                <DropdownArrowIcon
                   src={VectorIcon}
-                  alt=""
-                  style={{
-                    marginLeft: "4px",
-                    transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.2s ease",
-                  }}
+                  alt="정렬 순서"
+                  $isOpen={isDropdownOpen}
                 />
               </Dropbox>
               {isDropdownOpen && (
                 <DropdownMenu>
-                  <DropdownItem onClick={() => handleSortChange("낮은 가격")} selected={sortOrder === "낮은 가격"}>
+                  <DropdownItem onClick={() => handleSortChange("낮은 가격")} $selected={sortOrder === "낮은 가격"}>
                     낮은 가격 순으로
                   </DropdownItem>
-                  <DropdownItem onClick={() => handleSortChange("높은 가격")} selected={sortOrder === "높은 가격"}>
+                  <DropdownItem onClick={() => handleSortChange("높은 가격")} $selected={sortOrder === "높은 가격"}>
                     높은 가격 순으로
                   </DropdownItem>
                 </DropdownMenu>
@@ -93,78 +98,31 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
               <SearchResultItem
                 key={item.roomId}
                 onClick={() => moveToDetailPage(item.roomId)}
-                isHovered={hoveredRoomId === item.roomId}
+                $isHovered={hoveredRoomId === item.roomId}
               >
                 <ResultPhotoContainer>
-                  <ResultPhoto
+                  <StyledResultPhoto
                     src={item.photo}
                     alt="장소 사진"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      marginRight: "10px",
-                      borderRadius: "8px 0 0 8px",
-                    }}
                   />
                   <RankingBadge>{index + 1}</RankingBadge>
                 </ResultPhotoContainer>
                 <ResultInfo>
                   <InfoContent>
-                    <div
-                      style={{
-                        color: "#0089FC",
-                        fontFamily: "Pretendard",
-                        fontSize: "14px",
-                        fontStyle: "normal",
-                        fontWeight: 700,
-                        lineHeight: "100%",
-                        marginBottom: "13px",
-                      }}
-                    >
+                    <AddressText>
                       {item.address?.roadName || "주소 정보 없음"}
-                    </div>
+                    </AddressText>
                     <div>
-                      <span
-                        style={{
-                          color: "#77838F",
-                          textAlign: "right",
-                          fontFamily: "Pretendard",
-                          fontSize: "10.525px",
-                          fontStyle: "normal",
-                          fontWeight: 600,
-                          lineHeight: "normal",
-                          letterSpacing: "0.191px",
-                        }}
-                      >
+                      <PricePerTimeText>
                         per 30 min /
-                      </span>
-                      <span
-                        style={{
-                          color: "#2FB975",
-                          textAlign: "right",
-                          fontFamily: "Pretendard",
-                          fontSize: "16.99px",
-                          fontStyle: "normal",
-                          fontWeight: 700,
-                          marginLeft: "6px",
-                          marginBottom: "6px",
-                        }}
-                      >
+                      </PricePerTimeText>
+                      <PriceText>
                         {item.price.toLocaleString()}원
-                      </span>
+                      </PriceText>
                     </div>
-                    <div
-                      style={{
-                        color: "#77838F",
-                        fontFamily: "Pretendard",
-                        fontSize: "10.841px",
-                        fontStyle: "normal",
-                        fontWeight: 600,
-                      }}
-                    >
+                    <PhoneNumberText>
                       {item.phoneNumber}
-                    </div>
+                    </PhoneNumberText>
                   </InfoContent>
                 </ResultInfo>
               </SearchResultItem>
@@ -337,8 +295,8 @@ const DropdownItem = styled.div`
   padding: 8px 12px;
   font-size: 14px;
   cursor: pointer;
-  background-color: ${(props) => (props.selected ? "#f8f9fa" : "white")};
-  font-weight: ${(props) => (props.selected ? "bold" : "normal")};
+  background-color: ${(props) => (props.$selected ? "#f8f9fa" : "white")};
+  font-weight: ${(props) => (props.$selected ? "bold" : "normal")};
 
   &:hover {
     background-color: #f8f9fa;
@@ -401,4 +359,137 @@ const ScrollableItemContainer = styled.div`
   &::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
   }
+`;
+
+const OverviewTitle = styled.span`
+  font-weight: bold;
+  font-size: 17.21px;
+`;
+
+const UpdateIconImg = styled.img`
+  width: 49px;
+  height: 12px;
+  cursor: pointer;
+`;
+
+const OverviewIconImg = styled.img`
+  width: 26px;
+  height: 121px;
+`;
+
+const LocationText = styled.span`
+  font-weight: bold;
+  font-size: 13px;
+  color: #0089fc;
+`;
+
+const MyMoodIconImg = styled.img`
+  width: 110px;
+  height: 20px;
+  margin-bottom: 7px;
+`;
+
+const PromptText = styled.span`
+  font-weight: 600; /* semi-bold is not a standard value */
+  font-size: 10px;
+  color: #030303;
+  line-height: 1.7;
+`;
+
+const ListSubtitle = styled(Subtitle)`
+  margin-top: 7px;
+`;
+
+const SortOrderText = styled.span`
+  font-weight: bold;
+`;
+
+const SortOrderUnitText = styled.span`
+  color: rgba(36, 41, 47, 0.75);
+  margin-left: 2px;
+  margin-right: 8px;
+`;
+
+const DropdownArrowIcon = styled.img`
+  margin-left: 4px;
+  transform: ${(props) => (props.$isOpen ? "rotate(180deg)" : "rotate(0deg)")};
+  transition: transform 0.2s ease;
+`;
+
+const StyledResultPhoto = styled(ResultPhoto)`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin-right: 10px;
+  border-radius: 8px 0 0 8px;
+`;
+
+const AddressText = styled.div`
+  color: #0089fc;
+  font-family: "Pretendard";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 100%;
+  margin-bottom: 13px;
+`;
+
+const PricePerTimeText = styled.span`
+  color: #77838f;
+  text-align: right;
+  font-family: "Pretendard";
+  font-size: 10.525px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  letter-spacing: 0.191px;
+`;
+
+const PriceText = styled.span`
+  color: #2fb975;
+  text-align: right;
+  font-family: "Pretendard";
+  font-size: 16.99px;
+  font-style: normal;
+  font-weight: 700;
+  margin-left: 6px;
+  margin-bottom: 6px;
+`;
+
+const PhoneNumberText = styled.div`
+  color: #77838f;
+  font-family: "Pretendard";
+  font-size: 10.841px;
+  font-style: normal;
+  font-weight: 600;
+`;
+
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background-color: #fff;
+`;
+
+const Spinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #2fb975;
+  animation: ${spin} 1s ease infinite;
+  margin-bottom: 20px;
+`;
+
+const LoadingText = styled.div`
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
 `;

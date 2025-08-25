@@ -63,8 +63,8 @@ function LandingPage() {
 
           {/* Tail */}
           <div>
-            <TailImg src={isOn ? NGreen : FWhite} alt={isOn ? "N" : "FF"} isOn={isOn} />
-            {!isOn && <TailImg src={FWhite} alt="F" isOn={isOn} />}
+            <TailImg src={isOn ? NGreen : FWhite} alt={isOn ? "N" : "FF"} $isOn={isOn} />
+            {!isOn && <TailImg src={FWhite} alt="F" $isOn={isOn} />}
           </div>
         </LogoRow>
       </Center>
@@ -179,7 +179,7 @@ const Knob = styled.div`
 `;
 
 const TailImg = styled.img`
-  width: ${({ isOn }) => (isOn ? "clamp(90px, 7vw, 150px)" : "clamp(70px, 6vw, 120px)")};
+  width: ${({ $isOn }) => ($isOn ? "clamp(90px, 7vw, 150px)" : "clamp(70px, 6vw, 120px)")};
   height: auto;
   filter: drop-shadow(0 3px 24px rgba(0, 0, 0, 0.08));
 `;

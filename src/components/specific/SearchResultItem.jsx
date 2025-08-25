@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 
-const SearchResultItem = ({ children, onClick, onMouseEnter, onMouseLeave, isHovered }) => {
+const SearchResultItem = ({ children, onClick, onMouseEnter, onMouseLeave, $isHovered }) => {
   return (
-    <ItemContainer onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} isHovered={isHovered}>
+    <ItemContainer onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} $isHovered={$isHovered}>
       {children}
     </ItemContainer>
   );
@@ -17,7 +17,7 @@ const ItemContainer = styled.div`
   height: 120px;
   border-radius: 8px;
   border: 0.8px solid #f3f3f3;
-  background: #fff;
+  background: ${(props) => (props.$isHovered ? "#f5f5f5" : "#fff")};
   box-shadow: 0 0 13.5px 0 rgba(0, 0, 0, 0.03);
   &:hover {
     background-color: #f5f5f5;

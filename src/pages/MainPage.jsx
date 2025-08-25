@@ -15,40 +15,6 @@ import RecommendationBox from "../components/specific/RecommendationBox";
 
 import { postMain, postRecommend } from "../apis/recommend";
 
-const isDesignMode = () => {
-  if (typeof window === "undefined") return false;
-  const sp = new URLSearchParams(window.location.search);
-  return sp.get("design") === "1";
-};
-
-// 화면에 바로 쓸 더미 데이터
-const DESIGN_DUMMY = [
-  {
-    roomId: 101,
-    photo: "https://picsum.photos/seed/spaceon101/640/480",
-    address: { roadName: "서울 강남구 테헤란로 231", latitude: 37.49895, longitude: 127.0276 },
-    maxPeople: 6,
-    phoneNumber: "010-1111-2222",
-    price: 42000,
-  },
-  {
-    roomId: 102,
-    photo: "https://picsum.photos/seed/spaceon102/640/480",
-    address: { roadName: "서울 서초구 서초대로 74길", latitude: 37.4962, longitude: 127.0234 },
-    maxPeople: 4,
-    phoneNumber: "010-3333-4444",
-    price: 38000,
-  },
-  {
-    roomId: 103,
-    photo: "https://picsum.photos/seed/spaceon103/640/480",
-    address: { roadName: "성남시 분당구 판교역로 146", latitude: 37.3947, longitude: 127.1109 },
-    maxPeople: 8,
-    phoneNumber: "010-5555-6666",
-    price: 55000,
-  },
-];
-
 function MainPage() {
   const [markers, setMarkers] = useState([]);
   const [recommendList, setRecommendList] = useState([]);
@@ -64,33 +30,8 @@ function MainPage() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isDesignMode()) return;
-
-    // recommendList/markers 세팅
-    setRecommendList(DESIGN_DUMMY);
-    setMarkers(
-      DESIGN_DUMMY.map((item) => ({
-        position: { lat: Number(item.address.latitude), lng: Number(item.address.longitude) },
-        title: `장소 ${item.roomId}`,
-        id: item.roomId,
-        price: Number(item.price).toLocaleString(),
-      }))
-    );
-
-    // 지도 센터도 첫 결과로 이동
-    setCurrentLocation({
-      lat: Number(DESIGN_DUMMY[0].address.latitude),
-      lng: Number(DESIGN_DUMMY[0].address.longitude),
-    });
-
-    // 결과 화면 바로 오픈
-    setShowResults(true);
-  }, []);
-
   // 0) 최초 진입 시 한 번 현재 위치 시도 (실패해도 앱은 동작)
   useEffect(() => {
-    if (isDesignMode()) return; // 🔒 디자인 모드면 geolocation 안 탐
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -176,29 +117,15 @@ function MainPage() {
   const [prompt, setPrompt] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const requestRecommend = async () => {
-    if (isDesignMode()) {
-      setRecommendList(DESIGN_DUMMY);
-      setMarkers(
-        DESIGN_DUMMY.map((item) => ({
-          position: { lat: Number(item.address.latitude), lng: Number(item.address.longitude) },
-          title: `장소 ${item.roomId}`,
-          id: item.roomId,
-          price: Number(item.price).toLocaleString(),
-        }))
-      );
-      setCurrentLocation({
-        lat: Number(DESIGN_DUMMY[0].address.latitude),
-        lng: Number(DESIGN_DUMMY[0].address.longitude),
-      });
-      setShowResults(true);
-      return;
-    }
     if (!centerAddress) {
       alert("위치를 먼저 선택해주세요.");
       return;
     }
+    setLoading(true);
+    setShowResults(true);
     try {
       const data = await postRecommend({
         center: centerAddress,
@@ -221,16 +148,17 @@ function MainPage() {
           price: Number(item.price).toLocaleString(),
         }))
       );
-      setShowResults(true);
     } catch (e) {
       console.error("POST /recommend 실패:", e);
       alert("추천을 불러오지 못했습니다.");
+      setShowResults(false); // 에러 발생 시 결과 화면을 다시 숨김
+    } finally {
+      setLoading(false);
     }
   };
 
   // 1) 추천 API: 위치가 준비된 이후에만 호출. 응답 비거나 실패하면 더미로 대체.
   useEffect(() => {
-    if (isDesignMode()) return; // 🔒 디자인 모드면 /main 호출하지 않음
     if (!currentLocation) return;
 
     const applyData = (list) => {
@@ -280,6 +208,7 @@ function MainPage() {
               hoveredRoomId={hoveredRoomId}
               prompt={prompt}
               centerAddress={centerAddress}
+              isLoading={loading}
             />
           ) : (
             <FormComponent
@@ -309,18 +238,18 @@ function MainPage() {
           isSearchLocationModalOpen={isSearchLocationModalOpen}
         />
       </ContentsContainer>
-
-      <RecommendationBox
+      
+      {showResults ? <></>: <RecommendationBox
         recommendList={recommendList}
         isDetailModalOpen={isDetailModalOpen}
         isSearchLocationModalOpen={isSearchLocationModalOpen}
         onCardClick={moveToDetailPage}
-      />
+      />}
 
-      {isDetailModalOpen && <DetailPlacePage isModal={true} onClose={closeDetailModal} roomId={selectedRoomId} />}
+      {isDetailModalOpen && <DetailPlacePage onClose={closeDetailModal} roomId={selectedRoomId} />}
 
       {isSearchLocationModalOpen && (
-        <LocationSearchModal isModal={true} onClose={closeSearchLocationModal} onConfirm={handleLocationConfirm} />
+        <LocationSearchModal onClose={closeSearchLocationModal} onConfirm={handleLocationConfirm} />
       )}
     </PageContainer>
   );
