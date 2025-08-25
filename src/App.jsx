@@ -15,11 +15,11 @@ function App() {
     <>
       <Header/>
       <Routes>
-        <Route path="/" element={<MainPage />} />
+        <Route path="/main" element={<MainPage />} />
         <Route path="/manage-page" element={<ManageMyPlacePage />} />
         <Route path="/add-place" element={<AddPlacePage />} />
         <Route path="/reservation-page/:roomId" element={<ReservationPage />} />
-        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage />} />
       </Routes>
     </>
   );

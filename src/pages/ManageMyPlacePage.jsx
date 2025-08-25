@@ -480,6 +480,7 @@ const Value = styled.span`
   font-size: 12.5px;
   font-weight: 600;
   color: #333;
+  white-space: nowrap;
 `;
 
 const Divider = styled.div`
