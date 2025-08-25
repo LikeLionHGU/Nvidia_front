@@ -255,7 +255,7 @@ function MainPage() {
           longitude: Number(currentLocation.lng),
         });
         const list = Array.isArray(data?.recommendList) ? data.recommendList : Array.isArray(data) ? data : [];
-        applyData(list.length);
+        applyData(list);
       } catch (err) {
         console.error("POST /main 실패", err);
       }
