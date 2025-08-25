@@ -7,6 +7,8 @@ import OverviewIcon from "../../assets/icons/Overview.svg";
 import MyMoodIcon from "../../assets/icons/MyMood.svg";
 import VectorIcon from "../../assets/icons/Vector.svg";
 
+import NoResultImg from "../../assets/images/NoResultImg.svg";
+
 function SearchResultContainer({
   handleBackClick,
   recommendList,
@@ -96,39 +98,45 @@ function SearchResultContainer({
             </DropdownWrapper>
           </DropboxContainer>
           <ScrollableItemContainer>
-            {recommendList.map((item, index) => (
-              <SearchResultItem
-                key={item.roomId}
-                onClick={() => moveToDetailPage(item.roomId)}
-                $isHovered={hoveredRoomId === item.roomId}
-              >
-                <ResultPhotoContainer>
-                  <StyledResultPhoto
-                    src={item.photo}
-                    alt="장소 사진"
-                  />
-                  <RankingBadge>{index + 1}</RankingBadge>
-                </ResultPhotoContainer>
-                <ResultInfo>
-                  <InfoContent>
-                    <AddressText>
-                      {item.address?.roadName || "주소 정보 없음"}
-                    </AddressText>
-                    <div>
-                      <PricePerTimeText>
-                        per 30 min /
-                      </PricePerTimeText>
-                      <PriceText>
-                        {item.price.toLocaleString()}원
-                      </PriceText>
-                    </div>
-                    <PhoneNumberText>
-                      {item.phoneNumber}
-                    </PhoneNumberText>
-                  </InfoContent>
-                </ResultInfo>
-              </SearchResultItem>
-            ))}
+            {recommendList.length === 0 ? (
+              <NoResultContainer>
+                <img src={NoResultImg} alt="검색 결과 없음" />
+              </NoResultContainer>
+            ) : (
+              recommendList.map((item, index) => (
+                <SearchResultItem
+                  key={item.roomId}
+                  onClick={() => moveToDetailPage(item.roomId)}
+                  $isHovered={hoveredRoomId === item.roomId}
+                >
+                  <ResultPhotoContainer>
+                    <StyledResultPhoto
+                      src={item.photo}
+                      alt="장소 사진"
+                    />
+                    <RankingBadge>{index + 1}</RankingBadge>
+                  </ResultPhotoContainer>
+                  <ResultInfo>
+                    <InfoContent>
+                      <AddressText>
+                        {item.address?.roadName || "주소 정보 없음"}
+                      </AddressText>
+                      <div>
+                        <PricePerTimeText>
+                          per 30 min /
+                        </PricePerTimeText>
+                        <PriceText>
+                          {item.price.toLocaleString()}원
+                        </PriceText>
+                      </div>
+                      <PhoneNumberText>
+                        {item.phoneNumber}
+                      </PhoneNumberText>
+                    </InfoContent>
+                  </ResultInfo>
+                </SearchResultItem>
+              ))
+            )}
           </ScrollableItemContainer>
         </BottomContainer>
       </FormContainer>
@@ -494,4 +502,18 @@ const LoadingText = styled.div`
   font-size: 1.2rem;
   font-weight: bold;
   color: #333;
+`;
+
+const NoResultContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+`;
+
+const NoResultText = styled.p`
+  margin-top: 16px;
+  font-size: 1.2rem;
+  color: #888;
 `;
