@@ -16,7 +16,7 @@ function Header() {
   };
 
   const moveToHome = () => {
-    navigate("/");
+    navigate("/main");
     window.location.reload();
   };
 
