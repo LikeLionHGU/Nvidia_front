@@ -13,13 +13,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
-      // 3) 백엔드(Spring) — janghong.asia
-      //    프리픽스는 /api/spaceon 으로 두고, 요청에서 /api/spaceon을 제거해 백엔드로 프록시
-      '/api/spaceon': {
-        target: 'http://janghong.asia',   // 서버가 https면 이걸로, http면 http로 변경
+
+      '/spaceon': {
+        target: 'https://janghong.asia', //  HTTPS로 변경
         changeOrigin: true,
-        secure: false,                      // http 통신이므로 false로 설정
-        rewrite: (path) => path.replace(/^\/api\/spaceon/, ''),
+        secure: true,                    //  HTTPS니까 true
+        rewrite: (path) => path.replace(/^\/spaceon/, ''),
       },
     },
   },
