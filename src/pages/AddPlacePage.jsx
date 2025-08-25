@@ -7,7 +7,7 @@ import {
   startOfMonth, isSameMonth, addDays,
   endOfMonth, startOfWeek, endOfWeek
 } from "date-fns";
-import { useNavigate } from 'react-router-dom';
+
 
 import ImageUploader from "../components/specific/AddPlacePage/ImageUploader";
 import BasicInfoForm from "../components/specific/AddPlacePage/BasicInfoForm";
@@ -31,8 +31,7 @@ export default function AddPlacePage() {
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [roadName, setRoadName] = useState("");
-  const [latitude, setLatitude] = useState(null);
-  const [longitude, setLongitude] = useState(null);
+  
   const [account, setAccount] = useState("");
   const [maxPeople, setMaxPeople] = useState("");
   const [price, setPrice] = useState("");
@@ -49,7 +48,7 @@ export default function AddPlacePage() {
   const today = new Date();
   const [selectedDates, setSelectedDates] = useState(new Set());
 
-  const navigate = useNavigate();
+  
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -75,16 +74,13 @@ export default function AddPlacePage() {
     setShowSuccess(false);
   };
 
-  const handleCancel = () => {
-    navigate('/');
-  };
+  
 
   const handleReset = () => {
     setName("");
     setPhoneNumber("");
     setRoadName("");
-    setLatitude(null);
-    setLongitude(null);
+    
     setAccount("");
     setMaxPeople("");
     setPrice("");
@@ -247,13 +243,11 @@ export default function AddPlacePage() {
       fd.append("imageFile", file, file.name);
     });
   
-    // 디버그: 실제 전송되는 FormData 확인
-    for (const [k, v] of fd.entries()) {
-    }
+    
   
     // 6) 전송 (Content-Type 수동 지정 X)
     try {
-      const res = await api.post("/enrollment/done", fd);
+            await api.post("/enrollment/done", fd);
   
       const first = photoList[0];
       const url = first ? URL.createObjectURL(first) : null;

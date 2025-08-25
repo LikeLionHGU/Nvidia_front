@@ -7,11 +7,10 @@ import PriceMarker from "../components/specific/PriceMarker"; // PriceMarker 가
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 15;
 
-const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLocation }) => {
+const MapComponent = ({ markers, onMarkerClick, onMarkerHover, currentLocation }) => {
   const navermaps = useNavermaps();
   const [map, setMap] = useState(null);
   const mapRef = useRef(null);
-  const [hoveredPlaceId, setHoveredPlaceId] = useState(null); // 호버된 마커를 관리하는 상태
 
   // 카드 리스트가 가리는 높이(px). 상황에 맞게 조절(예: 220~300)
   const BOTTOM_UI_PADDING = 80;
@@ -180,14 +179,12 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
 
   // New handlers for marker hover
   const handlePriceMarkerMouseEnter = useCallback((placeId) => {
-    setHoveredPlaceId(placeId);
     if (onMarkerHover) {
       onMarkerHover(placeId, true); // Pass true for hover start
     }
   }, [onMarkerHover]);
 
   const handlePriceMarkerMouseLeave = useCallback(() => {
-    setHoveredPlaceId(null);
     if (onMarkerHover) {
       onMarkerHover(null, false); // Pass false for hover end
     }

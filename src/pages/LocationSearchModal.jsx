@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { X, MapPin, Navigation } from "lucide-react";
 import { debounce } from "lodash";
@@ -50,23 +50,26 @@ function LocationSearchModal({ onClose, onConfirm }) {
     });
   };
 
-  const runSearch = async (query) => {
-    const q = (query || "").trim();
-    if (!q) {
-      setItems([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await searchLocal({ query: q, display: 5, sort: "random" });
-      setItems(data.items || []);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const debouncedSearch = useCallback(debounce(runSearch, 250), []);
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (query) => {
+        const q = (query || "").trim();
+        if (!q) {
+          setItems([]);
+          return;
+        }
+        setLoading(true);
+        try {
+          const data = await searchLocal({ query: q, display: 5, sort: "random" });
+          setItems(data.items || []);
+        } catch {
+          setItems([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 250),
+    []
+  );
 
   const updateDropdownPosition = (idx) => {
     const searchBox = searchBoxRefs.current[idx];

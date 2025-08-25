@@ -48,14 +48,14 @@ function FormComponent({
     if (isCompleted) {
       setStepEnabled((prev) => ({ ...prev, step3: true }));
     }
-  }, [step2Text]);
+  }, [step2Text, setPrompt]);
 
   useEffect(() => {
     const isCompleted = minBudget !== "" && maxBudget !== "";
     setStepCompleted((prev) => ({ ...prev, step3: isCompleted }));
     setMinPrice?.(minBudget);
     setMaxPrice?.(maxBudget);
-  }, [minBudget, maxBudget]);
+  }, [minBudget, maxBudget, setMinPrice, setMaxPrice]);
 
   const handleSkipStep = (stepNumber) => {
     if (stepNumber === 1) {

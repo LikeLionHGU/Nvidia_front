@@ -1,5 +1,5 @@
 // src/pages/ReservationPage.jsx
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import api from "../apis/client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -35,8 +35,8 @@ export default function ReservationPage() {
   const navigate = useNavigate();
 
   // 로딩 및 에러 상태
-  const [loading, setLoading] = useState({ page: true, days: false, slots: false });
-  const [error, setError] = useState(null);
+    const [, setLoading] = useState({ page: true, days: false, slots: false });
+    const [, setError] = useState(null);
 
   // 데이터 상태
   const [placeData, setPlaceData] = useState(null);
@@ -58,7 +58,7 @@ export default function ReservationPage() {
 
   const today = new Date();
 
-  const handleCancel = () => navigate("/");
+  
 
   const handleReset = () => {
     setName("");

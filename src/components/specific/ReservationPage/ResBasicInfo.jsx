@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import SelectionSummary from "./ResSelectionSummary";
 
@@ -19,14 +19,7 @@ const colors = {
 export default function ResBasicInfo({
   name, setName,
   phoneNumber, setPhoneNumber,
-  address, setAddress,
-  account, setAccount,
   numPeople, setNumPeople,
-  price, setPrice,
-  memo, setMemo,
-  selectedTags,
-  onConfirmSelection,
-  optionList, setOptionList,
   formWidth = "100%",
   columns = 2,
   slotsByDate,
@@ -255,27 +248,7 @@ const Input = styled.input`
   }
 `;
 
-const TextArea = styled.textarea`
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid ${colors.line};
-  background: ${colors.surface};
-  min-height: 100px;
-  resize: vertical;
-  color: ${colors.ink};
-  resize: none;
 
-  &::placeholder { color: ${colors.sub}; }
-  &:focus {
-    outline: none;
-    border-color: ${colors.brand};
-    box-shadow: 0 0 0 3px ${colors.brandSoft};
-  }
-`;
 
 /* 인원 스텝퍼 */
 const StepperBox = styled.div`

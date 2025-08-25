@@ -1,5 +1,4 @@
-import { Routes, Route } from "react-router-dom";
-import React from "react";
+import { Route, Routes } from "react-router-dom";
 import MainPage from "./pages/MainPage";
 import ManageMyPlacePage from "./pages/ManageMyPlacePage";
 import AddPlacePage from "./pages/AddPlacePage";
