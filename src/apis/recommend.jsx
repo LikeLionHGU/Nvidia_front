@@ -1,5 +1,7 @@
+// apis/recommend.js
 import api from "../apis/client";
 
+/* ================== 내부 유틸 ================== */
 // 안전 숫자 변환 (NaN 방지)
 function toNumberOrZero(v) {
   const n = typeof v === "string" ? parseFloat(v) : Number(v);
@@ -10,6 +12,19 @@ function toNumberOrUndefined(v) {
   return Number.isFinite(n) ? n : undefined;
 }
 
+// center 정규화: 유효한 값만 포함해 서버에 쓰레기 값 전달 방지
+function normalizeCenter(center) {
+  const lat = toNumberOrUndefined(center?.latitude);
+  const lng = toNumberOrUndefined(center?.longitude);
+  return {
+    roadName: center?.roadName || "",
+    ...(lat !== undefined ? { latitude: lat } : {}),
+    ...(lng !== undefined ? { longitude: lng } : {}),
+  };
+}
+
+/* ================== API ================== */
+/** 메인: POST /main  (현재 위치 기반 추천) */
 export async function postMain(body) {
   try {
     const res = await api.post("/main", body);
@@ -20,26 +35,15 @@ export async function postMain(body) {
   }
 }
 
+/** 추천: POST /recommend  (주소 리스트 + 조건 기반 추천) */
 export async function postRecommend({ center, prompt, minPrice, maxPrice }) {
   try {
-    const normalizedCenter = {
-      roadName: center?.roadName || "",
-      // 위/경도가 없거나 잘못된 경우는 아예 누락하여 백엔드에 쓰레기 값이 안 가게
-      ...(toNumberOrUndefined(center?.latitude) !== undefined && {
-        latitude: toNumberOrUndefined(center?.latitude),
-      }),
-      ...(toNumberOrUndefined(center?.longitude) !== undefined && {
-        longitude: toNumberOrUndefined(center?.longitude),
-      }),
-    };
-
     const req = {
-      addressList: [normalizedCenter],
+      addressList: [normalizeCenter(center)], // 단일 중간 위치를 리스트에 넣어 전달
       prompt: prompt || "",
       minPrice: toNumberOrZero(minPrice),
       maxPrice: toNumberOrZero(maxPrice),
     };
-
     const res = await api.post("/recommend", req);
     return res.data;
   } catch (err) {
@@ -47,7 +51,7 @@ export async function postRecommend({ center, prompt, minPrice, maxPrice }) {
   }
 }
 
-/** 상세 조회: /spaceon/recommend/detail/{roomId} */
+/** 상세: GET /recommend/detail/{roomId} */
 export async function getRecommendDetail(roomId) {
   if (roomId === undefined || roomId === null) {
     throw new Error("roomId가 필요합니다.");
