@@ -7,21 +7,23 @@ import OverviewIcon from "../../assets/icons/Overview.svg";
 import MyMoodIcon from "../../assets/icons/MyMood.svg";
 import VectorIcon from "../../assets/icons/Vector.svg";
 
-function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPage, hoveredRoomId, prompt, centerAddress, isLoading }) {
-  const [sortOrder, setSortOrder] = useState("낮은 가격"); // "낮은 가격" 또는 "높은 가격"
+function SearchResultContainer({
+  handleBackClick,
+  recommendList,
+  moveToDetailPage,
+  hoveredRoomId,
+  prompt,
+  centerAddress,
+  isLoading,
+  sortOrder,
+  handleSortChange,
+}) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // 가격에 따라 정렬된 리스트
-  const sortedRecommendList = [...recommendList].sort((a, b) => {
-    if (sortOrder === "낮은 가격") {
-      return a.price - b.price;
-    } else {
-      return b.price - a.price;
-    }
-  });
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
-  const handleSortChange = (newSortOrder) => {
-    setSortOrder(newSortOrder);
+  const onSortChange = (newOrder) => {
+    handleSortChange(newOrder);
     setIsDropdownOpen(false);
   };
 
@@ -72,7 +74,7 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
           <DropboxContainer>
             <ListSubtitle>오늘의 공간, 조건에 맞게 준비했어요 !</ListSubtitle>
             <DropdownWrapper>
-              <Dropbox onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <Dropbox onClick={toggleDropdown}>
                 <SortOrderText>{sortOrder}</SortOrderText>
                 <SortOrderUnitText> 순으로</SortOrderUnitText>
                 <DropdownArrowIcon
@@ -83,10 +85,10 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
               </Dropbox>
               {isDropdownOpen && (
                 <DropdownMenu>
-                  <DropdownItem onClick={() => handleSortChange("낮은 가격")} $selected={sortOrder === "낮은 가격"}>
+                  <DropdownItem onClick={() => onSortChange("낮은 가격")} $selected={sortOrder === "낮은 가격"}>
                     낮은 가격 순으로
                   </DropdownItem>
-                  <DropdownItem onClick={() => handleSortChange("높은 가격")} $selected={sortOrder === "높은 가격"}>
+                  <DropdownItem onClick={() => onSortChange("높은 가격")} $selected={sortOrder === "높은 가격"}>
                     높은 가격 순으로
                   </DropdownItem>
                 </DropdownMenu>
@@ -94,7 +96,7 @@ function SearchResultContainer({ handleBackClick, recommendList, moveToDetailPag
             </DropdownWrapper>
           </DropboxContainer>
           <ScrollableItemContainer>
-            {sortedRecommendList.map((item, index) => (
+            {recommendList.map((item, index) => (
               <SearchResultItem
                 key={item.roomId}
                 onClick={() => moveToDetailPage(item.roomId)}
