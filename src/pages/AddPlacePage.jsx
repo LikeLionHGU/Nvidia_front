@@ -175,6 +175,95 @@ export default function AddPlacePage() {
   };
 
   /* ---------- 제출 ---------- */
+  // const onSubmit = async () => {
+  //   // 1) 필수값 검증
+  //   if (
+  //     !name || !phoneNumber || !roadName || !account ||
+  //     !maxPeople || !price || chipList.length === 0 ||
+  //     photoList.length === 0 || selectedDates.size === 0
+  //   ) {
+  //     alert("필수 입력 항목을 모두 채워주세요. (옵션과 주의사항 제외)");
+  //     return;
+  //   }
+  
+  //   // 2) 날짜별 슬롯 → DTO
+  //   const enrollmentTimeDto = Array.from(selectedDates)
+  //     .map((dateKey) => {
+  //       const set = slotsByDate.get(dateKey) || new Set();
+  //       const sorted = Array.from(set).sort((a, b) => a - b).map(Number);
+  //       return { date: dateKey, selectedTimeSlotIndex: sorted };
+  //     })
+  //     .filter(row => row.selectedTimeSlotIndex.length > 0);
+  
+  //   if (enrollmentTimeDto.length === 0) {
+  //     alert("선택된 시간이 없습니다. 시간 슬롯을 선택해주세요.");
+  //     return;
+  //   }
+  
+  //   // 3) 옵션 문자열 → 리스트
+  //   const optionArray = (optionList || "")
+  //     .split(",")
+  //     .map(v => v.trim())
+  //     .filter(Boolean);
+  
+  //   // 4) 주소 → 위경도
+  //   let geoData = { roadName, latitude: null, longitude: null };
+  //   try {
+  //     const result = await Geocode({ query: roadName });
+  //     geoData.latitude = result.latitude;
+  //     geoData.longitude = result.longitude;
+  //   } catch (err) {
+  //     console.error("Geocoding error:", err);
+  //     alert("올바른 주소를 입력해주세요.");
+  //     return;
+  //   }
+  
+  //   // 5) FormData 구성
+  //   const requestPayload = {
+  //     enName: name,
+  //     enPhoneNumber: phoneNumber,
+  //     roadName: geoData.roadName,
+  //     latitude: geoData.latitude,
+  //     longitude: geoData.longitude,
+  //     account,
+  //     maxPeople: parseInt(maxPeople || "0", 10),
+  //     price: parseInt(price || "0", 10),
+  //     memo,
+  //     optionList: optionArray,     // List<String>
+  //     chipList,                    // List<String>
+  //     enrollmentTimeDto,           // List<{ date, selectedTimeSlotIndex:int[] }>
+  //   };
+  
+  //   const fd = new FormData();
+  
+  //   // JSON 파트 (request)
+  //   fd.append(
+  //     "request",
+  //     new Blob([JSON.stringify(requestPayload)], { type: "application/json" })
+  //   );
+  
+  //   // 파일 파트 (imageFile 여러 번 추가) → @RequestPart("imageFile") List<MultipartFile> files
+  //   photoList.forEach((file) => {
+  //     fd.append("imageFile", file, file.name);
+  //   });
+  
+  //   // 디버그: 실제 전송되는 FormData 확인
+  //   for (const [k, v] of fd.entries()) {
+  //   }
+  
+  //   // 6) 전송 (Content-Type 수동 지정 X)
+  //   try {
+  //     const res = await api.post("/enrollment/done", fd);
+  
+  //     const first = photoList[0];
+  //     const url = first ? URL.createObjectURL(first) : null;
+  //     openSuccess(url);
+  //   } catch (e) {
+  //     console.error("등록 실패:", e.response?.status, e.response?.data || e);
+  //     alert(`등록 실패: ${e.response?.data?.error || e.message}`);
+  //   }
+  // };
+
   const onSubmit = async () => {
     // 1) 필수값 검증
     if (
@@ -218,45 +307,41 @@ export default function AddPlacePage() {
       return;
     }
   
-    // 5) FormData 구성
-    const requestPayload = {
-      enName: name,
-      enPhoneNumber: phoneNumber,
-      roadName: geoData.roadName,
-      latitude: geoData.latitude,
-      longitude: geoData.longitude,
-      account,
-      maxPeople: parseInt(maxPeople || "0", 10),
-      price: parseInt(price || "0", 10),
-      memo,
-      optionList: optionArray,     // List<String>
-      chipList,                    // List<String>
-      enrollmentTimeDto,           // List<{ date, selectedTimeSlotIndex:int[] }>
-    };
-  
+    // 5) FormData 구성 (★ JSON Blob 없이 폼필드로 전송)
     const fd = new FormData();
   
-    // JSON 파트 (request)
-    fd.append(
-      "request",
-      new Blob([JSON.stringify(requestPayload)], { type: "application/json" })
-    );
+    // 단일 필드들
+    fd.append("enName", name);
+    fd.append("enPhoneNumber", phoneNumber);
+    fd.append("roadName", geoData.roadName || roadName);
+    if (geoData.latitude != null) fd.append("latitude", String(geoData.latitude));
+    if (geoData.longitude != null) fd.append("longitude", String(geoData.longitude));
+    fd.append("account", account);
+    fd.append("maxPeople", String(parseInt(maxPeople || "0", 10)));
+    fd.append("price", String(parseInt(price || "0", 10)));
+    if (memo) fd.append("memo", memo);
   
-    // 파일 파트 (imageFile 여러 번 추가) → @RequestPart("imageFile") List<MultipartFile> files
+    // 배열/리스트 필드들 (같은 키 반복 방식)
+    optionArray.forEach(v => fd.append("optionList", v));
+    chipList.forEach(v => fd.append("chipList", v));
+  
+    // 중첩 리스트: enrollmentTimeDto[i].date / enrollmentTimeDto[i].selectedTimeSlotIndex
+    enrollmentTimeDto.forEach((row, i) => {
+      fd.append(`enrollmentTimeDto[${i}].date`, row.date);
+      row.selectedTimeSlotIndex.forEach((slotIdx) => {
+        // 다중 값(반복 키)로 전달 → Spring 컬렉션 바인딩
+        fd.append(`enrollmentTimeDto[${i}].selectedTimeSlotIndex`, String(slotIdx));
+      });
+    });
+  
+    // 파일 파트 (여러 장)
     photoList.forEach((file) => {
       fd.append("imageFile", file, file.name);
     });
   
-    // 디버그: 실제 전송되는 FormData 확인
-    for (const [k, v] of fd.entries()) {
-      console.log(k, v instanceof File ? `${v.name} (${v.type}, ${v.size}B)` : v);
-    }
-  
-    // 6) 전송 (Content-Type 수동 지정 X)
+    // 6) 전송 (Content-Type 수동 지정 X → 브라우저가 boundary 포함 자동 설정)
     try {
       const res = await api.post("/enrollment/done", fd);
-      console.log("등록 성공:", res.data);
-  
       const first = photoList[0];
       const url = first ? URL.createObjectURL(first) : null;
       openSuccess(url);

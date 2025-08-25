@@ -7,21 +7,12 @@ export default defineConfig({
   plugins: [react(), svgr()],
   server: {
     proxy: {
-      // Reverse Geocode
+      // 1) NCP Reverse Geocode (직접 호출)
       '/map-reversegeocode': {
         target: 'https://naveropenapi.apigw.ntruss.com',
         changeOrigin: true,
-        secure: true, // ntruss는 정상 cert, true로 둬도 OK
-      },
-
-      // Naver Search API
-      '/api': {
-        target: 'https://openapi.naver.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
         secure: true,
       },
-
       // 3) 백엔드(Spring) — janghong.asia
       //    프리픽스는 /api/spaceon 으로 두고, 요청에서 /api/spaceon을 제거해 백엔드로 프록시
       '/api/spaceon': {
@@ -35,4 +26,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['date-fns'],
   },
-})
+});

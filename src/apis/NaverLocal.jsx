@@ -35,12 +35,24 @@ export async function searchLocal({
     throw error;
   }
 }
-
-// fetch 백업
-export async function searchLocalFetch({ query, display = 5, start = 1, sort = "random" }) {
-  const url =
-    `/api/naver-local?query=${encodeURIComponent(query)}&display=${display}&start=${start}&sort=${sort}`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
-  return resp.json();
+// 백업용: 직접 fetch 사용 방식
+export async function searchLocalFetch({
+  query,
+  display = 5,
+  start = 1,
+  sort = "random"
+}) {
+  try {
+    const response = await fetch(`/api/naver-local?query=${encodeURIComponent(query)}&display=${display}&start=${start}&sort=${sort}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Naver API Fetch Error:', error);
+    throw error;
+  }
 }

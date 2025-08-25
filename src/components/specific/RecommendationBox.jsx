@@ -1,12 +1,20 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const RecommendationBox = ({ recommendList, isDetailModalOpen, onCardClick, isSearchLocationModalOpen }) => {
-  // Slice the list to only show the first 3 items
-  const displayList = recommendList.slice(0, 3);
+const RecommendationBox = ({
+  recommendList,
+  isDetailModalOpen,
+  isSearchLocationModalOpen,
+  onCardClick,
+}) => {
+  // 상위 3개만 노출
+  const displayList = (recommendList || []).slice(0, 3);
 
   return (
-    <FloatingBox isDetailModalOpen={isDetailModalOpen} isSearchLocationModalOpen={isSearchLocationModalOpen}> 
+    <FloatingBox
+      $isDetailModalOpen={isDetailModalOpen}
+      $isSearchLocationModalOpen={isSearchLocationModalOpen}
+    >
       <TextBox>
         <BoldText>
           내 주변 여기 공실이
@@ -15,14 +23,15 @@ const RecommendationBox = ({ recommendList, isDetailModalOpen, onCardClick, isSe
         </BoldText>
         <LightText>거리기반으로 추천해줘요</LightText>
       </TextBox>
+
       <CardContainer>
         {displayList.map((item, index) => (
-          <Card key={item.roomId} onClick={() => onCardClick(item.roomId)}>
+          <Card key={item.roomId} onClick={() => onCardClick?.(item.roomId)}>
             <NumberBadge>{index + 1}</NumberBadge>
             <CardImage src={item.photo} alt={`장소 ${item.roomId}`} />
             <CardInfo>
-              <Address>{item.roadName}</Address>
-              <Price>per 30min / {item.price.toLocaleString()}원</Price>
+              <Address>{item?.address?.roadName ?? item?.roadName ?? '-'}</Address>
+              <Price>per 30min / {(Number(item.price) || 0).toLocaleString()}원</Price>
             </CardInfo>
           </Card>
         ))}
@@ -47,8 +56,10 @@ const FloatingBox = styled.div`
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: ${({ isDetailModalOpen, isSearchLocationModalOpen }) =>
-  (isDetailModalOpen || isSearchLocationModalOpen) ? 1 : 1000};ㄴ
+
+  /* ✅ transient props 읽기 */
+  z-index: ${({ $isDetailModalOpen, $isSearchLocationModalOpen }) =>
+    $isDetailModalOpen || $isSearchLocationModalOpen ? 1 : 1000};
 `;
 
 const TextBox = styled.div`
@@ -92,6 +103,7 @@ const Card = styled.div`
 const NumberBadge = styled.div`
   position: absolute;
   top: 10px;
+  left: 10px;
   background-color: #28a745;
   color: white;
   width: 22px;
@@ -102,6 +114,7 @@ const NumberBadge = styled.div`
   font-weight: bold;
   font-size: 12px;
   z-index: 2;
+  border-radius: 4px;
 `;
 
 const CardImage = styled.img`
@@ -119,6 +132,9 @@ const Address = styled.p`
   font-size: 0.8rem;
   color: #555;
   margin: 0 0 5px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Price = styled.p`
