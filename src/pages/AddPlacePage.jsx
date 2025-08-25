@@ -249,13 +249,11 @@ export default function AddPlacePage() {
   
     // 디버그: 실제 전송되는 FormData 확인
     for (const [k, v] of fd.entries()) {
-      console.log(k, v instanceof File ? `${v.name} (${v.type}, ${v.size}B)` : v);
     }
   
     // 6) 전송 (Content-Type 수동 지정 X)
     try {
       const res = await api.post("/enrollment/done", fd);
-      console.log("등록 성공:", res.data);
   
       const first = photoList[0];
       const url = first ? URL.createObjectURL(first) : null;

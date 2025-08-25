@@ -20,22 +20,17 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
   const moveToMarkers = useCallback(
     (mapInstance) => {
       if (!mapInstance || !navermaps || !markers || markers.length === 0) {
-        console.log("Cannot move to markers - missing dependencies");
         return;
       }
-
-      console.log("Moving to markers with", markers.length, "markers");
 
       try {
         if (markers.length === 1) {
           const pos = markers[0].position;
-          console.log("Moving to single marker:", pos);
           mapInstance.setCenter(new navermaps.LatLng(pos.lat, pos.lng));
           mapInstance.setZoom(14);
           // 아래 카드 영역만큼 위로 올려서(=화면을 위쪽으로 팬) 마커가 안 가리게
           mapInstance.panBy(new navermaps.Point(0, BOTTOM_UI_PADDING));
         } else {
-          console.log("Fitting bounds for multiple markers");
           const bounds = new navermaps.LatLngBounds();
           markers.forEach((marker) => {
             bounds.extend(new navermaps.LatLng(marker.position.lat, marker.position.lng));
@@ -47,7 +42,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
           const currentZoom = mapInstance.getZoom();
           mapInstance.setZoom(currentZoom - 1);
         }
-        console.log("Map movement completed successfully");
       } catch (error) {
         console.error("Error moving map:", error);
       }
@@ -58,8 +52,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
   // 지도 로드 핸들러들
   const handleMapLoad = useCallback(
     (loadedMap) => {
-      console.log("=== onLoad FIRED ===");
-      console.log("Map instance:", !!loadedMap);
       setMap(loadedMap);
 
       setTimeout(() => {
@@ -71,8 +63,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
 
   const handleMapLoadEnd = useCallback(
     (loadedMap) => {
-      console.log("=== onLoadEnd FIRED ===");
-      console.log("Map instance:", !!loadedMap);
       if (!map) {
         setMap(loadedMap);
       }
@@ -86,8 +76,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
 
   const handleMapReady = useCallback(
     (loadedMap) => {
-      console.log("=== onReady FIRED ===");
-      console.log("Map instance:", !!loadedMap);
       if (!map) {
         setMap(loadedMap);
       }
@@ -103,7 +91,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
   const handleMapRef = useCallback(
     (mapInstance) => {
       if (mapInstance && !map) {
-        console.log("=== MAP REF SET ===");
         setMap(mapInstance);
         mapRef.current = mapInstance;
 
@@ -117,9 +104,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
 
   // navermaps와 markers가 모두 준비되었을 때 실행
   useEffect(() => {
-    console.log("=== CHECKING FOR DIRECT ACCESS ===");
-    console.log("navermaps ready:", !!navermaps);
-    console.log("markers:", markers?.length || 0);
 
     // 만약 지도가 아직 로드되지 않았지만 navermaps는 준비되었다면
     // 직접 지도 인스턴스에 접근 시도
@@ -128,7 +112,6 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
         // 지도 컨테이너에서 직접 지도 인스턴스 찾기
         const mapContainer = document.querySelector('[data-cy="container"]');
         if (mapContainer && mapContainer._naverMap) {
-          console.log("=== FOUND MAP VIA DIRECT ACCESS ===");
           const foundMap = mapContainer._naverMap;
           setMap(foundMap);
           moveToMarkers(foundMap);
@@ -147,13 +130,8 @@ const MapComponent = ({ markers, center, onMarkerClick, onMarkerHover, currentLo
 
   // 마커 변경 시 기존 map으로 이동
   useEffect(() => {
-    console.log("=== EFFECT TRIGGERED ===");
-    console.log("Map ready:", !!map);
-    console.log("Navermaps ready:", !!navermaps);
-    console.log("Markers count:", markers?.length || 0);
 
     if (map && navermaps && markers && markers.length > 0) {
-      console.log("Moving to markers via effect");
 
       const timeoutId = setTimeout(() => {
         moveToMarkers(map);

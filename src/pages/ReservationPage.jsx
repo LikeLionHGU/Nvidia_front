@@ -261,7 +261,6 @@ useEffect(() => {
             const schedule = Array.from(resp?.data?.schedule ?? []);
             newSlotsByDate.set(dateKey, schedule);
             needsUpdate = true;
-            console.log("slots for", dateKey, "=>", schedule);
           } catch (err) {
             console.error(`Failed to fetch slots for ${dateKey}:`, err);
             newSlotsByDate.set(dateKey, []); // 에러 시 빈 배열

@@ -14,14 +14,12 @@ function FormComponent({
   setMaxPrice,
   onSubmitRecommend,
 }) {
-  // 각 스텝의 완료 상태 관리
   const [stepCompleted, setStepCompleted] = useState({
     step1: false,
     step2: false,
     step3: false,
   });
 
-  // 각 스텝의 활성화 상태 관리
   const [stepEnabled, setStepEnabled] = useState({
     step1: true,
     step2: false,
@@ -35,117 +33,62 @@ function FormComponent({
   const [minFocused, setMinFocused] = useState(false);
   const [maxFocused, setMaxFocused] = useState(false);
 
-  // Step 1 완료 여부 체크
   useEffect(() => {
     const hasAddress = addressInputs.some((input) => input.trim() !== "");
-    setStepCompleted((prev) => ({
-      ...prev,
-      step1: hasAddress,
-    }));
-
-    // Step 1이 완료되면 Step 2 활성화
+    setStepCompleted((prev) => ({ ...prev, step1: hasAddress }));
     if (hasAddress) {
-      setStepEnabled((prev) => ({
-        ...prev,
-        step2: true,
-      }));
+      setStepEnabled((prev) => ({ ...prev, step2: true }));
     }
   }, [addressInputs]);
 
-  // Step 2 완료 여부 체크
   useEffect(() => {
     const isCompleted = step2Text.trim() !== "";
-    setStepCompleted((prev) => ({
-      ...prev,
-      step2: isCompleted,
-    }));
+    setStepCompleted((prev) => ({ ...prev, step2: isCompleted }));
     setPrompt?.(step2Text);
-    // Step 2가 완료되면 Step 3 활성화
     if (isCompleted) {
-      setStepEnabled((prev) => ({
-        ...prev,
-        step3: true,
-      }));
+      setStepEnabled((prev) => ({ ...prev, step3: true }));
     }
   }, [step2Text]);
 
-  // Step 3 완료 여부 체크
   useEffect(() => {
     const isCompleted = minBudget !== "" && maxBudget !== "";
-    setStepCompleted((prev) => ({
-      ...prev,
-      step3: isCompleted,
-    }));
+    setStepCompleted((prev) => ({ ...prev, step3: isCompleted }));
     setMinPrice?.(minBudget);
     setMaxPrice?.(maxBudget);
   }, [minBudget, maxBudget]);
 
-  // Skip 버튼 핸들러
   const handleSkipStep = (stepNumber) => {
     if (stepNumber === 1) {
-      setStepEnabled((prev) => ({
-        ...prev,
-        step2: true,
-      }));
-      setStepCompleted((prev) => ({
-        ...prev,
-        step1: true,
-      }));
+      setStepEnabled((prev) => ({ ...prev, step2: true }));
+      setStepCompleted((prev) => ({ ...prev, step1: true }));
     } else if (stepNumber === 2) {
-      setStepEnabled((prev) => ({
-        ...prev,
-        step3: true,
-      }));
-      setStepCompleted((prev) => ({
-        ...prev,
-        step2: true,
-      }));
+      setStepEnabled((prev) => ({ ...prev, step3: true }));
+      setStepCompleted((prev) => ({ ...prev, step2: true }));
     } else if (stepNumber === 3) {
-      setStepCompleted((prev) => ({
-        ...prev,
-        step3: true,
-      }));
+      setStepCompleted((prev) => ({ ...prev, step3: true }));
     }
   };
 
-  // 초기화 함수
   const handleReset = () => {
-    // 모든 input 초기화
     addressInputs.forEach((_, index) => {
       handleAddressInputChange(index, "");
     });
     setStep2Text("");
     setMinBudget("");
     setMaxBudget("");
-
-    // 상태 초기화
-    setStepCompleted({
-      step1: false,
-      step2: false,
-      step3: false,
-    });
-    setStepEnabled({
-      step1: true,
-      step2: false,
-      step3: false,
-    });
+    setStepCompleted({ step1: false, step2: false, step3: false });
+    setStepEnabled({ step1: true, step2: false, step3: false });
   };
 
   const onlyDigits = (s) => (s || "").replace(/\D/g, "");
+  const formatCurrency = (digits) =>
+    digits ? Number(digits).toLocaleString("ko-KR") + "원" : "";
 
-  const formatCurrency = (digits) => {
-    if (!digits) return "";
-    const n = Number(digits);
-    if (Number.isNaN(n)) return "";
-    return n.toLocaleString("ko-KR") + "원";
-  };
-
-  // 에러 여부: 둘 다 값이 있고, min > max
-  const hasBudgetError = !!minBudget && !!maxBudget && Number(minBudget) > Number(maxBudget);
+  const hasBudgetError =
+    !!minBudget && !!maxBudget && Number(minBudget) > Number(maxBudget);
 
   return (
     <FormContainer>
-      {/* 헤더 정보 */}
       <InfoContainer>
         <TopWrapper>
           <Title>오늘 딱 맞는 공실을 찾아보세요</Title>
@@ -159,18 +102,16 @@ function FormComponent({
       {/* Step 1 */}
       <StepContainer>
         <LeftContainer>
-          <StepBadge completed={stepCompleted.step1}>Step 1</StepBadge>
-          <ProcessBar completed={stepCompleted.step1} />
+          <StepBadge $completed={stepCompleted.step1}>Step 1</StepBadge>
+          <ProcessBar $completed={stepCompleted.step1} />
         </LeftContainer>
         <RightContainer>
           <StepHeader>
             <StepTitle>위치를 지정해주세요.</StepTitle>
             <SkipButton onClick={() => handleSkipStep(1)}>Skip</SkipButton>
           </StepHeader>
-
           <StepDescription>내 위치를 선택하거나, 친구들의 위치를 알려주세요.</StepDescription>
-
-          <StepContent enabled={stepEnabled.step1}>
+          <StepContent $enabled={stepEnabled.step1}>
             <AddressListContainer>
               {addressInputs.map((input, index) => (
                 <AddressInputContainer key={index}>
@@ -178,7 +119,9 @@ function FormComponent({
                     type="text"
                     placeholder="위치를 입력해주세요!"
                     value={input}
-                    onChange={(e) => handleAddressInputChange(index, e.target.value)}
+                    onChange={(e) =>
+                      handleAddressInputChange(index, e.target.value)
+                    }
                     readOnly
                     onClick={() => onOpenSearchLocationModal(index)}
                   />
@@ -192,22 +135,30 @@ function FormComponent({
       {/* Step 2 */}
       <StepContainer>
         <LeftContainer>
-          <StepBadge completed={stepCompleted.step2} disabled={!stepEnabled.step2}>
+          <StepBadge
+            $completed={stepCompleted.step2}
+            $disabled={!stepEnabled.step2}
+          >
             Step 2
           </StepBadge>
-          <ProcessBar completed={stepCompleted.step2} />
+          <ProcessBar $completed={stepCompleted.step2} />
         </LeftContainer>
         <RightContainer>
           <StepHeader>
-            <StepTitle disabled={!stepEnabled.step2}>분위기와 목적을 작성해주세요.</StepTitle>
-            <SkipButton onClick={() => handleSkipStep(2)} disabled={!stepEnabled.step2}>
+            <StepTitle $disabled={!stepEnabled.step2}>
+              분위기와 목적을 작성해주세요.
+            </StepTitle>
+            <SkipButton
+              onClick={() => handleSkipStep(2)}
+              $disabled={!stepEnabled.step2}
+            >
               Skip
             </SkipButton>
           </StepHeader>
-
-          <StepDescription disabled={!stepEnabled.step2}>원하는 공실의 분위기와 목적을 알려주세요.</StepDescription>
-
-          <StepContent enabled={stepEnabled.step2}>
+          <StepDescription $disabled={!stepEnabled.step2}>
+            원하는 공실의 분위기와 목적을 알려주세요.
+          </StepDescription>
+          <StepContent $enabled={stepEnabled.step2}>
             <TextareaContainer>
               <Textarea
                 placeholder="이용 목적과 원하는 분위기를 자유롭게 작성해보세요!"
@@ -220,7 +171,11 @@ function FormComponent({
                   <ExampleItem onClick={() => setStep2Text("카페 감성의 스터디룸 찾아줘")}>
                     카페 감성의 스터디룸 찾아줘
                   </ExampleItem>
-                  <ExampleItem onClick={() => setStep2Text("4명 회의할 수 있는 조용하고 밝은 공간 찾아줘")}>
+                  <ExampleItem
+                    onClick={() =>
+                      setStep2Text("4명 회의할 수 있는 조용하고 밝은 공간 찾아줘")
+                    }
+                  >
                     4명 회의할 수 있는 조용하고 밝은 공간 찾아줘
                   </ExampleItem>
                 </ExampleContainer>
@@ -233,23 +188,29 @@ function FormComponent({
       {/* Step 3 */}
       <StepContainer>
         <LeftContainer>
-          <StepBadge completed={stepCompleted.step3} disabled={!stepEnabled.step3}>
+          <StepBadge
+            $completed={stepCompleted.step3}
+            $disabled={!stepEnabled.step3}
+          >
             Step 3
           </StepBadge>
         </LeftContainer>
         <RightContainer>
           <StepHeader>
-            <StepTitle disabled={!stepEnabled.step3}>예산을 설정해주세요.</StepTitle>
-            <SkipButton onClick={() => handleSkipStep(3)} disabled={!stepEnabled.step3}>
+            <StepTitle $disabled={!stepEnabled.step3}>
+              예산을 설정해주세요.
+            </StepTitle>
+            <SkipButton
+              onClick={() => handleSkipStep(3)}
+              $disabled={!stepEnabled.step3}
+            >
               Skip
             </SkipButton>
           </StepHeader>
-
-          <StepDescription disabled={!stepEnabled.step3}>
+          <StepDescription $disabled={!stepEnabled.step3}>
             예산 범위를 알려주시면, 그 안에서 최고의 공실을 찾아드릴게요.
           </StepDescription>
-
-          <StepContent enabled={stepEnabled.step3}>
+          <StepContent $enabled={stepEnabled.step3}>
             <BudgetInputContainer>
               <BudgetInputWrapper>
                 <BudgetInput
@@ -263,9 +224,7 @@ function FormComponent({
                   disabled={!stepEnabled.step3}
                   $error={hasBudgetError}
                 />
-
                 <BudgetSeparator>~</BudgetSeparator>
-
                 <BudgetInput
                   type="text"
                   inputMode="numeric"
@@ -283,18 +242,22 @@ function FormComponent({
           </StepContent>
         </RightContainer>
       </StepContainer>
+
       <Divider />
 
-      {/* 버튼 컨테이너 */}
       <ButtonContainer>
         <ResetButton onClick={handleReset}>초기화</ResetButton>
-        <RecommendButton onClick={onSubmitRecommend}>딱 맞는 공실 추천 받기</RecommendButton>
+        <RecommendButton onClick={onSubmitRecommend}>
+          딱 맞는 공실 추천 받기
+        </RecommendButton>
       </ButtonContainer>
     </FormContainer>
   );
 }
 
 export default FormComponent;
+
+/* ================= styles ================= */
 
 const FormContainer = styled.div`
   padding: 40px;
@@ -348,10 +311,8 @@ const LeftContainer = styled.div`
 `;
 
 const ProcessBar = styled.div`
-  border-right: ${(props) =>
-    props.completed
-      ? "1.5px solid #2FB975" // 완료 시 초록 실선
-      : "1.5px dashed #bebebe"}; // 기본 회색 점선
+  border-right: ${(p) =>
+    p.$completed ? "1.5px solid #2FB975" : "1.5px dashed #bebebe"};
   height: 100%;
 `;
 
@@ -376,41 +337,41 @@ const StepBadge = styled.div`
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  background-color: ${(props) => (props.disabled ? "#f5f5f5" : props.completed ? "#2FB975" : "#f5f5f5")};
-  color: ${(props) => (props.disabled ? "#ccc" : props.completed ? "white" : "#666")};
+  background-color: ${(p) =>
+    p.$disabled ? "#f5f5f5" : p.$completed ? "#2FB975" : "#f5f5f5"};
+  color: ${(p) =>
+    p.$disabled ? "#ccc" : p.$completed ? "white" : "#666"};
 `;
 
 const StepTitle = styled.div`
   font-size: 1.15vw;
   font-weight: bold;
-  color: ${(props) => (props.disabled ? "#ccc" : "#333")};
+  color: ${(p) => (p.$disabled ? "#ccc" : "#333")};
   flex: 1;
 `;
 
 const SkipButton = styled.button`
   background: none;
   border: none;
-  color: ${(props) => (props.disabled ? "#ccc" : "#2FB975")};
+  color: ${(p) => (p.$disabled ? "#ccc" : "#2FB975")};
   font-size: 0.69vw;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-
+  cursor: ${(p) => (p.$disabled ? "not-allowed" : "pointer")};
   &:hover {
-    text-decoration: ${(props) => (props.disabled ? "none" : "underline")};
+    text-decoration: ${(p) => (p.$disabled ? "none" : "underline")};
   }
 `;
 
 const StepDescription = styled.p`
   font-size: 14px;
-  color: ${(props) => (props.disabled ? "#ccc" : "#666")};
+  color: ${(p) => (p.$disabled ? "#ccc" : "#666")};
   margin-bottom: 16px;
 `;
 
 const StepContent = styled.div`
-  opacity: ${(props) => (props.enabled ? 1 : 0.5)};
-  pointer-events: ${(props) => (props.enabled ? "auto" : "none")};
+  opacity: ${(p) => (p.$enabled ? 1 : 0.5)};
+  pointer-events: ${(p) => (p.$enabled ? "auto" : "none")};
   display: flex;
   flex-direction: column;
-  justify-content
 `;
 
 const AddressListContainer = styled.div`
@@ -429,7 +390,6 @@ const Input = styled.input`
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 14px;
-
   &:focus {
     outline: none;
     border-color: #2fb975;
@@ -444,19 +404,18 @@ const TextareaContainer = styled.div`
 const Textarea = styled.textarea`
   width: 100%;
   padding: 12px;
-  padding-bottom: ${(props) => (props.value && props.value.trim() === "" ? "60px" : "12px")};
+  padding-bottom: ${(p) =>
+    p.value && p.value.trim() === "" ? "60px" : "12px"};
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 14px;
   height: 14.06vh;
   resize: none;
   box-sizing: border-box;
-
   &:focus {
     outline: none;
     border-color: #2fb975;
   }
-
   &:disabled {
     background-color: #f5f5f5;
     cursor: not-allowed;
@@ -483,7 +442,6 @@ const ExampleItem = styled.div`
   color: #666;
   cursor: pointer;
   transition: all 0.2s ease;
-
   &:hover {
     background-color: #2fb975;
     color: white;
@@ -512,7 +470,6 @@ const BudgetInput = styled.input`
   font-size: 14px;
   text-align: center;
   color: ${(p) => (p.$error ? "#FF3C3C" : "inherit")};
-
   &:focus {
     outline: none;
     border-color: ${(p) => (p.$error ? "#FF3C3C" : "#2fb975")};
@@ -521,8 +478,6 @@ const BudgetInput = styled.input`
     background-color: #f5f5f5;
     cursor: not-allowed;
   }
-
-  /* 혹시 type="number"를 쓸 때를 대비한 스핀버튼 제거(브라우저 가드) */
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -559,7 +514,6 @@ const ResetButton = styled.button`
   border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
-
   &:hover {
     background-color: #e9ecef;
   }
@@ -575,7 +529,6 @@ const RecommendButton = styled.button`
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-
   &:hover {
     background-color: #28a745;
   }

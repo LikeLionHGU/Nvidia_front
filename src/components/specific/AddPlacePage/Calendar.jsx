@@ -57,15 +57,16 @@ export default function Calendar({ today, selectedDates, toggleDate }) {
 
           <CalendarGrid>
             {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w, i) => (
-              <DayCell>{w}</DayCell>
+              <DayCell key={w}>{w}</DayCell>
             ))}
-            {calendarCells.map((d, idx) => {
+
+            {calendarCells.map((d) => {
               const key = format(d, "yyyy-MM-dd");
               const selected = selectedDates.has(key);
               const disabled = isBefore(d, startOfToday());
               return (
                 <DateCell
-                  key={idx}
+                  key={key}
                   onClick={() => {
                     if (disabled) return;
                     if (!selected && selectedDates.size >= 5) {
