@@ -21,8 +21,7 @@ const ResSuccessModal = ({ isOpen, onClose, details, slotsByDate }) => {
     totalPrice = 0,
     pricePer30min = 0,
     hours = 0,
-    date,
-    time,
+    
   } = details || {};
 
   const money = (n) => n.toLocaleString();

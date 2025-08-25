@@ -512,8 +512,3 @@ const NoResultContainer = styled.div`
   height: 100%;
 `;
 
-const NoResultText = styled.p`
-  margin-top: 16px;
-  font-size: 1.2rem;
-  color: #888;
-`;

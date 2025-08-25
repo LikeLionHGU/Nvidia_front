@@ -56,7 +56,7 @@ export default function Calendar({ today, selectedDates, toggleDate }) {
           </CalendarHeader>
 
           <CalendarGrid>
-            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w, i) => (
+            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w) => (
               <DayCell key={w}>{w}</DayCell>
             ))}
 

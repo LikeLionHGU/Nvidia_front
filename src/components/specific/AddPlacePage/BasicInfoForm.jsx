@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import TagSelector from './TagSelector';
 
@@ -246,18 +246,7 @@ const TextArea = styled.textarea`
   }
 `;
 
-const GhostButton = styled.button`
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid ${colors.line};
-  background: ${colors.surface};
-  font-weight: 600;
-  color: ${colors.text};
-  cursor: pointer;
-  &:hover { background: ${colors.surfaceSoft}; }
-`;
-const SmallButton = styled(GhostButton)`padding: 8px 10px;`;
-const Hint = styled.div`font-size: 12px; color: ${colors.sub}; margin-top: 6px;`;
+
 
 /* 인원 스텝퍼 */
 const StepperBox = styled.div`

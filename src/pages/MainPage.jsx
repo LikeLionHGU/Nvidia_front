@@ -1,8 +1,8 @@
 // src/pages/MainPage.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+
 import styled from "styled-components";
-import axios from "axios";
+
 
 import DetailPlacePage from "./DetailPage";
 import LocationSearchModal from "./LocationSearchModal";
@@ -16,20 +16,20 @@ import RecommendationBox from "../components/specific/RecommendationBox";
 import { postMain, postRecommend } from "../apis/recommend";
 
 function MainPage() {
-  const [markers, setMarkers] = useState([]);
+  
   const [recommendList, setRecommendList] = useState([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isSearchLocationModalOpen, setIsSearchLocationModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [addressInputs, setAddressInputs] = useState([""]);
-  const [budgetRange, setBudgetRange] = useState([0, 100000]);
+  
   const [hoveredRoomId, setHoveredRoomId] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null); // { lat, lng }
   const [centerAddress, setCenterAddress] = useState(null);
   const [sortOrder, setSortOrder] = useState("낮은 가격"); // "낮은 가격" 또는 "높은 가격"
 
-  const navigate = useNavigate();
+  
 
   // 0) 최초 진입 시 한 번 현재 위치 시도 (실패해도 앱은 동작)
   useEffect(() => {
@@ -74,13 +74,7 @@ function MainPage() {
     next[index] = value;
     setAddressInputs(next);
   };
-  const addAddressInput = () => {
-    if (addressInputs.length >= 5) return alert("최대 5개의 주소만 입력 가능합니다.");
-    setAddressInputs((prev) => [...prev, ""]);
-  };
-  const removeAddressInput = (index) => {
-    setAddressInputs((prev) => prev.filter((_, i) => i !== index));
-  };
+  
 
   const moveToDetailPage = (roomId) => {
     setIsDetailModalOpen(true);
@@ -169,7 +163,7 @@ function MainPage() {
     })();
   }, [currentLocation]);
 
-  const handleRecommendClick = () => setShowResults(true);
+  
   const handleBackClick = () => setShowResults(false);
 
   const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
@@ -294,125 +288,4 @@ const SearchResultsContainer = styled.div`
 `;
 
 
-const DetailModalContainer = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
 
-const DetailModalContent = styled.div`
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 80%;
-  max-width: 600px;
-`;
-
-const CloseButton = styled.button`
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 15px;
-  cursor: pointer;
-  margin-top: 20px;
-
-  &:hover {
-    background-color: #c82333;
-  }
-`;
-
-const SearchLocationModalContainer = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const SearchLocationModalContent = styled.div`
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 80%;
-  max-width: 500px;
-`;
-
-const CloseSearchLocationButton = styled.button`
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 15px;
-  cursor: pointer;
-  margin-top: 20px;
-
-  &:hover {
-    background-color: #5a6268;
-  }
-`;
-
-const RecommendationContainer = styled.div`
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  max-width: 1200px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-`;
-
-const RecommendationTitle = styled.h3`
-  margin-top: 0;
-`;
-
-const RecommendationList = styled.div`
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-`;
-
-const RecommendationCard = styled.div`
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  min-width: 200px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #f5f5f5;
-  }
-`;
-
-const CardImage = styled.img`
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 4px;
-`;
-
-const CardTitle = styled.h4`
-  margin: 10px 0 5px;
-`;
-
-const CardInfo = styled.p`
-  margin: 0;
-  font-size: 14px;
-  color: #555;
-`;

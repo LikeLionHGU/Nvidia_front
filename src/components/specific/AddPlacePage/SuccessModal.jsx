@@ -5,22 +5,16 @@ import Logo from '../../../assets/icons/LogoWhite.svg';
 import {useNavigate} from "react-router-dom";
 
 
-const colors = {
-  brand: "#2FB975",
-  text: "#374151",
-  line: "#E5E7EB",
-};
+
 
 const SuccessModal = ({ show, onClose, previewUrl, name }) => {
+  const navigate = useNavigate();
+
   if (!show) {
     return null;
   }
 
-  const navigate = useNavigate();
-
-  const moveToMain = () => {
-    navigate("/");
-  }
+  
 
   return (
     <Overlay onClick={onClose}>

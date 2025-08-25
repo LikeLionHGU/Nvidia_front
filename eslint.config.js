@@ -15,7 +15,10 @@ export default defineConfig([
     ],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        naver: 'readonly', // Add 'naver' global
+      },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -24,6 +27,13 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+  // Add a new configuration for the 'api' directory
+  {
+    files: ['api/**/*.js'],
+    languageOptions: {
+      globals: globals.node, // Use Node.js globals
     },
   },
 ])

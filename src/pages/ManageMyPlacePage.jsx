@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import styled from 'styled-components';
 import api from '../apis/client';
 import AdImg from "../assets/images/AdImg.svg";
@@ -12,7 +12,7 @@ import CallIconSvg from "../assets/icons/CallIcon.svg";
 import ContactIconSvg from "../assets/icons/ContactIcon.svg";
 
 /* ================= 공통 파서 & 정규화 ================= */
-async function readJson(res){const t=await res.text();try{return JSON.parse(t);}catch{throw new Error('Invalid JSON');}}
+
 function extractList(payload, keys=[]){
   if(Array.isArray(payload)) return payload;
   for(const k of keys){const v=payload?.[k]; if(Array.isArray(v)) return v;}
@@ -111,7 +111,7 @@ const ManageMyPlacePage = () => {
   const [hasSearched,setHasSearched]=useState(false);
 
   const [isFocused, setIsFocused] = useState(false);
-  const navigate = useNavigate();
+  
 
   const fetchData = useCallback(async (tab, phone) => {
     if (!phone.trim()) { alert('전화번호를 입력해주세요.'); return; }

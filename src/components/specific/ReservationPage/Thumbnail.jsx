@@ -15,8 +15,7 @@ export default function Thumbnail({ placeData }) {
     photoList,
     address,
     chipList = [],
-    phoneNumber,
-    price,
+    
     maxPeople,
     optionList = [],
   } = placeData || {};
