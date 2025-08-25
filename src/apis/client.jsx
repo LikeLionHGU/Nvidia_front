@@ -1,5 +1,4 @@
-// src/apis/client.js
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://janghong.asia", // 직접 서버 호출
@@ -20,6 +19,7 @@ const api = axios.create({
 
     return data;
   }],
+
 });
 
 export default api;
