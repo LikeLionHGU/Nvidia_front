@@ -1,10 +1,11 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api/spaceon", // 항상 Edge Function 경유
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 10000,
 });
 
 export default api;
