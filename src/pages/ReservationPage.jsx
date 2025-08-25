@@ -380,7 +380,7 @@ useEffect(() => {
               초기화
             </CancelButton>
             <SubmitButton type="button" onClick={handleReservation}>
-              등록
+              예약
             </SubmitButton>
           </ButtonContainer>
         </FormWrap>

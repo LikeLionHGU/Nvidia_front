@@ -91,7 +91,7 @@ function DetailPage({ onClose, roomId }) {
                 <MainImg src={photoList[currentImageIndex]} alt="장소 대표 사진" />
                 {photoList.length > 1 && (
                   <>
-                    <ArrowButton left onClick={handlePrevImage}>
+                    <ArrowButton $left onClick={handlePrevImage}>
                       ❮
                     </ArrowButton>
                     <ArrowButton right onClick={handleNextImage}>
@@ -106,7 +106,7 @@ function DetailPage({ onClose, roomId }) {
               {photoList.length > 1 && (
                 <SubImgContainer>
                   {photoList.map((photo, index) => (
-                    <SubImageWrapper key={index} isActive={index === currentImageIndex}>
+                    <SubImageWrapper key={index} $isActive={index === currentImageIndex}>
                       <img src={photo} alt={`photo-${index + 1}`} onClick={() => handleImageClick(index)} />
                     </SubImageWrapper>
                   ))}
@@ -267,7 +267,7 @@ const ArrowButton = styled.button`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  ${(props) => (props.left ? "left: 15px;" : "right: 15px;")}
+  ${(props) => (props.$left ? "left: 15px;" : "right: 15px;")}
   background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
@@ -310,7 +310,7 @@ const SubImageWrapper = styled.div`
   cursor: pointer;
   border-radius: 6px;
   overflow: hidden;
-  border: 2px solid ${(props) => (props.isActive ? "#0089fc" : "transparent")};
+  border: 2px solid ${(props) => (props.$isActive ? "#0089fc" : "transparent")};
 
   img {
     width: 73px;
