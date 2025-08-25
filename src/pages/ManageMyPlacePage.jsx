@@ -437,7 +437,7 @@ const MiddleColumn = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 20px 24px 0 24px;
+  padding: 10px 24px 0 24px;
   font-family: Inter;
 `;
 
@@ -593,7 +593,7 @@ const TextContainer = styled.div`
 const TimeListContainer = styled.div`
   width: 90%; height: 80%; background:#FAFAFA; border-radius: 3px;
   display:flex; flex-direction:column; gap:10px; overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 13px;
 `;
 const TimeHeader = styled.div`
   background:#16a34a; color:#fff; font-weight:700; text-align:center;
