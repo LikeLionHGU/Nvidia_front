@@ -13,6 +13,7 @@ function MapWrapper({
   handleGetCurrentLocation,
   isDetailModalOpen,
   isSearchLocationModalOpen,
+  isSearchResultVisible,
 }) {
   const center = currentLocation || { lat: 37.5665, lng: 126.978 };
   return (
@@ -30,6 +31,7 @@ function MapWrapper({
         onClick={handleGetCurrentLocation}
         $isDetailModalOpen={isDetailModalOpen}
         $isSearchLocationModalOpen={isSearchLocationModalOpen}
+        $isSearchResultVisible={isSearchResultVisible}
       >
         <Icon src={MyLocationIcon} alt="Current Location" />
         내 위치 불러오기
@@ -58,12 +60,13 @@ const CurrentLocationButton = styled.button`
   /* ✅ transient props 사용 */
   z-index: ${({ $isDetailModalOpen, $isSearchLocationModalOpen }) =>
     $isDetailModalOpen || $isSearchLocationModalOpen ? 1 : 1000};
+  display: ${({ $isSearchResultVisible }) =>
+    $isSearchResultVisible ? "none" : "flex"};
 
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 20px;
   padding: 10px 15px;
-  display: flex;
   justify-content: center;
   align-items: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
