@@ -1,5 +1,5 @@
 // src/pages/MainPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import axios from "axios";
@@ -27,6 +27,7 @@ function MainPage() {
   const [hoveredRoomId, setHoveredRoomId] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null); // { lat, lng }
   const [centerAddress, setCenterAddress] = useState(null);
+  const [sortOrder, setSortOrder] = useState("낮은 가격"); // "낮은 가격" 또는 "높은 가격"
 
   const navigate = useNavigate();
 
@@ -137,17 +138,6 @@ function MainPage() {
       const list = Array.isArray(data?.recommendList) ? data.recommendList : Array.isArray(data) ? data : [];
 
       setRecommendList(list);
-      setMarkers(
-        list.map((item) => ({
-          position: {
-            lat: Number(item.address?.latitude),
-            lng: Number(item.address?.longitude),
-          },
-          title: `장소 ${item.roomId}`,
-          id: item.roomId,
-          price: Number(item.price).toLocaleString(),
-        }))
-      );
     } catch (e) {
       console.error("POST /recommend 실패:", e);
       alert("추천을 불러오지 못했습니다.");
@@ -163,17 +153,6 @@ function MainPage() {
 
     const applyData = (list) => {
       setRecommendList(list);
-      setMarkers(
-        (list || []).map((item) => ({
-          position: {
-            lat: Number(item.address?.latitude),
-            lng: Number(item.address?.longitude),
-          },
-          title: `장소 ${item.roomId}`,
-          id: item.roomId,
-          price: Number(item.price).toLocaleString(),
-        }))
-      );
     };
 
     (async () => {
@@ -195,6 +174,29 @@ function MainPage() {
 
   const mapClientId = import.meta.env.VITE_MAP_CLIENT_ID;
 
+  const sortedRecommendList = useMemo(() => {
+    return [...recommendList].sort((a, b) => {
+      if (sortOrder === "낮은 가격") {
+        return a.price - b.price;
+      } else {
+        return b.price - a.price;
+      }
+    });
+  }, [recommendList, sortOrder]);
+
+  const sortedMarkers = useMemo(() => {
+    return sortedRecommendList.map((item, index) => ({
+      position: {
+        lat: Number(item.address?.latitude),
+        lng: Number(item.address?.longitude),
+      },
+      title: `장소 ${item.roomId}`,
+      id: item.roomId,
+      price: Number(item.price).toLocaleString(),
+      number: index + 1,
+    }));
+  }, [sortedRecommendList]);
+
   return (
     <PageContainer>
       <ContentsContainer>
@@ -202,13 +204,15 @@ function MainPage() {
           {showResults ? (
             <SearchResultContainer
               handleBackClick={handleBackClick}
-              recommendList={recommendList}
+              recommendList={sortedRecommendList}
               moveToDetailPage={moveToDetailPage}
               onCardClick={moveToDetailPage}
               hoveredRoomId={hoveredRoomId}
               prompt={prompt}
               centerAddress={centerAddress}
               isLoading={loading}
+              sortOrder={sortOrder}
+              handleSortChange={setSortOrder}
             />
           ) : (
             <FormComponent
@@ -229,7 +233,7 @@ function MainPage() {
 
         <MapWrapper
           mapClientId={mapClientId}
-          markers={markers}
+          markers={sortedMarkers}
           moveToDetailPage={moveToDetailPage}
           handleMarkerHover={handleMarkerHover}
           currentLocation={currentLocation || { lat: 37.5665, lng: 126.978 }} // 서울시청 근처 기본값
@@ -286,4 +290,128 @@ const SearchResultsContainer = styled.div`
   &::-webkit-scrollbar {
     display: none;
   } /* Chrome, Safari */
+`;
+
+
+const DetailModalContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const DetailModalContent = styled.div`
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+`;
+
+const CloseButton = styled.button`
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  cursor: pointer;
+  margin-top: 20px;
+
+  &:hover {
+    background-color: #c82333;
+  }
+`;
+
+const SearchLocationModalContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const SearchLocationModalContent = styled.div`
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 500px;
+`;
+
+const CloseSearchLocationButton = styled.button`
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  cursor: pointer;
+  margin-top: 20px;
+
+  &:hover {
+    background-color: #5a6268;
+  }
+`;
+
+const RecommendationContainer = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 1200px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+`;
+
+const RecommendationTitle = styled.h3`
+  margin-top: 0;
+`;
+
+const RecommendationList = styled.div`
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+`;
+
+const RecommendationCard = styled.div`
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 200px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+`;
+
+const CardImage = styled.img`
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+`;
+
+const CardTitle = styled.h4`
+  margin: 10px 0 5px;
+`;
+
+const CardInfo = styled.p`
+  margin: 0;
+  font-size: 14px;
+  color: #555;
 `;

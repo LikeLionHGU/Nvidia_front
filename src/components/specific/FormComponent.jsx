@@ -434,11 +434,11 @@ const ExampleContainer = styled.div`
 `;
 
 const ExampleItem = styled.div`
-  padding: 6px 10px;
+  padding: 6px 7px;
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 16px;
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   cursor: pointer;
   transition: all 0.2s ease;
