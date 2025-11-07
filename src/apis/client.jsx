@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://janghong.asia", // 직접 서버 호출
+  // baseURL: "https://janghong.asia", // 직접 서버 호출
+  baseURL: "https://jinjigui.info:4443/", // 직접 서버 호출
   timeout: 30000, // 업로드면 넉넉하게
   transformRequest: [(data, headers) => {
     // FormData일 경우 Content-Type을 제거 → 브라우저가 자동으로 boundary 붙여줌
